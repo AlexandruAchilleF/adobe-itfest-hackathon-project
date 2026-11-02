@@ -10,9 +10,12 @@ runtime.exposeApi({
     const parent = editor.context.insertionParent;
     const page = editor.context.currentPage;
     const scale = Math.min(page.width / design.width, page.height / design.height);
-    const fill = (hex) => editor.makeColorFill(colorUtils.fromHex(hex)); // VERIFICĂ: colorUtils.fromHex
+    // culori invalide (ex: generate greșit) → gri, ca un singur element să nu oprească tot desenul
+    const safe = (hex) => (/^#[0-9a-f]{6}$/i.test(hex) ? hex : "#888888");
+    const fill = (hex) => editor.makeColorFill(colorUtils.fromHex(safe(hex))); // VERIFICĂ: colorUtils.fromHex
 
     for (const el of design.elements) {
+      try {
       if (el.type === "rect") {
         const node = editor.createRectangle();
         node.width = el.width * scale;
@@ -30,13 +33,16 @@ runtime.exposeApi({
       } else if (el.type === "line") {
         const node = editor.createLine();
         node.setEndPoints(el.x1 * scale, el.y1 * scale, el.x2 * scale, el.y2 * scale); // VERIFICĂ
-        node.stroke = editor.makeStroke({ color: colorUtils.fromHex(el.stroke), width: el.strokeWidth * scale }); // VERIFICĂ
+        node.stroke = editor.makeStroke({ color: colorUtils.fromHex(safe(el.stroke)), width: el.strokeWidth * scale }); // VERIFICĂ
         parent.children.append(node);
       } else if (el.type === "text") {
         const node = editor.createText(el.text);
         parent.children.append(node);
         node.translation = { x: el.x * scale, y: el.y * scale };
-        node.fullContent.applyCharacterStyles({ fontSize: el.fontSize * scale, color: colorUtils.fromHex(el.fill) }); // VERIFICĂ
+        node.fullContent.applyCharacterStyles({ fontSize: el.fontSize * scale, color: colorUtils.fromHex(safe(el.fill)) }); // VERIFICĂ
+      }
+      } catch (err) {
+        console.error(`[add-on] nu am putut desena elementul ${el.id}:`, err);
       }
     }
   },
