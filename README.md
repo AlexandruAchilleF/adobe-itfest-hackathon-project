@@ -10,6 +10,7 @@ pentru pitch. Fiecare modul merge singur. La hackathon alegeți ideea după tem�
 
 > Citiți întâi [`docs/BUSINESS.md`](docs/BUSINESS.md) (problemă, cumpărător, piață, adopție, pitch de 3 minute)
 > și [`docs/PLAN-12H.md`](docs/PLAN-12H.md) (programul celor 12 ore și planul pentru 4 idei verificate pe template).
+> Integrările Adobe (add-on Express, PDF Embed, Express Embed SDK) se pregătesc dinainte: [`docs/ADOBE-SETUP.md`](docs/ADOBE-SETUP.md).
 
 **Totul merge fără nicio cheie.** AI-ul cade pe `mock`, multiplayer-ul pe tab-uri locale. Așa puteți dezvolta și repeta pitch-ul chiar dacă pică internetul.
 
