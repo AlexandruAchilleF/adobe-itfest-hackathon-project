@@ -38,7 +38,18 @@ type Handler = (data: unknown, from: string) => void;
 
 export function useRoom<S = Record<string, unknown>>(
   code: string | null,
-  { name, initialState, meta }: { name: string; initialState?: S; meta?: Record<string, unknown> },
+  {
+    name,
+    initialState,
+    meta,
+    authority = false,
+  }: {
+    name: string;
+    initialState?: S;
+    meta?: Record<string, unknown>;
+    /** true = clientul ăsta deține starea (ex: ecranul mare), chiar dacă n-a intrat primul */
+    authority?: boolean;
+  },
 ) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [connected, setConnected] = useState(false);
@@ -52,6 +63,8 @@ export function useRoom<S = Record<string, unknown>>(
   const isHost = players.length > 0 && players[0].id === me.id;
   const isHostRef = useRef(isHost);
   isHostRef.current = isHost;
+  const authorityRef = useRef(authority);
+  authorityRef.current = authority;
 
   useEffect(() => {
     if (!code) return;
@@ -67,7 +80,7 @@ export function useRoom<S = Record<string, unknown>>(
         return;
       }
       if (msg.type === STATE_REQUEST) {
-        if (isHostRef.current && stateRef.current !== undefined) t.send({ type: STATE, data: stateRef.current, from: me.id });
+        if ((isHostRef.current || authorityRef.current) && stateRef.current !== undefined) t.send({ type: STATE, data: stateRef.current, from: me.id });
         return;
       }
       handlers.current.get(msg.type)?.forEach((h) => h(msg.data, msg.from));

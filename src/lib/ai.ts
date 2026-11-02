@@ -29,6 +29,11 @@ interface BaseOptions {
 
 interface AskOptions<T> extends BaseOptions {
   schema: z.ZodType<T>;
+  /**
+   * Schema trimisă modelului, dacă vrei alta decât cea de validare
+   * (ex: strictă pentru model, permisivă la validare — vezi agent.ts).
+   */
+  outputSchema?: z.ZodType;
   /** Ce returnează modul demo. Dacă lipsește, serverul generează date din schemă. */
   mock?: T;
 }
@@ -74,7 +79,7 @@ async function buildBody(opts: BaseOptions) {
 
 /** Răspuns structurat: JSON validat cu schema Zod. */
 export async function ask<T>(opts: AskOptions<T>): Promise<{ data: T; raw: AiResponse }> {
-  const schema = z.toJSONSchema(opts.schema, { target: "draft-2020-12" }) as Record<string, unknown>;
+  const schema = z.toJSONSchema(opts.outputSchema ?? opts.schema, { target: "draft-2020-12" }) as Record<string, unknown>;
   const raw = await post({ ...(await buildBody(opts)), schema, mock: opts.mock }, opts.signal);
   const parsed = opts.schema.safeParse(raw.data);
   if (!parsed.success) {

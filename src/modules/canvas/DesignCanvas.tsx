@@ -6,8 +6,8 @@
 //   ref.current?.exportPNG()
 
 import { Canvas, Circle, type FabricObject, PencilBrush, Rect, Textbox } from "fabric";
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import type { Design } from "../../lib/design";
+import { forwardRef, type KeyboardEvent as ReactKeyboardEvent, useEffect, useImperativeHandle, useRef } from "react";
+import type { Design, DesignElement } from "../../lib/design";
 import { canvasToDesign, elementToFabric, loadDesign } from "./fabricDesign";
 
 export interface DesignCanvasHandle {
@@ -19,6 +19,16 @@ export interface DesignCanvasHandle {
   addRect(fill?: string): void;
   addCircle(fill?: string): void;
   addPath(d: string, stroke?: string, strokeWidth?: number): Promise<void>;
+  /** Adaugă orice element din schema Design (folosit de comenzile AI). */
+  addElement(el: DesignElement): Promise<void>;
+  /** Înlocuiește tot designul (ex: după o comandă AI) și îl pune în istoric. */
+  setDesign(design: Design): Promise<void>;
+  setBackground(color: string): void;
+  removeLast(): void;
+  undo(): void;
+  redo(): void;
+  canUndo(): boolean;
+  canRedo(): boolean;
   deleteSelected(): void;
   setFillOfSelected(fill: string): void;
   setDrawingMode(on: boolean, color?: string, width?: number): void;
@@ -43,6 +53,28 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
   const onChangeRef = useRef(onChange);
   const loadingRef = useRef(false);
   onChangeRef.current = onChange;
+  // Istoric pentru undo/redo: instantanee JSON ale designului.
+  const historyRef = useRef<Design[]>([design]);
+  const indexRef = useRef(0);
+
+  const record = (next: Design) => {
+    const h = historyRef.current.slice(0, indexRef.current + 1);
+    h.push(next);
+    if (h.length > 60) h.shift();
+    historyRef.current = h;
+    indexRef.current = h.length - 1;
+  };
+
+  const restore = (target: Design) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    designRef.current = target;
+    loadingRef.current = true;
+    loadDesign(canvas, target).finally(() => {
+      loadingRef.current = false;
+    });
+    onChangeRef.current?.(target);
+  };
 
   // Creare / distrugere canvas
   useEffect(() => {
@@ -57,6 +89,7 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
       timer = setTimeout(() => {
         const next = canvasToDesign(canvas, designRef.current);
         designRef.current = next;
+        record(next);
         onChangeRef.current?.(next);
       }, 150);
     };
@@ -78,6 +111,8 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
     if (!canvas) return;
     if (design === designRef.current && canvas.getObjects().length > 0) return;
     designRef.current = design;
+    historyRef.current = [design];
+    indexRef.current = 0;
     canvas.setDimensions({ width: design.width, height: design.height });
     fit();
     loadingRef.current = true;
@@ -160,11 +195,71 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
         canvas.freeDrawingBrush = brush;
       }
     },
+    addElement: async (el) => add(await elementToFabric(el)),
+    setDesign: async (next) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      if (next.width !== designRef.current.width || next.height !== designRef.current.height) {
+        canvas.setDimensions({ width: next.width, height: next.height });
+      }
+      designRef.current = next;
+      fit();
+      loadingRef.current = true;
+      await loadDesign(canvas, next).finally(() => {
+        loadingRef.current = false;
+      });
+      record(next);
+      onChangeRef.current?.(next);
+    },
+    setBackground: (color) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      canvas.backgroundColor = color;
+      canvas.requestRenderAll();
+      canvas.fire("object:modified", {} as never);
+    },
+    removeLast: () => {
+      const canvas = canvasRef.current;
+      const last = canvas?.getObjects().at(-1);
+      if (canvas && last) canvas.remove(last);
+    },
+    undo: () => {
+      if (indexRef.current <= 0) return;
+      indexRef.current -= 1;
+      restore(historyRef.current[indexRef.current]);
+    },
+    redo: () => {
+      if (indexRef.current >= historyRef.current.length - 1) return;
+      indexRef.current += 1;
+      restore(historyRef.current[indexRef.current]);
+    },
+    canUndo: () => indexRef.current > 0,
+    canRedo: () => indexRef.current < historyRef.current.length - 1,
     canvas: () => canvasRef.current,
   }));
 
+  // Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z sau Ctrl+Y = redo (când pânza are focus)
+  function onKeyDown(e: ReactKeyboardEvent) {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    const key = e.key.toLowerCase();
+    if (key === "z" && !e.shiftKey) {
+      e.preventDefault();
+      if (indexRef.current > 0) {
+        indexRef.current -= 1;
+        restore(historyRef.current[indexRef.current]);
+      }
+    } else if ((key === "z" && e.shiftKey) || key === "y") {
+      e.preventDefault();
+      if (indexRef.current < historyRef.current.length - 1) {
+        indexRef.current += 1;
+        restore(historyRef.current[indexRef.current]);
+      }
+    }
+  }
+
   return (
-    <div ref={wrapRef} className={`w-full min-w-0 ${className ?? ""}`}>
+    <div ref={wrapRef} tabIndex={-1} onKeyDown={onKeyDown} className={`w-full min-w-0 outline-none ${className ?? ""}`}>
       <canvas ref={elRef} />
     </div>
   );

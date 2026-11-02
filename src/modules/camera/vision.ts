@@ -1,7 +1,7 @@
 // Încarcă modelele MediaPipe o singură dată. Încearcă întâi fișierele locale
 // (public/mediapipe, copiate la `npm install`), apoi CDN-ul.
 
-import { FaceLandmarker, FilesetResolver, HandLandmarker } from "@mediapipe/tasks-vision";
+import { FaceLandmarker, FilesetResolver, HandLandmarker, PoseLandmarker } from "@mediapipe/tasks-vision";
 
 const LOCAL_WASM = "/mediapipe/wasm";
 const CDN_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.0/wasm";
@@ -9,6 +9,10 @@ const MODELS = {
   hand: {
     local: "/mediapipe/models/hand_landmarker.task",
     cdn: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+  },
+  pose: {
+    local: "/mediapipe/models/pose_landmarker_lite.task",
+    cdn: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
   },
   face: {
     local: "/mediapipe/models/face_landmarker.task",
@@ -79,9 +83,27 @@ export function getFaceLandmarker(): Promise<FaceLandmarker> {
         runningMode: "VIDEO",
         numFaces: 1,
         outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: false,
       }),
     );
   })();
   facePromise.catch(() => (facePromise = null));
   return facePromise;
+}
+
+let posePromise: Promise<PoseLandmarker> | null = null;
+/** Corp: 33 de puncte (umeri, coate, încheieturi, șolduri, genunchi...). */
+export function getPoseLandmarker(): Promise<PoseLandmarker> {
+  posePromise ??= (async () => {
+    const [fs, model] = await Promise.all([fileset(), modelPath("pose")]);
+    return withDelegate((delegate) =>
+      PoseLandmarker.createFromOptions(fs, {
+        baseOptions: { modelAssetPath: model, delegate },
+        runningMode: "VIDEO",
+        numPoses: 1,
+      }),
+    );
+  })();
+  posePromise.catch(() => (posePromise = null));
+  return posePromise;
 }
