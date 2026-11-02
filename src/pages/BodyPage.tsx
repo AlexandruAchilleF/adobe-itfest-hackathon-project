@@ -7,6 +7,9 @@ import { POSE_CONNECTIONS } from "../modules/camera/pose";
 import { useCamera } from "../modules/camera/useCamera";
 import { useFace } from "../modules/camera/useFace";
 import { usePose } from "../modules/camera/usePose";
+import { DesignCanvas } from "../modules/canvas/DesignCanvas";
+import { usePointerCursor } from "../modules/pointer/PointerCursor";
+import { exampleDesign } from "../lib/design";
 
 type Mode = "face" | "pose";
 
@@ -17,6 +20,13 @@ export function BodyPage() {
   const cursor = useRef({ x: 0.5, y: 0.5 });
   const cursorEl = useRef<HTMLDivElement>(null);
   const [clicks, setClicks] = useState(0);
+  // „Mouse cu capul": cursorul controlează toată pagina (click prin menținere, clipit = apucă/lasă)
+  const [headMouse, setHeadMouse] = useState(false);
+  const headMouseRef = useRef(false);
+  headMouseRef.current = headMouse;
+  const pointer = usePointerCursor({ dwellMs: 1200 });
+  // (vezi onEvent: wink = drag, gura deschisă = click, dwell = click)
+  const screenPos = useRef({ x: innerWidth / 2, y: innerHeight / 2 });
 
   const face = useFace(cam.videoRef, {
     enabled: cam.status === "ready" && mode === "face",
@@ -29,10 +39,22 @@ export function BodyPage() {
         cursorEl.current.style.left = `${cursor.current.x * 100}%`;
         cursorEl.current.style.top = `${cursor.current.y * 100}%`;
       }
+      if (headMouseRef.current) {
+        // viteză proporțională cu înclinarea, cu zonă moartă în centru
+        const dz = (v: number) => (Math.abs(v) < 0.15 ? 0 : v - Math.sign(v) * 0.15);
+        const p = screenPos.current;
+        p.x = Math.max(0, Math.min(innerWidth - 1, p.x + dz(f.expressions.yaw) * 22));
+        p.y = Math.max(0, Math.min(innerHeight - 1, p.y + dz(f.expressions.pitch) * 22));
+        pointer.moveTo(p.x, p.y);
+      }
     },
     onEvent: (e: FaceEvent) => {
       setEvents((l) => [e, ...l].slice(0, 6));
       if (e === "blink" || e === "mouth-open") setClicks((c) => c + 1);
+      if (!headMouseRef.current) return;
+      if (e === "mouth-open") pointer.click();
+      // clipitul natural apare la câteva secunde, deci folosim gesturi voite: wink = apucă/lasă
+      if (e === "wink-left" || e === "wink-right") (pointer.pointer.isDown ? pointer.release : pointer.press)();
     },
   });
   const pose = usePose(cam.videoRef, { enabled: cam.status === "ready" && mode === "pose" });
@@ -83,8 +105,20 @@ export function BodyPage() {
 
   return (
     <div>
+      {pointer.cursor}
       <PageHeader title="Față + corp" description="Expresii și mișcarea capului ca input (control fără mâini), sau postura întregului corp pentru jocuri și fitness.">
         <div className="flex gap-2">
+          {mode === "face" && (
+            <Button
+              variant={headMouse ? "danger" : "secondary"}
+              onClick={() => {
+                if (headMouse) pointer.hide();
+                setHeadMouse(!headMouse);
+              }}
+            >
+              {headMouse ? "■ Oprește mouse-ul cu capul" : "🖱️ Mouse cu capul"}
+            </Button>
+          )}
           <Button variant={mode === "face" ? "primary" : "secondary"} onClick={() => setMode("face")}>
             🙂 Față
           </Button>
@@ -100,6 +134,14 @@ export function BodyPage() {
             {mode === "pose" && <canvas ref={overlay} className="absolute inset-0 h-full w-full" />}
           </CameraView>
           <ErrorNote error={cam.error ?? face.error ?? pose.error} />
+          {headMouse && (
+            <Card title="Încearcă fără mâini">
+              <p className="mb-3 text-sm text-slate-400">
+                Înclină capul ca să miști cursorul. Ține-l nemișcat 1,2 s = click. Fă cu ochiul = apucă/lasă (drag). Gura deschisă = click.
+              </p>
+              <DesignCanvas design={exampleDesign} className="max-w-[420px] overflow-hidden rounded-xl" />
+            </Card>
+          )}
         </div>
         <div className="space-y-4">
           {mode === "face" ? (

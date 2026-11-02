@@ -8,7 +8,8 @@ pentru pitch. Fiecare modul merge singur. La hackathon alegeți ideea după tem�
 3. **AI ca mecanism**: răspunsuri structurate și comenzi vocale care execută acțiuni.
 4. **Rezultat editabil, luat acasă**: design editabil, QR, PDF.
 
-> Citiți întâi [`docs/BUSINESS.md`](docs/BUSINESS.md): problemă, cumpărător, piață, adopție și structura pitch-ului de 3 minute.
+> Citiți întâi [`docs/BUSINESS.md`](docs/BUSINESS.md) (problemă, cumpărător, piață, adopție, pitch de 3 minute)
+> și [`docs/PLAN-12H.md`](docs/PLAN-12H.md) (programul celor 12 ore și planul pentru 4 idei verificate pe template).
 
 **Totul merge fără nicio cheie.** AI-ul cade pe `mock`, multiplayer-ul pe tab-uri locale. Așa puteți dezvolta și repeta pitch-ul chiar dacă pică internetul.
 
@@ -31,6 +32,7 @@ pentru pitch. Fiecare modul merge singur. La hackathon alegeți ideea după tem�
 | **Sunet** | Bătăi din palme, nota cântată (Hz + notă), volum, benzi bass/mid/treble. | `src/modules/audio/` |
 | **Telefonul ca controller** | QR, iar telefonul devine joystick, volan (giroscop), pad de desen, buton de vot sau tastatură. Ecranul mare decide layout-ul. | `src/modules/controller/`, `/screen` |
 | **Hardware** | Web Serial către Arduino/ESP32: trimiți și primești linii de text. | `src/modules/hardware/serial.ts` |
+| **Cursor virtual** | Capul, mâna sau un telefon devin mouse real pe orice pagină: click prin menținere (dwell), drag, click pe butoane, obiecte trase pe pânză. | `src/modules/pointer/` |
 
 ### AI și output
 
@@ -39,6 +41,7 @@ pentru pitch. Fiecare modul merge singur. La hackathon alegeți ideea după tem�
 | **AI structurat** | `ask({ prompt, schema, files })` → JSON validat cu Zod. Gemini, Claude sau `mock`. Acceptă imagini și PDF. | `src/lib/ai.ts`, `server/` |
 | **Comenzi vocale → acțiuni** | Definiți acțiunile aplicației cu `defineAction`, utilizatorul vorbește, iar AI-ul le alege, le execută și răspunde vocal. | `src/lib/agent.ts`, `/agent` |
 | **Design editabil** | Pânză Fabric.js: AI-ul generează, omul editează. Undo/redo, export PNG/SVG/JSON. | `src/modules/canvas/`, `src/lib/design.ts` |
+| **Mockup + accesibilitate** | Designul pus în perspectivă pe o poză reală, simulare de distanță și daltonism, audit WCAG și de lizibilitate (fără AI, instant), plus critică AI. | `src/lib/perspective.ts`, `src/lib/accessibility.ts`, `/mockup` |
 | **Share prin QR** | Juriul își ia rezultatul pe telefon. | `src/lib/share.ts`, `src/components/QrPanel.tsx` |
 | **Multiplayer** | Camere cu cod/QR, jucători live, stare comună, mesaje. Supabase Realtime sau local între tab-uri. | `src/modules/rooms/` |
 | **Adobe PDF** | Viewer oficial Adobe (PDF Embed API) + AI care răspunde cu pagina sursă. | `src/modules/adobe/` |
@@ -131,6 +134,21 @@ screen.setScreen({ layout: "choices", prompt: "Votează", choices: ["A", "B"] })
 // telefoanele intră pe /controller?code=XXXX (QR: roomJoinUrl(code, "/controller"))
 ```
 Layout-uri: `gamepad` (joystick + A/B), `tilt` (giroscop + A/B), `draw`, `choices`, `text`.
+
+### Cursor virtual (orice input → mouse)
+```ts
+const pointer = usePointerCursor({ dwellMs: 1000 });      // click prin menținere
+pointer.moveTo(x, y);                                     // pixeli; de la cap, mână, joystick
+pointer.press(); pointer.release();                       // drag (ex: ciupit)
+return <>{pointer.cursor}</>;
+```
+
+### Mockup și accesibilitate
+```ts
+drawImageToQuad(ctx, posterCanvas, orderQuad(punctePeFotografie));
+auditDesign(design, 50 /* cm */);   // [{ text, contrast: 13.98, level: "AAA", readableFromM: 3.7 }]
+contrastRatio("#fff", "#1e293b");   simulateImageData(imageData, "deuteranopia");
+```
 
 ### Sunet și hardware
 ```ts
@@ -229,7 +247,7 @@ Setați aceleași variabile în *Vercel → Project → Settings → Environment
 |---|---|
 | `npm run dev` | Aplicația + `/api` local |
 | `npm run build` | Typecheck + build de producție |
-| `npm test` | Teste unitare (gesturi, față, corp, audio, controller, agent, sondaj, business, server AI, share) |
+| `npm test` | Teste unitare (gesturi, față, corp, audio, controller, agent, sondaj, business, perspectivă, accesibilitate, dwell, server AI, share) |
 | `npm run e2e` | Teste în browser cu cameră și microfon false și AI mock. Rulați întâi `npx playwright install chromium` |
 | `npm run check` | Toate cele de mai sus |
 | `npm run addon:schema` | Regenerează schema pentru add-on-ul Express |

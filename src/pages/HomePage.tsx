@@ -15,8 +15,8 @@ const GROUPS = [
     title: "2. Input neobișnuit",
     note: "Juriul devine utilizator în 10 secunde.",
     modules: [
-      { href: "/camera", title: "Mâini + gesturi", body: "Ciupit, pumn, swipe, cursor cu degetul, desen în aer, iar AI-ul ghicește desenul.", file: "src/modules/camera/" },
-      { href: "/body", title: "Față + corp", body: "Zâmbet, clipit, capul pe post de joystick (control fără mâini) și postura corpului.", file: "src/modules/camera/useFace.ts" },
+      { href: "/camera", title: "Mâini + gesturi", body: "Ciupit, pumn, swipe, desen în aer, iar AI-ul ghicește desenul. „Mouse cu mâna”: ciupești și tragi obiecte.", file: "src/modules/camera/" },
+      { href: "/body", title: "Față + corp", body: "Zâmbet, clipit, „mouse cu capul” care controlează orice pagină (click prin menținere, drag cu wink) și postura corpului.", file: "src/modules/camera/useFace.ts" },
       { href: "/voice", title: "Voce", body: "Vorbire → text și text → vorbire în română, gratuit.", file: "src/modules/voice/" },
       { href: "/sound", title: "Sunet + hardware", body: "Bătăi din palme, nota cântată, volum, plus o punte Web Serial către Arduino/ESP32.", file: "src/modules/audio/" },
       { href: "/screen", title: "Telefonul ca controller", body: "QR, iar telefonul devine joystick, volan (giroscop), pad de desen, buton de vot sau tastatură.", file: "src/modules/controller/" },
@@ -35,6 +35,7 @@ const GROUPS = [
     note: "Tiparul care a câștigat la hackathoanele Adobe.",
     modules: [
       { href: "/canvas", title: "Design editabil", body: "Pânză Fabric.js cu undo/redo, export PNG/SVG/JSON și QR.", file: "src/modules/canvas/" },
+      { href: "/mockup", title: "Mockup în lumea reală", body: "Designul pus în perspectivă pe o poză reală, simulare de distanță și daltonism, audit WCAG și de lizibilitate.", file: "src/lib/perspective.ts" },
       { href: "/pipeline", title: "Flux complet", body: "Voce → AI → design editabil → QR. Exemplu de asamblare.", file: "src/pages/PipelinePage.tsx" },
       { href: "/pdf", title: "Adobe PDF", body: "PDF Embed API + AI care răspunde cu pagina sursă.", file: "src/modules/adobe/" },
       { href: "/room", title: "Multiplayer", body: "Camere cu cod/QR, jucători live, stare comună.", file: "src/modules/rooms/" },

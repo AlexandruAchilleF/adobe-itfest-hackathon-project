@@ -69,3 +69,23 @@ export function downloadText(text: string, filename: string, mime = "image/svg+x
   downloadDataUrl(url, filename);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+// Ultimul design editat, ca alte pagini (ex: mockup) să-l poată folosi.
+const LAST_DESIGN_KEY = "hackathon:last-design";
+
+export function saveLastDesign(design: DesignType): void {
+  try {
+    localStorage.setItem(LAST_DESIGN_KEY, JSON.stringify(design));
+  } catch {
+    /* prea mare sau storage blocat */
+  }
+}
+
+export function loadLastDesign(): DesignType | null {
+  try {
+    const parsed = Design.safeParse(JSON.parse(localStorage.getItem(LAST_DESIGN_KEY) ?? "null"));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}

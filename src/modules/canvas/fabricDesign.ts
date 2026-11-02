@@ -8,7 +8,7 @@ import {
   Line,
   Path,
   Rect,
-  type StaticCanvas,
+  StaticCanvas,
   Textbox,
   util,
 } from "fabric";
@@ -170,4 +170,15 @@ export function canvasToDesign(canvas: StaticCanvas, base: Pick<Design, "title" 
       .map(fabricToElement)
       .filter((e): e is DesignElement => e !== null),
   };
+}
+
+/** Randează un Design într-un <canvas> nou, fără să-l afișeze (pentru mockup-uri, AI, export). */
+export async function renderDesignToCanvas(design: Design, multiplier = 1): Promise<HTMLCanvasElement> {
+  const el = document.createElement("canvas");
+  const sc = new StaticCanvas(el, { width: design.width, height: design.height, renderOnAddRemove: false });
+  await loadDesign(sc, design);
+  sc.renderAll();
+  const out = sc.toCanvasElement(multiplier);
+  await sc.dispose();
+  return out;
 }

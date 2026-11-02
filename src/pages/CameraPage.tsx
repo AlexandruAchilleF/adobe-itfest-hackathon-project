@@ -7,6 +7,8 @@ import { AiError, ask } from "../lib/ai";
 import { CameraView } from "../modules/camera/CameraView";
 import { useCamera } from "../modules/camera/useCamera";
 import { useHands } from "../modules/camera/useHands";
+import { mapToViewport } from "../modules/pointer/dwell";
+import { usePointerCursor } from "../modules/pointer/PointerCursor";
 
 type Stroke = Array<{ x: number; y: number }>;
 
@@ -25,11 +27,24 @@ export function CameraPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<{ msg: string; hint?: string } | null>(null);
   const trailRef = useRef<HTMLCanvasElement>(null);
+  // „Mouse cu mâna": arătătorul mișcă un cursor real pe pagină; ciupit = apasă (drag)
+  const [handMouse, setHandMouse] = useState(false);
+  const handMouseRef = useRef(false);
+  handMouseRef.current = handMouse;
+  const pointer = usePointerCursor({ dwell: false });
 
   const { hands, handsRef, status, error: handsError, fps } = useHands(cam.videoRef, {
     enabled: cam.status === "ready",
     onFrame: (list) => {
       const hand = list[0];
+      if (handMouseRef.current) {
+        if (!hand) return pointer.release();
+        const p = mapToViewport(hand.pointer, innerWidth, innerHeight);
+        pointer.moveTo(p.x, p.y);
+        if (hand.gesture === "pinch") pointer.press();
+        else pointer.release();
+        return;
+      }
       if (hand?.swipe) setSwipes((s) => [`${hand.handedness}: ${hand.swipe}`, ...s].slice(0, 5));
       // ciupit = creion pe hârtie
       if (hand?.gesture === "pinch") {
@@ -91,6 +106,7 @@ export function CameraPage() {
   const hand = hands[0];
   return (
     <div>
+      {pointer.cursor}
       <PageHeader
         title="Cameră + gesturi"
         description="Ciupește (degetul mare + arătător) ca să desenezi în aer. Pumnul șterge. Mișcă mâna rapid stânga/dreapta pentru swipe."
@@ -112,6 +128,15 @@ export function CameraPage() {
               {busy && <Spinner />} Ce am desenat?
             </Button>
             <Button onClick={() => (strokesRef.current = [])}>Șterge</Button>
+            <Button
+              variant={handMouse ? "danger" : "secondary"}
+              onClick={() => {
+                if (handMouse) pointer.hide();
+                setHandMouse(!handMouse);
+              }}
+            >
+              {handMouse ? "■ Oprește mouse-ul cu mâna" : "🖱️ Mouse cu mâna"}
+            </Button>
           </div>
           <ErrorNote error={error?.msg} hint={error?.hint} />
           {guess && (

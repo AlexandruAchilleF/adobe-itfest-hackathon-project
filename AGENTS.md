@@ -12,6 +12,9 @@ UI-ul și comentariile sunt în română.
 - `src/modules/*`: module independente (camera: mâini/față/corp, voice, audio, controller, canvas, rooms, adobe, demo: kiosk/recorder/stats, hardware). Paginile din `src/pages/` sunt demo-uri și exemple de folosire.
 - `src/lib/agent.ts`: comenzi în limbaj natural → acțiuni (`defineAction`, `runAgent`, `useVoiceAgent`). Pentru control vocal sau text al aplicației, adaugă acțiuni, nu un parser propriu.
 - `src/lib/business.ts` și `src/lib/survey.ts`: business canvas (schemă Zod) și agregarea sondajului de validare.
+- `src/modules/pointer/`: cursor virtual. Orice sursă (cap, mână, telefon) → evenimente reale de mouse/pointer, cu dwell click. Pentru control fără mouse folosește-l, nu reimplementa click-uri.
+- `src/lib/perspective.ts` (omografie, `drawImageToQuad`) și `src/lib/accessibility.ts` (contrast WCAG, daltonism, lizibilitate la distanță, `auditDesign`): verificări deterministe, de pus lângă AI.
+- `docs/PLAN-12H.md`: planul pe ore și ideile verificate. `docs/BUSINESS.md`: ghidul de pitch.
 - Logica pură (gesturi, față, corp, audio, protocol controller, sondaj) e separată de hook-uri și are teste în `tests/`. Păstrează separarea asta.
 - Paginile deschise pe telefon din QR (`/view`, `/controller`, `/s`) sunt în lista `BARE` din `App.tsx` și nu au meniu.
 

@@ -8,6 +8,7 @@
 import { Canvas, Circle, type FabricObject, PencilBrush, Rect, Textbox } from "fabric";
 import { forwardRef, type KeyboardEvent as ReactKeyboardEvent, useEffect, useImperativeHandle, useRef } from "react";
 import type { Design, DesignElement } from "../../lib/design";
+import { saveLastDesign } from "../../lib/share";
 import { canvasToDesign, elementToFabric, loadDesign } from "./fabricDesign";
 
 export interface DesignCanvasHandle {
@@ -90,6 +91,7 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
         const next = canvasToDesign(canvas, designRef.current);
         designRef.current = next;
         record(next);
+        saveLastDesign(next);
         onChangeRef.current?.(next);
       }, 150);
     };

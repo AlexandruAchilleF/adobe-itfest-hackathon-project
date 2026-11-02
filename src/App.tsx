@@ -17,6 +17,7 @@ import { CameraPage } from "./pages/CameraPage";
 import { CanvasPage } from "./pages/CanvasPage";
 import { ControllerPage } from "./pages/ControllerPage";
 import { HomePage } from "./pages/HomePage";
+import { MockupPage } from "./pages/MockupPage";
 import { PdfPage } from "./pages/PdfPage";
 import { PipelinePage } from "./pages/PipelinePage";
 import { RoomPage } from "./pages/RoomPage";
@@ -49,6 +50,7 @@ export const NAV_GROUPS = [
     label: "Output",
     items: [
       { href: "/canvas", label: "Design editabil" },
+      { href: "/mockup", label: "Mockup + accesibilitate" },
       { href: "/pdf", label: "Adobe PDF" },
       { href: "/room", label: "Multiplayer" },
     ],
@@ -92,6 +94,7 @@ function Routes({ status }: { status: AppStatus }) {
       <Route path="/ai" component={AiPage} />
       <Route path="/agent" component={AgentPage} />
       <Route path="/canvas" component={CanvasPage} />
+      <Route path="/mockup" component={MockupPage} />
       <Route path="/room" component={RoomPage} />
       <Route path="/pdf" component={PdfPage} />
       <Route path="/business" component={BusinessPage} />
