@@ -1,0 +1,220 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "width": {
+      "type": "number"
+    },
+    "height": {
+      "type": "number"
+    },
+    "background": {
+      "type": "string",
+      "description": "culoare CSS hex, ex: #1e293b"
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "rect"
+              },
+              "id": {
+                "type": "string",
+                "description": "id unic scurt, ex: e1"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "fill": {
+                "type": "string",
+                "description": "culoare CSS hex, ex: #1e293b"
+              },
+              "radius": {
+                "type": "number",
+                "description": "colțuri rotunjite, 0 = drepte"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "x",
+              "y",
+              "width",
+              "height",
+              "fill",
+              "radius"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "circle"
+              },
+              "id": {
+                "type": "string",
+                "description": "id unic scurt, ex: e1"
+              },
+              "x": {
+                "type": "number",
+                "description": "centrul cercului"
+              },
+              "y": {
+                "type": "number",
+                "description": "centrul cercului"
+              },
+              "radius": {
+                "type": "number"
+              },
+              "fill": {
+                "type": "string",
+                "description": "culoare CSS hex, ex: #1e293b"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "x",
+              "y",
+              "radius",
+              "fill"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "text"
+              },
+              "id": {
+                "type": "string",
+                "description": "id unic scurt, ex: e1"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number",
+                "description": "lățimea casetei de text; textul se rupe pe rânduri"
+              },
+              "text": {
+                "type": "string"
+              },
+              "fontSize": {
+                "type": "number"
+              },
+              "fill": {
+                "type": "string",
+                "description": "culoare CSS hex, ex: #1e293b"
+              },
+              "fontWeight": {
+                "type": "string",
+                "enum": [
+                  "normal",
+                  "bold"
+                ]
+              },
+              "align": {
+                "type": "string",
+                "enum": [
+                  "left",
+                  "center",
+                  "right"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "x",
+              "y",
+              "width",
+              "text",
+              "fontSize",
+              "fill",
+              "fontWeight",
+              "align"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "line"
+              },
+              "id": {
+                "type": "string",
+                "description": "id unic scurt, ex: e1"
+              },
+              "x1": {
+                "type": "number"
+              },
+              "y1": {
+                "type": "number"
+              },
+              "x2": {
+                "type": "number"
+              },
+              "y2": {
+                "type": "number"
+              },
+              "stroke": {
+                "type": "string",
+                "description": "culoare CSS hex, ex: #1e293b"
+              },
+              "strokeWidth": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "type",
+              "id",
+              "x1",
+              "y1",
+              "x2",
+              "y2",
+              "stroke",
+              "strokeWidth"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "description": "ordinea contează: primele elemente sunt în spate"
+    }
+  },
+  "required": [
+    "title",
+    "width",
+    "height",
+    "background",
+    "elements"
+  ],
+  "additionalProperties": false
+}
