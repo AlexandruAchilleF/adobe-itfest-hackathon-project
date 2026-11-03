@@ -110,3 +110,10 @@ test("/api/health și AI structurat", async ({ page, request }) => {
   await page.getByRole("button", { name: "Trimite" }).click();
   await expect(page.getByText(/"ideas": \[/)).toBeVisible();
 });
+
+test("tipărire: fără meniu și fără antetul paginii", async ({ page }) => {
+  await page.goto("/docs?demo=1");
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByRole("link", { name: "Business canvas" })).toBeHidden();
+  await expect(page.getByRole("heading", { name: /Documente → răspunsuri verificate/ })).toBeHidden();
+});

@@ -75,9 +75,20 @@ const { items, add, update, remove } = useCollection(items);
 defineAction({ name, kind: "read" | "write", description, args: zodObject, run, examples, mockArgs });
 const agent = useVoiceAgent({ actions, context });  // + <ConfirmActions pending={agent.pending} />
 
+// Text propus de AI, corectat de om (crește pe mai multe rânduri, se tipărește curat)
+<EditableText value={text} onChange={setText} />
+
 // Design editabil + audit
 <DesignCanvas ref={ref} design={design} onChange={setDesign} />
 auditDesign(design, latimeCm);  autoFixDesign(design, { physicalWidthCm, distanceM });
+```
+
+## Tipărire și PDF
+
+`window.print()` tipărește doar conținutul paginii: meniul și antetul au `print:hidden`. Puneți `print:hidden` și pe panourile cu butoane. PDF-uri exemplu noi (pentru demo și teste) se fac din HTML:
+
+```bash
+node scripts/make-sample-pdf.mjs samples-src/fisierul-vostru.html
 ```
 
 ## Configurare (opțional)
@@ -119,6 +130,8 @@ Setați aceleași variabile în *Vercel → Project → Settings → Environment
 | `npm run check` | toate cele de mai sus |
 
 ## Ce e în altă parte
+
+- Un proiect complet construit din template, ca test, e pe ramura **`dry-run`** (fișă adaptată din lecție). Rezultatele testului: [`docs/DRY-RUN.md`](docs/DRY-RUN.md).
 
 - Modulele de interacțiune (mâini, față, corp, sunet, Arduino, telefon-controller, mockup în perspectivă, kiosk) sunt pe ramura **`effects`**. Aduceți-le înapoi doar dacă tema le cere explicit, de exemplu accesibilitate fără mâini.
 - Add-on-ul Adobe Express: `adobe-express-addon/` și `docs/ADOBE-SETUP.md`.

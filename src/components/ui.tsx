@@ -55,7 +55,7 @@ export function ErrorNote({ error, hint }: { error: string | null | undefined; h
 
 export function PageHeader({ title, description, children }: { title: string; description: ReactNode; children?: ReactNode }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <header className="mb-6 flex flex-wrap items-end justify-between gap-4 print:hidden">
       <div className="max-w-2xl">
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-slate-400">{description}</p>

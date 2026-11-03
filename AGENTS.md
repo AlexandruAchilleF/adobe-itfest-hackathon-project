@@ -16,6 +16,8 @@ Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din 
 - `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`) sau localStorage.
 - `src/lib/agent.ts` + `src/lib/useVoiceAgent.ts` + `src/components/ConfirmActions.tsx`: limbaj natural → acțiuni. `kind: "write"` cere confirmarea omului.
 - `src/lib/design.ts` + `src/modules/canvas/`: designul editabil (Fabric.js v7). `src/lib/accessibility.ts`: audit WCAG, lizibilitate, `autoFixDesign`.
+- `src/components/EditableText.tsx`: text propus de AI, editabil de om (pentru fișe, rapoarte, oferte). Pentru tipărire, ascunde UI-ul cu `print:hidden`.
+- PDF-uri exemplu: HTML în `samples-src/` → `node scripts/make-sample-pdf.mjs samples-src/x.html` → `public/samples/x.pdf`.
 - `src/recipes/needs.ts`: domeniul exemplu (schemă, seed, scor). Acesta se schimbă după temă.
 - Rețetele: `src/pages/DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`, `MapPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
 

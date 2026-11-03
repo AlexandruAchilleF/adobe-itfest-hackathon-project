@@ -13,3 +13,11 @@
 body {
   @apply bg-slate-950 text-slate-100 antialiased;
 }
+
+/* Tipărire / „Salvează ca PDF": doar conținutul marcat contează. Meniul, butoanele și
+   panourile au clasa print:hidden; fundalul devine alb. */
+@media print {
+  @page { margin: 15mm; }
+  body { background: #fff !important; color: #000; }
+  textarea { height: auto !important; }
+}

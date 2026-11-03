@@ -78,7 +78,7 @@ export function App() {
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-[1100] border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+      <header className="sticky top-0 z-[1100] border-b print:hidden border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
           <Link href="/" className="font-bold tracking-tight">
             ⚡ {import.meta.env.VITE_APP_NAME || "Hackathon Template"}
@@ -112,7 +112,7 @@ export function App() {
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
+      <main className="mx-auto max-w-6xl px-4 py-8 print:max-w-none print:p-0">
         <Suspense fallback={<Loading />}>
         <Switch>
           <Route path="/">
