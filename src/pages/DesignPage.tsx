@@ -1,7 +1,9 @@
-// Rețeta DESIGN EDITABIL: input haotic (text, mesaj vocal, poză a unui afiș vechi / schiță) →
-// AI propune un design → omul îl editează → audit determinist (contrast WCAG, lizibilitate
-// de la distanță) + reparare automată → export PNG/SVG sau QR pe telefon.
-// Tiparul câștigătorilor Adobe Express (brief → design editabil).
+// Rețeta DESIGN EDITABIL + ACCESIBILITATE: input haotic (text, mesaj vocal, poza unui material
+// vechi / schiță) → AI propune un design → omul îl editează → audit determinist (contrast WCAG,
+// lizibilitate la distanța reală de privire) + reparare automată → export PNG/SVG sau QR.
+// Exemplu: materialele de marketing ale unui magazin online, care din iunie 2025 trebuie să
+// respecte cerințele Actului European privind Accesibilitatea. Tiparul câștigătorilor
+// Adobe Express (brief → design editabil) + Accessify (verificare de accesibilitate).
 
 import { useRef, useState } from "react";
 import { Button, Card, ErrorNote, PageHeader, Spinner } from "../components/ui";
@@ -14,11 +16,12 @@ import { useCamera } from "../modules/camera/useCamera";
 import { DesignCanvas, type DesignCanvasHandle } from "../modules/canvas/DesignCanvas";
 import { useSpeechRecognition } from "../modules/voice/speech";
 
+// cm = lățimea la care e văzut de fapt; m = distanța tipică de privire
 const FORMATS = {
-  a4: { label: "Afiș A4", width: 1240, height: 1754, cm: 21 },
-  post: { label: "Postare 4:5", width: 1080, height: 1350, cm: 30 },
-  story: { label: "Story 9:16", width: 1080, height: 1920, cm: 30 },
-  slide: { label: "Slide 16:9", width: 1920, height: 1080, cm: 100 },
+  post: { label: "Postare pe telefon (4:5)", width: 1080, height: 1350, cm: 7, m: 0.35 },
+  story: { label: "Story pe telefon (9:16)", width: 1080, height: 1920, cm: 7, m: 0.35 },
+  banner: { label: "Banner pe site (laptop)", width: 1920, height: 640, cm: 30, m: 0.6 },
+  a4: { label: "Afiș în magazin (A4)", width: 1240, height: 1754, cm: 21, m: 2 },
 } as const;
 type FormatKey = keyof typeof FORMATS;
 
@@ -37,18 +40,18 @@ function mockDesign(brief: string, width: number, height: number): AiDesign {
       { type: "text", id: "title", x: m * 1.6, y: height * 0.3, width: width - m * 3.2, text: words.slice(0, 4).join(" ") || "Titlu", fontSize: Math.round(width / 13), fill: "#f8fafc", fontWeight: "bold", align: "left" },
       { type: "line", id: "rule", x1: m * 1.6, y1: height * 0.6, x2: width * 0.45, y2: height * 0.6, stroke: "#f5a524", strokeWidth: 10 },
       // intenționat mic și cu contrast slab, ca auditul să aibă ce repara în demo
-      { type: "text", id: "body", x: m * 1.6, y: height * 0.64, width: width - m * 3.2, text: words.slice(4).join(" ").slice(0, 160) || "Detalii", fontSize: Math.round(width / 40), fill: "#64748b", fontWeight: "normal", align: "left" },
+      { type: "text", id: "body", x: m * 1.6, y: height * 0.64, width: width - m * 3.2, text: words.slice(4, 14).join(" ") || "Detalii", fontSize: Math.round(width / 40), fill: "#64748b", fontWeight: "normal", align: "left" },
     ],
   };
 }
 
 export function DesignPage() {
   const ref = useRef<DesignCanvasHandle>(null);
-  const [brief, setBrief] = useState("Apa caldă se oprește joi între 9 și 17 pentru reparații la scara B. Ne cerem scuze, Asociația de proprietari.");
-  const [format, setFormat] = useState<FormatKey>("a4");
+  const [brief, setBrief] = useState("Reduceri de iarnă: -30% la gecile de puf până pe 15 decembrie. Livrare gratuită la comenzi peste 200 lei. Magazinul online Exemplu.");
+  const [format, setFormat] = useState<FormatKey>("post");
   const [photo, setPhoto] = useState<string | null>(null);
   const [design, setDesign] = useState<Design>(exampleDesign);
-  const [distance, setDistance] = useState(2);
+  const [distance, setDistance] = useState<number>(FORMATS.post.m);
   const [changes, setChanges] = useState<string[]>([]);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -68,7 +71,7 @@ export function DesignPage() {
     try {
       const { data } = await ask({
         system: designSystemPrompt(f.width, f.height),
-        prompt: `Creează un design pentru: ${brief}\nFormat: ${f.label}, ${f.width}x${f.height}px.${photo ? "\nImaginea atașată e un afiș/schiță existentă: păstrează informația, îmbunătățește designul." : ""}`,
+        prompt: `Creează un design pentru: ${brief}\nFormat: ${f.label}, ${f.width}x${f.height}px, văzut de la ~${f.m} m.${photo ? "\nImaginea atașată e un material/schiță existentă: păstrează informația, îmbunătățește designul." : ""}`,
         schema: AiDesign,
         files: photo ? [photo] : undefined,
         mock: mockDesign(brief, f.width, f.height),
@@ -90,8 +93,8 @@ export function DesignPage() {
   return (
     <div>
       <PageHeader
-        title="Input haotic → design editabil"
-        description="Text, mesaj vocal sau poza unui afiș vechi → AI propune → omul editează → auditul verifică dacă se citește → export sau QR. Rețeta pentru teme creative, de comunicare sau accesibilitate."
+        title="Input haotic → design editabil și accesibil"
+        description="Text, mesaj vocal sau poza unui material vechi → AI propune → omul editează → auditul verifică contrastul WCAG și dacă se citește la distanța reală → reparare automată → export sau QR. Rețeta pentru teme creative, de marketing sau accesibilitate."
       />
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <div className="min-w-0 space-y-4">
@@ -140,7 +143,16 @@ export function DesignPage() {
               </div>
             )}
             <div className="mt-3 flex gap-2">
-              <select value={format} onChange={(e) => setFormat(e.target.value as FormatKey)} className="rounded-lg border border-slate-700 bg-slate-800 px-2 text-sm" aria-label="Format">
+              <select
+                value={format}
+                onChange={(e) => {
+                  const k = e.target.value as FormatKey;
+                  setFormat(k);
+                  setDistance(FORMATS[k].m);
+                }}
+                className="rounded-lg border border-slate-700 bg-slate-800 px-2 text-sm"
+                aria-label="Format"
+              >
                 {Object.entries(FORMATS).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v.label}
@@ -155,8 +167,8 @@ export function DesignPage() {
           </Card>
           <Card title={`3. Se citește? ${problems ? `— ${problems} probleme` : "— ✓"}`}>
             <label className="block text-sm">
-              Privit de la <b>{distance} m</b>
-              <input type="range" min={0.5} max={10} step={0.5} value={distance} onChange={(e) => setDistance(Number(e.target.value))} className="w-full" />
+              Privit de la <b>{distance} m</b> <span className="text-xs text-slate-500">(lățime reală {f.cm} cm)</span>
+              <input type="range" min={0.2} max={6} step={0.05} value={distance} onChange={(e) => setDistance(Number(e.target.value))} className="w-full" />
             </label>
             <ul className="mt-2 space-y-1 text-sm" data-testid="audit">
               {audit.map((a) => (

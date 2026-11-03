@@ -7,11 +7,11 @@ Nu e o listă de idei de copiat. E punctul de plecare pentru interviurile de din
 
 ## Documente / „Rethink Reading” → rețeta `/docs`
 
-**1. Regulamente și contracte pe care nu le citește nimeni**
-- *Cine are problema:* locatarii noi, chiriașii, studenții la cămin.
-- *Cine plătește:* firmele de administrare imobile, agențiile imobiliare, căminele.
-- *Date:* regulamentele de cămin publice ale universităților, contracte-tip de închiriere, Legea 196/2018 (asociațiile de proprietari).
-- *Întrebări:* „Ultima dată când ai avut o întrebare despre bloc sau cămin, unde ai căutat răspunsul? Cât a durat?”
+**1. Caietele de sarcini din licitațiile publice** (exemplul din `/docs`)
+- *Cine are problema:* firmele mici (IT, servicii, construcții) care vor să liciteze în SEAP și n-au departament de achiziții.
+- *Cine plătește deja:* aceleași firme, prin consultanți în achiziții publice sau prin zile de muncă ale unui angajat. O cerință ratată înseamnă ofertă descalificată.
+- *Date:* documentațiile de atribuire sunt publice în SEAP/SICAP (e-licitatie.ro). Descărcați 3 caiete reale din domeniul vostru.
+- *Întrebări:* „Ultima licitație la care v-ați uitat: cât a durat să decideți dacă participați? Ați fost vreodată descalificați pentru un document lipsă? Cât plătiți un consultant?”
 
 **2. Profesorii care adaptează materiale**
 - *Cine are problema:* profesorii de gimnaziu cu elevi care au dificultăți de citire.
@@ -43,11 +43,11 @@ Nu e o listă de idei de copiat. E punctul de plecare pentru interviurile de din
 
 ## Accesibilitate / design incluziv → rețeta `/design`
 
-**6. Anunțuri și afișe pe care nu le citește nimeni**
-- *Cine are problema:* administratorii de bloc, secretariatele, micii comercianți.
-- *Cine plătește:* firmele de administrare, tipografiile (verificare înainte de tipar), primăriile.
-- *Date:* fotografiați 10 afișe reale din cartier sau facultate și rulați-le prin audit. Așa obțineți cifra pentru pitch („7 din 10 nu se citesc de la 2 m”).
-- *Întrebări:* „Ai ratat ceva din cauza unui anunț pe care nu l-ai văzut sau înțeles?”
+**6. Accesibilitatea obligatorie a materialelor digitale** (exemplul din `/design`)
+- *Cine are problema:* magazinele online, băncile, operatorii de transport și alte servicii care, de la 28 iunie 2025, trebuie să respecte cerințele Actului European privind Accesibilitatea (Directiva (UE) 2019/882).
+- *Cine plătește deja:* firmele, prin audituri de accesibilitate și refaceri de materiale; cerința e legală, nu opțională.
+- *Date:* luați 10 bannere sau postări reale ale unor magazine online românești și rulați-le prin audit. Cifra pentru pitch: „7 din 10 au text sub pragul de contrast WCAG AA” (numărați voi, nu presupuneți).
+- *Întrebări:* „Știți ce vă cere legea de accesibilitate? Cine verifică la voi materialele înainte de publicare? Cât v-a costat ultimul audit?”
 
 ## Reguli pentru interviuri (după *The Mom Test*)
 

@@ -8,8 +8,8 @@ Criteriile publicate de Adobe la hackathoanele lor sunt **valoarea pentru utiliz
 
 Scrieți problema într-o propoziție, **fără să pomeniți soluția**:
 
-> ❌ „Oamenii au nevoie de o aplicație cu AI pentru afișe.”
-> ✅ „Administratorii de bloc pierd 30 de minute pe anunț, iar locatarii tot ratează întreruperile de apă.”
+> ❌ „Firmele au nevoie de o aplicație cu AI pentru documente.”
+> ✅ „Firmele mici pierd o zi citind un caiet de sarcini ca să afle dacă pot licita, iar un document lipsă le descalifică oferta.”
 
 Verificați:
 - **Cine anume** suferă? O persoană pe care o puteți descrie: vârstă, job, ce face marțea dimineața.
@@ -21,21 +21,23 @@ Verificați:
 | Utilizator | Cumpărător | Model |
 |---|---|---|
 | Elev | Școala / părintele | B2B2C, licență per școală |
-| Locatar | Firma de administrare | B2B SaaS |
+| Angajatul care pregătește oferta | Administratorul firmei | B2B SaaS |
 | Cetățean | Primăria | B2G (licitație, buget anual) |
 | Designer freelancer | El însuși | B2C abonament |
 | Utilizator Adobe Express | Utilizatorul, prin marketplace-ul de add-on-uri | freemium / premium |
 
 Juriul va întreba **„cine scoate banii din buzunar și de ce?”** Răspunsul bun e cuantificat:
-„economisesc ~10 ore/lună, deci 15 €/lună e un chilipir”.
+„o zi de muncă economisită pe licitație costă mai mult decât abonamentul pe o lună”.
+Un semnal bun: cumpărătorul **plătește deja azi** pentru problemă (consultanți, ore de muncă, amenzi evitate). Dacă nu există un buget, nu există cumpărător.
 
 ## 3. Piață: mic, real, bottom-up
 
 Nu începeți cu „piața globală de design e de 50 de miliarde”. Începeți cu **primul segment**:
 
-> 400 de firme de administrare în București × 15 €/lună × 12 = **72.000 €/an**. La nivel național, de ~5 ori mai mult.
+> [numărul de firme mici de IT care au licitat anul trecut, numărat din datele publice de atribuire] × 49 €/lună × 12.
+> Numărați din date reale, nu inventați: juriul întreabă de unde vine cifra.
 
-Arată că știți să număr clienți reali.
+Arată că știți să numărați clienți reali.
 
 ## 4. Adopție
 

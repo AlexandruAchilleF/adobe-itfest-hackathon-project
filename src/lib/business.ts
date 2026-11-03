@@ -76,51 +76,52 @@ export function canvasToMarkdown(c: BusinessCanvas, title = "Business canvas"): 
   ].join("\n\n");
 }
 
+// Exemplu (ipoteze de validat, nu cifre verificate): marcați în pitch ce ați confirmat cu oameni reali.
 export const exampleCanvas: BusinessCanvas = {
-  one_liner: "Ajutăm asociațiile de proprietari și ONG-urile mici să facă afișe clare în 20 de secunde, dictând un mesaj vocal.",
+  one_liner: "Ajutăm firmele mici care licitează în SEAP să afle în 10 minute, cu citate din document, dacă pot participa la o licitație.",
   problem: {
-    statement: "Anunțurile din blocuri și de la ONG-urile mici sunt scrise de mână sau în Word, greu de citit și ignorate.",
-    who_suffers: "Administratorul de bloc (55+ ani) care trebuie să anunțe o întrerupere de apă.",
-    how_often: "De 2-4 ori pe lună; 20-40 de minute de fiecare dată, plus apeluri de la locatarii care n-au văzut anunțul.",
-    current_workaround: "Word + imprimantă, poze pe grupul de WhatsApp, sau o foaie scrisă de mână.",
+    statement: "Caietele de sarcini au zeci de pagini, iar o singură cerință ratată (un document, o cifră de afaceri minimă, un termen) descalifică oferta.",
+    who_suffers: "Administratorul unei firme de IT cu 5–20 de angajați, care face și ofertele.",
+    how_often: "La fiecare licitație analizată: de verificat cu firmele, ipoteza noastră e 1–2 zile de muncă pe caiet.",
+    current_workaround: "Citit manual, consultanți în achiziții publice plătiți pe procedură sau renunțarea la licitații.",
   },
   customers: {
-    user: "Administratori de bloc, voluntari ONG, bibliotecari",
-    buyer: "Firmele de administrare imobile (gestionează 50-300 de blocuri fiecare)",
-    early_adopters: "3 firme de administrare din sectorul 3, contactate prin asociația de profil",
+    user: "Persoana care pregătește ofertele într-o firmă mică",
+    buyer: "Administratorul firmei, care plătește deja consultanți sau ore de muncă",
+    early_adopters: "Firme mici de IT și servicii care au licitat în ultimul an (căutate în anunțurile de atribuire publice)",
   },
-  value_proposition: "Afiș accesibil și editabil din vocea ta, în 20 de secunde, fără să știi design.",
-  mvp: "Dictezi anunțul → apare afișul editabil → îl tipărești sau îl trimiți pe WhatsApp prin QR.",
+  value_proposition: "Lista cerințelor, a documentelor și a termenelor dintr-un caiet de sarcini, fiecare cu citatul și pagina din document.",
+  mvp: "Încarci caietul de sarcini → primești structura, răspunsuri cu citate verificate și secțiunile importante pentru firma ta.",
   business_model: {
     model: "B2B SaaS",
-    pricing: "15 €/lună per firmă de administrare, nelimitat",
-    why_they_pay: "Economisesc ~10 ore/lună de lucru administrativ și mai puține apeluri de la locatari.",
+    pricing: "ipoteză: 49 €/lună sau 15 € per caiet analizat (de testat cu întrebarea din sondaj)",
+    why_they_pay: "Costă mai puțin decât o zi de muncă sau un consultant pe procedură; o descalificare evitată acoperă abonamentul pe ani.",
   },
   market: {
-    first_segment: "Firmele de administrare imobile din București (~400)",
-    sizing: "400 firme × 15 € × 12 luni ≈ 72.000 €/an în București; ~5× la nivel național.",
+    first_segment: "Firmele mici de IT din București care au depus cel puțin o ofertă în SEAP în ultimul an",
+    sizing: "număr firme (din datele publice de atribuire, de numărat) × preț × 12 luni; calculul se face pe date reale, nu pe estimări",
   },
   adoption: {
-    channels: ["Demo la asociația administratorilor", "Parteneriat cu un furnizor de software de facturare pentru blocuri", "Afișele generate poartă un mic QR „făcut cu …”"],
-    friction: ["Utilizatori mai puțin tehnici", "Imprimanta din birou"],
-    hook: "Șabloanele salvate per bloc: următorul anunț durează 5 secunde.",
+    channels: ["Asociațiile de firme IT și camerele de comerț", "Consultanții în achiziții, ca partener care analizează mai repede", "Conținut gratuit: „ce cer de obicei caietele de sarcini pentru IT”"],
+    friction: ["Încrederea în AI pentru un document cu consecințe legale", "Caiete scanate, fără text"],
+    hook: "Alertă când apare o licitație nouă care se potrivește profilului firmei.",
   },
   competition: [
-    { name: "Canva / Adobe Express", gap: "Prea multe opțiuni pentru un administrator; nu pornește de la voce" },
-    { name: "Word + WhatsApp", gap: "Gratuit, dar lent și neaccesibil" },
+    { name: "Consultanții în achiziții publice", gap: "Scumpi și lenți pentru o firmă care doar vrea să afle dacă merită să participe" },
+    { name: "Citit manual / ChatGPT", gap: "Fără citate verificate: un răspuns greșit poate costa descalificarea" },
   ],
   risks: [
-    { risk: "Recunoașterea vocală în română greșește nume de străzi", mitigation: "Ecran de confirmare + editare directă" },
-    { risk: "Firmele nu plătesc pentru „încă o aplicație”", mitigation: "Integrare în software-ul de facturare pe care îl folosesc deja" },
+    { risk: "AI-ul ratează o cerință", mitigation: "Fiecare răspuns are citatul căutat în text; produsul nu înlocuiește verificarea finală" },
+    { risk: "Caiete scanate (imagini)", mitigation: "OCR (de exemplu Adobe PDF Services) ca pas următor" },
   ],
-  metrics: ["Afișe generate/săptămână per firmă", "Timp de la mesaj la afiș tipărit", "Retenție la 30 de zile"],
+  metrics: ["Timp până la decizia „participăm sau nu”", "Caiete analizate pe firmă pe lună", "Cerințe ratate (raportate de utilizatori)"],
   judge_questions: [
-    { question: "De ce n-ar face asta Adobe Express?", answer: "Express e pentru oameni care vor să creeze; noi suntem pentru cei care vor doar ca anunțul să fie gata. Putem fi chiar un add-on Express." },
-    { question: "De ce ar plăti cineva 15 €?", answer: "Pentru că firma de administrare plătește orele angajaților; economia e de ~10 ore/lună." },
+    { question: "Ce se întâmplă dacă AI-ul greșește o cerință?", answer: "Fiecare răspuns are citatul exact, căutat automat în document; dacă nu există, e marcat. Decizia finală rămâne a omului." },
+    { question: "De ce n-ar face asta Adobe cu Acrobat AI Assistant?", answer: "Acrobat răspunde la întrebări generale; noi știm ce contează într-o licitație din România (DUAE, garanții, criterii) și verificăm citatele." },
   ],
   validation_survey: [
-    { question: "Ai văzut în ultima lună un anunț de bloc greu de citit?", type: "yes_no", choices: [] },
-    { question: "Cât de enervant e să afli prea târziu de o întrerupere?", type: "scale", choices: [] },
-    { question: "Cât ar plăti lunar o firmă de administrare pentru asta?", type: "choice", choices: ["0 €", "5 €", "15 €", "30 €+"] },
+    { question: "Firma ta (sau una în care ai lucrat) a participat la o licitație publică în ultimul an?", type: "yes_no", choices: [] },
+    { question: "Cât de greu a fost să afli ce cere caietul de sarcini?", type: "scale", choices: [] },
+    { question: "Cât ar plăti lunar o firmă mică pentru asta?", type: "choice", choices: ["0 €", "20 €", "50 €", "100 €+"] },
   ],
 };

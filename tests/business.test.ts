@@ -44,11 +44,11 @@ describe("sondaj", () => {
     expect(stats[1].average).toBe(3.7);
     expect(stats[1].headline).toContain("2 din 3 (67%) au dat 4 sau 5");
   });
-  it("variante → cea mai aleasă", () => expect(stats[2].headline).toBe("cel mai ales: „15 €” (2 din 3, 67%)"));
+  it("variante → cea mai aleasă", () => expect(stats[2].headline).toBe("cel mai ales: „50 €” (2 din 3, 67%)"));
   it("CSV cu antet și rânduri", () => {
     const csv = surveyToCsv(qs, responses).split("\n");
     expect(csv).toHaveLength(5);
-    expect(csv[1]).toBe('1,da,"5","15 €"');
+    expect(csv[1]).toBe('1,da,"5","50 €"');
   });
 });
 

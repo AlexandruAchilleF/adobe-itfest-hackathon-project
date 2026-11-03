@@ -131,6 +131,23 @@ const inside = (el: DesignElement, x: number, y: number) => {
   return false;
 };
 
+/** Dreptunghiul (card) pe care stă un text, dacă există — limitele în care trebuie să încapă. */
+export function containerUnder(design: Design, index: number): { top: number; bottom: number } {
+  const el = design.elements[index];
+  if (el.type === "text") {
+    const cx = el.x + el.width / 2;
+    const cy = el.y + el.fontSize / 2;
+    for (let i = index - 1; i >= 0; i--) {
+      const below = design.elements[i];
+      if (below.type === "rect" && inside(below, cx, cy)) {
+        const pad = Math.min(below.height * 0.06, 60);
+        return { top: below.y + pad, bottom: below.y + below.height - pad };
+      }
+    }
+  }
+  return { top: design.height * 0.04, bottom: design.height * 0.96 };
+}
+
 /** Culoarea de fundal de sub centrul unui element (ultima formă plină de sub el, altfel fundalul). */
 export function backgroundUnder(design: Design, index: number): string {
   const el = design.elements[index];
@@ -169,6 +186,26 @@ export function auditDesign(design: Design, physicalWidthCm = 29.7): TextAudit[]
 }
 
 // ── Reparare automată (deterministă) ──
+
+/** Estimare a înălțimii unui text care se rupe pe rânduri (Fabric: lineHeight 1.16, ~0.5em/caracter). */
+export function estimateTextHeight(text: string, fontSize: number, boxWidth: number): number {
+  const charsPerLine = Math.max(1, Math.floor(boxWidth / (fontSize * 0.5)));
+  let lines = 0;
+  for (const paragraph of text.split("\n")) {
+    let current = 0;
+    lines += 1;
+    for (const word of paragraph.split(/\s+/).filter(Boolean)) {
+      const len = word.length + (current ? 1 : 0);
+      if (current + len > charsPerLine && current > 0) {
+        lines += 1;
+        current = word.length;
+      } else {
+        current += len;
+      }
+    }
+  }
+  return Math.ceil(lines * fontSize * 1.16);
+}
 export interface FixResult {
   design: Design;
   /** ce s-a schimbat, în cuvinte, pentru UI și pitch */
@@ -190,6 +227,16 @@ export function autoFixDesign(design: Design, { physicalWidthCm = 29.7, distance
       const fontSize = Math.min(minSize, Math.round(design.width / 5));
       next = { ...next, fontSize };
       changes.push(`„${el.text.slice(0, 30)}”: font ${el.fontSize}px → ${fontSize}px (lizibil de la ${distanceM} m)`);
+    }
+    // textul mărit trebuie să încapă în pânză: îl urcăm, iar dacă nici așa nu încape, spunem
+    if (next.fontSize !== el.fontSize) {
+      const box = containerUnder(design, i);
+      const h = estimateTextHeight(next.text, next.fontSize, next.width);
+      if (next.y + h > box.bottom) {
+        const y = Math.max(box.top, Math.round(box.bottom - h));
+        next = { ...next, y };
+        if (y + h > box.bottom) changes.push(`„${el.text.slice(0, 30)}”: nu mai încape la mărimea necesară — scurtați textul`);
+      }
     }
     const bg = backgroundUnder(design, i);
     const large = next.fontSize * (1080 / design.width) >= 24;

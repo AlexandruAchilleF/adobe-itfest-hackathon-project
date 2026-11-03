@@ -12,7 +12,7 @@ export const SURVEY_HANDOFF_KEY = "hackathon:survey-questions";
 
 export function BusinessPage() {
   const [, navigate] = useLocation();
-  const [idea, setIdea] = useState("Afișe accesibile pentru blocuri și ONG-uri, generate dintr-un mesaj vocal.");
+  const [idea, setIdea] = useState("Asistent care citește caietele de sarcini din licitațiile publice și le spune firmelor mici, cu citate, dacă îndeplinesc cerințele.");
   const [theme, setTheme] = useState("");
   const [canvas, setCanvas] = useState<Canvas | null>(null);
   const [busy, setBusy] = useState(false);

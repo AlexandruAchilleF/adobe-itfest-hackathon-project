@@ -11,16 +11,16 @@ import { downloadText } from "../lib/share";
 import { DocumentViewer, type DocumentViewerHandle } from "../modules/documents/DocumentViewer";
 import { parsePdf } from "../modules/documents/pdfjs";
 
-const SAMPLE = "/samples/regulament-asociatie.pdf";
+const SAMPLE = "/samples/caiet-de-sarcini-exemplu.pdf";
 
 export function DocsPage() {
   const viewer = useRef<DocumentViewerHandle>(null);
   const [file, setFile] = useState<File | null>(null);
   const [doc, setDoc] = useState<ParsedDocument | null>(null);
-  const [question, setQuestion] = useState("Până când se plătește întreținerea și ce penalități sunt?");
+  const [question, setQuestion] = useState("Ce documente trebuie să depunem și până când?");
   const [answer, setAnswer] = useState<DocAnswerResult | null>(null);
-  const [persona, setPersona] = useState("Proprietar nou mutat în bloc");
-  const [job, setJob] = useState("Vrea să știe ce obligații are în prima lună");
+  const [persona, setPersona] = useState("Firmă de IT cu 8 angajați, la prima licitație publică");
+  const [job, setJob] = useState("Să decidă în 30 de minute dacă îndeplinește cerințele și merită să participe");
   const [ranked, setRanked] = useState<Awaited<ReturnType<typeof rankSections>> | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<{ msg: string; hint?: string } | null>(null);
@@ -71,7 +71,7 @@ export function DocsPage() {
               <Button
                 onClick={async () => {
                   const blob = await (await fetch(SAMPLE)).blob();
-                  await load(new File([blob], "regulament-asociatie.pdf", { type: "application/pdf" }));
+                  await load(new File([blob], "caiet-de-sarcini-exemplu.pdf", { type: "application/pdf" }));
                 }}
               >
                 Folosește exemplul

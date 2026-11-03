@@ -15,7 +15,7 @@ import {
 } from "../src/lib/documents";
 
 async function parseSample(): Promise<ParsedDocument> {
-  const data = new Uint8Array(readFileSync(new URL("../public/samples/regulament-asociatie.pdf", import.meta.url)));
+  const data = new Uint8Array(readFileSync(new URL("../public/samples/caiet-de-sarcini-exemplu.pdf", import.meta.url)));
   const pdf = await getDocument({ data }).promise;
   const byPage: PdfLine[][] = [];
   for (let i = 1; i <= pdf.numPages; i++) {
@@ -24,34 +24,35 @@ async function parseSample(): Promise<ParsedDocument> {
     byPage.push(linesFromItems(content.items as unknown as PdfTextItem[], i));
   }
   const pages = buildPages(byPage);
-  return { name: "regulament.pdf", pages, ...detectOutline(pages.flatMap((p) => p.lines)) };
+  return { name: "caiet.pdf", pages, ...detectOutline(pages.flatMap((p) => p.lines)) };
 }
 
 describe("PDF exemplu (pdf.js real)", async () => {
   const doc = await parseSample();
 
-  it("detectează titlul documentului", () => expect(doc.title).toBe("Regulamentul Asociației de Proprietari Bloc A7"));
+  it("detectează titlul documentului", () =>
+    expect(doc.title).toBe("Caiet de sarcini: platformă web pentru programări online"));
 
   it("detectează H1 și H2 cu paginile corecte", () => {
     const find = (t: string) => doc.outline.find((h) => h.text.startsWith(t));
-    expect(find("2. Cota de întreținere")).toMatchObject({ level: "H1", page: 1 });
-    expect(find("2.2 Penalități")).toMatchObject({ level: "H2", page: 1 });
-    expect(find("4. Obligațiile proprietarilor noi")).toMatchObject({ level: "H1", page: 2 });
-    expect(find("5.1 Întreruperea apei")).toMatchObject({ level: "H2", page: 3 });
-    expect(doc.outline.some((h) => h.text.startsWith("Prezentul regulament"))).toBe(false);
+    expect(find("2. Cerințe de calificare")).toMatchObject({ level: "H1", page: 1 });
+    expect(find("2.2 Capacitatea tehnică")).toMatchObject({ level: "H2", page: 1 });
+    expect(find("4. Documente de depus")).toMatchObject({ level: "H1", page: 2 });
+    expect(find("5.1 Depunerea ofertelor")).toMatchObject({ level: "H2", page: 3 });
+    expect(doc.outline.some((h) => h.text.startsWith("Autoritatea contractantă"))).toBe(false);
   });
 
   it("împarte documentul în secțiuni cu textul lor", () => {
-    const s = sectionsOf(doc).find((x) => x.heading.text.startsWith("2.2"));
-    expect(s?.text).toContain("0,2% pe zi");
+    const s = sectionsOf(doc).find((x) => x.heading.text.startsWith("5.1"));
+    expect(s?.text).toContain("20 noiembrie 2026");
   });
 
   it("verifică citatele: corect, pagină greșită, inventat", () => {
     const [ok, moved, fake] = verifyCitations(
       [
-        { page: 1, quote: "Întreținerea se plătește până în data de 20 a lunii următoare" },
-        { page: 1, quote: "declară numărul de persoane din apartament" },
-        { page: 2, quote: "Animalele de companie sunt interzise" },
+        { page: 1, quote: "cel puțin două contracte similare finalizate în ultimii trei ani" },
+        { page: 1, quote: "Garanția de participare este de 1.800 lei" },
+        { page: 2, quote: "Ofertantul trebuie să aibă certificare ISO 9001" },
       ],
       doc.pages,
     );

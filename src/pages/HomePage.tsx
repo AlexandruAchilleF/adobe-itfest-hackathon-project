@@ -11,8 +11,8 @@ const THEMES = [
 ];
 
 const RECIPES = [
-  { href: "/docs", title: "Documente → răspunsuri verificate", flow: "PDF → structură JSON (local) → întrebare → răspuns cu citate verificate în text → salt la pagină", who: "ex: proprietarul care nu citește regulamentul de 20 de pagini" },
-  { href: "/design", title: "Input haotic → design editabil", flow: "text / voce / poză → design propus de AI → editare → audit de lizibilitate + reparare → QR", who: "ex: administratorul de bloc care scrie anunțuri ignorate" },
+  { href: "/docs", title: "Documente → răspunsuri verificate", flow: "PDF → structură JSON (local) → întrebare → răspuns cu citate verificate în text → salt la pagină", who: "ex: firma mică ce pierde o zi citind un caiet de sarcini ca să afle dacă poate licita" },
+  { href: "/design", title: "Input haotic → design editabil", flow: "text / voce / poză → design propus de AI → editare → audit de lizibilitate + reparare → QR", who: "ex: magazinul online care trebuie să respecte cerințele de accesibilitate din 2025" },
   { href: "/assistant", title: "Asistent cu confirmare", flow: "cerere în limbaj natural → acțiuni pe date → omul aprobă orice modificare", who: "ex: coordonatorul de voluntari care lucrează din telefon" },
   { href: "/map", title: "Hartă + potrivire", flow: "nevoi pe hartă → adăugare în limbaj natural → potrivire ofertă ↔ nevoie cu scor", who: "ex: ONG-ul care nu știe cine poate ajuta, unde" },
 ];

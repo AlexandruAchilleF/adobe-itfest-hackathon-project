@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { auditDesign, autoFixDesign } from "../src/lib/accessibility";
+import { auditDesign, autoFixDesign, estimateTextHeight } from "../src/lib/accessibility";
 import { defineAction, mockPlan, runAgent } from "../src/lib/agent";
 import type { Design } from "../src/lib/design";
 import { createCollection, memoryBackend } from "../src/lib/store";
@@ -98,6 +98,11 @@ describe("agent cu confirmare umană", () => {
 });
 
 describe("reparare automată a designului", () => {
+  it("estimează rândurile textului", () => {
+    expect(estimateTextHeight("scurt", 50, 1000)).toBe(58);
+    expect(estimateTextHeight("cuvânt ".repeat(40), 50, 1000)).toBeGreaterThan(5 * 58);
+  });
+
   const design: Design = {
     title: "t",
     width: 1240,
@@ -115,6 +120,19 @@ describe("reparare automată a designului", () => {
     expect(after.level).not.toBe("fail");
     expect(after.readableFromM).toBeGreaterThanOrEqual(2);
     expect(changes).toHaveLength(2);
+  });
+
+  it("urcă textul mărit ca să încapă în pânză", () => {
+    const low = { ...design, elements: [{ ...design.elements[0], y: 1600, text: "Un text destul de lung care se va rupe pe mai multe rânduri după mărire" }] } as Design;
+    const { design: fixed } = autoFixDesign(low, { physicalWidthCm: 21, distanceM: 2 });
+    const el = fixed.elements[0] as Extract<Design["elements"][number], { type: "text" }>;
+    expect(el.y).toBeLessThan(1600);
+  });
+
+  it("spune când textul nu mai încape deloc", () => {
+    const long = { ...design, elements: [{ ...design.elements[0], text: "cuvânt ".repeat(200) }] } as Design;
+    const { changes } = autoFixDesign(long, { physicalWidthCm: 21, distanceM: 4 });
+    expect(changes.some((c) => c.includes("scurtați textul"))).toBe(true);
   });
 
   it("nu schimbă nimic dacă designul e deja bun", () => {

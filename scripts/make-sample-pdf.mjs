@@ -11,43 +11,47 @@ const html = `<!doctype html><html lang="ro"><head><meta charset="utf-8"><style>
   .page { page-break-after: always; }
 </style></head><body>
 <div class="page">
-  <h1>Regulamentul Asociației de Proprietari Bloc A7</h1>
-  <p class="sub">Document fictiv, creat ca exemplu pentru template-ul de hackathon.</p>
-  <h2>1. Dispoziții generale</h2>
-  <p>Prezentul regulament se aplică tuturor proprietarilor și chiriașilor din blocul A7, scările A și B.</p>
-  <p>Comitetul executiv se alege de adunarea generală pe o perioadă de doi ani.</p>
-  <h2>2. Cota de întreținere</h2>
-  <h3>2.1 Termenul de plată</h3>
-  <p>Întreținerea se plătește până în data de 20 a lunii următoare celei pentru care s-a emis lista.</p>
-  <p>Plata se poate face în numerar la casierie, marțea între orele 17 și 19, sau prin transfer bancar.</p>
-  <h3>2.2 Penalități</h3>
-  <p>Pentru întârzierea plății se aplică penalități de 0,2% pe zi, fără a depăși valoarea sumei datorate.</p>
+  <h1>Caiet de sarcini: platformă web pentru programări online</h1>
+  <p class="sub">Document fictiv, creat ca exemplu pentru template-ul de hackathon. Nu corespunde unei proceduri reale.</p>
+  <h2>1. Informații generale</h2>
+  <p>Autoritatea contractantă este Primăria Comunei Exemplu, cu sediul în județul Exemplu.</p>
+  <p>Obiectul contractului îl constituie dezvoltarea și găzduirea unei platforme web pentru programări online la ghișee.</p>
+  <p>Valoarea estimată a contractului este de 180.000 lei fără TVA.</p>
+  <h2>2. Cerințe de calificare</h2>
+  <h3>2.1 Situația economică</h3>
+  <p>Ofertantul trebuie să aibă o cifră de afaceri medie anuală de minimum 150.000 lei în ultimii trei ani.</p>
+  <h3>2.2 Capacitatea tehnică</h3>
+  <p>Ofertantul trebuie să facă dovada a cel puțin două contracte similare finalizate în ultimii trei ani.</p>
+  <p>Echipa propusă include obligatoriu un manager de proiect certificat și cel puțin doi dezvoltatori.</p>
 </div>
 <div class="page">
-  <h2>3. Spațiile comune</h2>
-  <h3>3.1 Curățenia</h3>
-  <p>Curățenia pe scări se face de firma contractată în fiecare marți și vineri.</p>
-  <p>Bicicletele și cărucioarele nu se depozitează pe holuri, ci în boxa de la parter.</p>
-  <h3>3.2 Liniștea</h3>
-  <p>Între orele 22 și 8 este interzisă orice activitate care produce zgomot.</p>
-  <h2>4. Obligațiile proprietarilor noi</h2>
-  <p>Proprietarii noi declară numărul de persoane din apartament în termen de 10 zile de la mutare.</p>
-  <p>La predarea cheilor, noul proprietar primește codul interfonului și programul casieriei.</p>
+  <h2>3. Specificații tehnice</h2>
+  <h3>3.1 Funcționalități</h3>
+  <p>Platforma permite cetățenilor să aleagă serviciul, data și ora și primesc confirmarea prin e-mail și SMS.</p>
+  <h3>3.2 Accesibilitate</h3>
+  <p>Platforma respectă cerințele de accesibilitate WCAG 2.1 nivel AA pentru toate paginile publice.</p>
+  <h3>3.3 Găzduire și date</h3>
+  <p>Datele cu caracter personal sunt găzduite exclusiv pe servere aflate în Uniunea Europeană.</p>
+  <h2>4. Documente de depus</h2>
+  <p>Oferta cuprinde DUAE completat, propunerea tehnică, propunerea financiară și garanția de participare.</p>
+  <p>Garanția de participare este de 1.800 lei și se constituie prin instrument bancar sau de asigurare.</p>
 </div>
 <div>
-  <h2>5. Reparații și avarii</h2>
-  <h3>5.1 Întreruperea apei</h3>
-  <p>Oprirea apei calde pentru reparații programate se anunță la avizier cu cel puțin 48 de ore înainte.</p>
-  <h3>5.2 Avarii</h3>
-  <p>Avariile se anunță imediat administratorului la numărul 0722 000 099, disponibil non-stop.</p>
-  <h2>6. Adunarea generală</h2>
-  <p>Adunarea generală se convoacă cel puțin o dată pe an, în primul trimestru.</p>
+  <h2>5. Termene</h2>
+  <h3>5.1 Depunerea ofertelor</h3>
+  <p>Ofertele se depun în SEAP până la data de 20 noiembrie 2026, ora 15:00.</p>
+  <p>Solicitările de clarificări se transmit cel târziu până la data de 10 noiembrie 2026.</p>
+  <h3>5.2 Execuția</h3>
+  <p>Durata de execuție a contractului este de șase luni de la semnare.</p>
+  <p>Pentru întârzieri în execuție se aplică penalități de 0,1% pe zi din valoarea contractului.</p>
+  <h2>6. Criteriul de atribuire</h2>
+  <p>Contractul se atribuie ofertei cu cel mai bun raport calitate-preț: prețul 60%, componenta tehnică 40%.</p>
 </div>
 </body></html>`;
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
 await page.setContent(html);
-await page.pdf({ path: new URL("../public/samples/regulament-asociatie.pdf", import.meta.url).pathname, format: "A4", margin: { top: "20mm", bottom: "20mm", left: "20mm", right: "20mm" } });
+await page.pdf({ path: new URL("../public/samples/caiet-de-sarcini-exemplu.pdf", import.meta.url).pathname, format: "A4", margin: { top: "20mm", bottom: "20mm", left: "20mm", right: "20mm" } });
 await browser.close();
-console.log("PDF exemplu generat în public/samples/regulament-asociatie.pdf");
+console.log("PDF exemplu generat în public/samples/caiet-de-sarcini-exemplu.pdf");

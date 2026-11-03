@@ -22,15 +22,15 @@ test("documente: structură JSON, răspuns cu citat verificat, salt la pagină, 
   await page.goto("/docs?demo=1");
   await page.getByRole("button", { name: "Folosește exemplul" }).click();
   const outline = page.getByTestId("outline");
-  await expect(outline).toContainText("2.2 Penalități");
-  await expect(outline).toContainText("4. Obligațiile proprietarilor noi");
+  await expect(outline).toContainText("2.2 Capacitatea tehnică");
+  await expect(outline).toContainText("4. Documente de depus");
 
   await page.getByRole("button", { name: "Întreabă" }).click();
   const answer = page.getByTestId("answer");
   await expect(answer).toContainText("✓ verificat în text");
 
   // click pe un titlu de pe pagina 3 → viewer-ul pdf.js sare acolo
-  await outline.getByText("5.1 Întreruperea apei").click();
+  await outline.getByText("5.1 Depunerea ofertelor").click();
   await expect(page.getByTestId("pdf-page")).toHaveText("Pagina 3 / 3");
 
   await page.getByRole("button", { name: "Ierarhizează secțiunile" }).click();
@@ -99,7 +99,7 @@ test("validare: business canvas → sondaj → rezultate pentru pitch", async ({
   await phone.goto(href!);
   await phone.getByRole("button", { name: "Da" }).click();
   await phone.getByRole("button", { name: "4" }).click();
-  await phone.getByRole("button", { name: "15 €" }).click();
+  await phone.getByRole("button", { name: "50 €" }).click();
   await expect(phone.getByText("Mulțumim!")).toBeVisible();
   await expect(page.getByText("1 din 1 (100%) au răspuns „Da”")).toBeVisible({ timeout: 8000 });
 });
