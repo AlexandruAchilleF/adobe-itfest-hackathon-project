@@ -24,10 +24,21 @@ export interface AgentAction<A extends AnyArgs = AnyArgs> {
   description: string;
   args: A;
   run: (args: z.infer<A>) => unknown | Promise<unknown>;
+  /**
+   * "read" = doar citește/afișează (se execută direct);
+   * "write" = modifică date (implicit) → cere confirmarea omului dacă e dat `confirm`.
+   */
+  kind?: "read" | "write";
   /** Fraze exemplu; în modul demo se alege acțiunea cu cele mai multe cuvinte comune. */
   examples?: string[];
-  /** Argumentele folosite în modul demo. */
-  mockArgs?: z.infer<A>;
+  /** Argumentele folosite în modul demo (sau o funcție care le construiește din cerere). */
+  mockArgs?: z.infer<A> | ((input: string) => z.infer<A>);
+}
+
+export interface PlannedCall {
+  name: string;
+  description: string;
+  args: unknown;
 }
 
 export function defineAction<A extends AnyArgs>(action: AgentAction<A>): AgentAction {
@@ -50,6 +61,11 @@ interface RunOptions {
   /** Ture anterioare, pentru „mai mare", „pe ăla de adineauri"... */
   history?: AgentTurn[];
   files?: Array<string | Blob>;
+  /**
+   * Omul confirmă acțiunile care modifică date, înainte de execuție.
+   * Primește lista de acțiuni „write" valide și întoarce, pentru fiecare, true (execută) sau false.
+   */
+  confirm?: (calls: PlannedCall[]) => Promise<boolean[]>;
 }
 
 export function agentSchema(actions: AgentAction[]) {
@@ -80,7 +96,8 @@ export function mockPlan(input: string, actions: AgentAction[]): { say: string; 
     }
   }
   if (!best || best.mockArgs === undefined) return { say: "(demo) Nu am înțeles comanda.", actions: [] };
-  return { say: `(demo) Am executat: ${best.description.toLowerCase()}.`, actions: [{ name: best.name, args: best.mockArgs }] };
+  const args = typeof best.mockArgs === "function" ? (best.mockArgs as (i: string) => unknown)(input) : best.mockArgs;
+  return { say: `(demo) Am executat: ${best.description.toLowerCase()}.`, actions: [{ name: best.name, args }] };
 }
 
 const normalize = (s: string) =>
@@ -122,23 +139,42 @@ export async function runAgent(opts: RunOptions): Promise<AgentTurn> {
     ? mockPlan(input, actions)
     : (await ask({ system, prompt, schema: LenientPlan, outputSchema: schema, files: opts.files, mock: mockPlan(input, actions) })).data;
 
-  const results: AgentTurn["actions"] = [];
-  for (const call of plan.actions as Array<{ name: string; args: unknown }>) {
+  // 1) validare: acțiune cunoscută + argumente conforme schemei
+  type Checked = { name: string; args: unknown; action?: AgentAction; error?: string };
+  const checked: Checked[] = (plan.actions as Array<{ name: string; args: unknown }>).map((call) => {
     const action = actions.find((a) => a.name === call.name);
-    if (!action) {
-      results.push({ name: call.name, args: call.args, ok: false, error: "acțiune necunoscută" });
+    if (!action) return { ...call, error: "acțiune necunoscută" };
+    const parsed = action.args.safeParse(call.args);
+    if (!parsed.success) return { ...call, error: z.prettifyError(parsed.error) };
+    return { name: call.name, args: parsed.data, action };
+  });
+
+  // 2) confirmare umană pentru acțiunile care modifică date
+  const writes = checked.filter((c) => c.action && (c.action.kind ?? "write") === "write");
+  const approved = new Set<Checked>();
+  if (opts.confirm && writes.length) {
+    const answers = await opts.confirm(writes.map((c) => ({ name: c.name, description: c.action!.description, args: c.args })));
+    writes.forEach((c, i) => answers[i] && approved.add(c));
+  } else {
+    writes.forEach((c) => approved.add(c));
+  }
+
+  // 3) execuție în ordine
+  const results: AgentTurn["actions"] = [];
+  for (const c of checked) {
+    if (!c.action) {
+      results.push({ name: c.name, args: c.args, ok: false, error: c.error });
       continue;
     }
-    const parsed = action.args.safeParse(call.args);
-    if (!parsed.success) {
-      results.push({ name: call.name, args: call.args, ok: false, error: z.prettifyError(parsed.error) });
+    if ((c.action.kind ?? "write") === "write" && !approved.has(c)) {
+      results.push({ name: c.name, args: c.args, ok: false, error: "respinsă de utilizator" });
       continue;
     }
     try {
-      await action.run(parsed.data);
-      results.push({ name: call.name, args: parsed.data, ok: true });
+      await c.action.run(c.args as never);
+      results.push({ name: c.name, args: c.args, ok: true });
     } catch (err) {
-      results.push({ name: call.name, args: parsed.data, ok: false, error: (err as Error).message });
+      results.push({ name: c.name, args: c.args, ok: false, error: (err as Error).message });
     }
   }
   return { input, say: plan.say, actions: results };

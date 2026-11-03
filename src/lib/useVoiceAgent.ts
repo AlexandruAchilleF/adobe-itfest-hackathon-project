@@ -6,7 +6,7 @@
 import { useCallback, useRef, useState } from "react";
 import { speak } from "../modules/voice/speech";
 import { useSpeechRecognition } from "../modules/voice/speech";
-import { type AgentAction, type AgentTurn, runAgent } from "./agent";
+import { type AgentAction, type AgentTurn, type PlannedCall, runAgent } from "./agent";
 
 interface Options {
   actions: AgentAction[];
@@ -17,10 +17,17 @@ interface Options {
   speakReplies?: boolean;
 }
 
+export interface PendingConfirmation {
+  calls: PlannedCall[];
+  resolve: (answers: boolean[]) => void;
+}
+
 export function useVoiceAgent({ actions, persona, context, lang = "ro-RO", speakReplies = true }: Options) {
   const [log, setLog] = useState<AgentTurn[]>([]);
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // acțiunile „write" propuse de AI așteaptă aici aprobarea omului (vezi <ConfirmActions />)
+  const [pending, setPending] = useState<PendingConfirmation | null>(null);
   const logRef = useRef<AgentTurn[]>([]);
   const opts = useRef({ actions, persona, context, speakReplies, lang });
   opts.current = { actions, persona, context, speakReplies, lang };
@@ -37,6 +44,16 @@ export function useVoiceAgent({ actions, persona, context, lang = "ro-RO", speak
         persona: opts.current.persona,
         context: opts.current.context?.(),
         history: logRef.current,
+        confirm: (calls) =>
+          new Promise<boolean[]>((resolve) =>
+            setPending({
+              calls,
+              resolve: (answers) => {
+                setPending(null);
+                resolve(answers);
+              },
+            }),
+          ),
       });
       logRef.current = [...logRef.current, turn];
       setLog(logRef.current);
@@ -54,6 +71,7 @@ export function useVoiceAgent({ actions, persona, context, lang = "ro-RO", speak
   return {
     send,
     log,
+    pending,
     thinking,
     error: error ?? speech.error,
     listening: speech.listening,

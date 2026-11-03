@@ -1,94 +1,82 @@
-# Plan pentru 12 ore
+# Planul pentru cele 12 ore
 
-Fiecare idee de mai jos e verificată pe template: piesele grele există și au teste.
-Ce scrieți la hackathon e **logica ideii**: prompturi, scheme, reguli de joc și UI-ul paginii.
-Estimările presupun 3–4 oameni și un asistent AI de cod (Claude Code, Cursor, Copilot) care citește `AGENTS.md`.
+Bazat pe cercetare (≈30 de câștigători de 12–24 h, hackathoanele Adobe 2024–2026, ITFest) și pe verdictul consiliului.
+Pe scurt: **un om, un input haotic, o transformare AI, un rezultat editabil**, plus dovezi de la oameni reali.
 
-## Programul zilei (orice idee)
+## Ce notează juriul Adobe
 
-| Ora | Ce faceți | Cine |
+Criteriile publicate de Adobe la hackathoanele lor (fără ponderi):
+1. **Valoare pentru utilizatori**: o persoană concretă, cu o problemă pe care o are acum.
+2. **Unicitate**: nu „ChatGPT pentru X”.
+3. **Fezabilitate și „intenția de a construi”**: un plan credibil pentru ce urmează după hackathon.
+4. **Relevanța pentru categorie**: spuneți în prima frază în ce categorie intrați.
+5. **Claritate**: un pitch de cam 3 minute, cu valoarea spusă devreme.
+
+Juriile Adobe au lăudat explicit echipele care **și-au validat ideea cu utilizatori**. Întrebări la care trebuie să aveți răspuns:
+- „De ce e nevoie de AI aici?”
+- „Ce se întâmplă când AI-ul greșește?”
+- „Puteți explica codul?”
+
+## Tema → rețeta de pornire
+
+| Dacă tema e despre… | Șanse (estimare) | Porniți de la | Ce schimbați |
+|---|---|---|---|
+| Asistent AI, agenți, „vorbește cu aplicația” | ~25% | `/assistant` | acțiunile (`defineAction`) și datele |
+| Documente, PDF, „Rethink Reading”, educație | ~20% + 5% | `/docs` | documentul, persona, întrebările |
+| Civic: Smart City, resurse, comunitate | ~20% | `/map` | schema din `src/recipes/needs.ts` și datele de seed |
+| Accesibilitate, design incluziv, conținut creativ | ~10% + 7% | `/design` | brief-ul, formatul, regulile auditului |
+
+Estimările vin din temele anterioare: ITFest 2023 a avut „Smart City” și „Resource Wise”, Adobe India 2025 „Rethink Reading”, iar Adobe Express a avut categorii despre workflow și documente. Tema reală se anunță la start. Cel mai ieftin indiciu: întrebați ce s-a prezentat la workshopul Adobe de la ITFest din 22 octombrie.
+
+## Rolurile (stabilite înainte)
+
+| Rol | Ce face | La pitch |
 |---|---|---|
-| 0:00–0:45 | Tema anunțată → alegeți ideea → business canvas (`/business`) → porniți sondajul (`/survey`) | toți |
-| 0:45–1:00 | Împărțiți: **A** = pagina principală, **B** = AI (prompt + schemă + mock), **C** = input/senzori, **D** = pitch și validare | toți |
-| 1:00–6:00 | Construiți **un singur flux cap-coadă**. La 6:00 trebuie să meargă urât, dar complet. | A, B, C |
-| 1:00–6:00 | Strângeți răspunsuri la sondaj (20+), scrieți slide-urile, căutați 2–3 cifre de piață | D |
-| 6:00–9:00 | Calitate: prompturi mai bune, cazuri care se strică, mod demo pentru fiecare apel AI | A, B, C |
-| 9:00–10:30 | Polish vizual, deploy pe Vercel, testat pe telefoane, `⏺ Rec` cu video-ul de rezervă | toți |
-| 10:30–12:00 | **Îngheț de cod.** Repetiții de pitch (minim 3), răspunsuri la întrebările grele | toți |
+| **Produs + validare** | interviuri pe hol, sondajul, business canvas, cifrele | spune problema și dovada |
+| **Flux principal** | adaptează rețeta: schema, prompturile, datele de seed | rulează demo-ul |
+| **AI + date** | prompturi, mock-uri realiste, cazuri în care AI-ul greșește | răspunde la întrebări tehnice |
+| **Pitch + polish** (la 4 oameni) | slide-uri, video de rezervă, deploy, UI | ține timpul |
 
-Regula de aur: **la ora 6 nu se mai adaugă funcționalități noi.**
+La 2–3 oameni, rolurile 3 și 4 se împart între ceilalți.
 
----
+## Programul zilei
 
-## 1. Clientul imposibil: simulator de clienți pentru designeri
+| Ora | Ce faceți |
+|---|---|
+| 0:00–0:30 | Tema → alegeți rețeta din tabelul de mai sus → o frază: „Ajutăm [cine] să [ce] fără [durere]”. |
+| 0:30–1:30 | **Fără cod.** 5 interviuri pe hol cu participanți și mentori, plus business canvas (`/business`) și sondajul pornit (`/survey`, QR pe masă). În paralel, cineva schimbă schema și datele de seed. |
+| 1:30–6:00 | Un singur flux, cap-coadă. La 6:00 trebuie să meargă, chiar dacă e urât. |
+| 6:00 | **Nu se mai adaugă funcționalități.** |
+| 6:00–9:00 | Calitate: prompturi, mock-uri pentru fiecare apel AI, cazurile în care AI-ul greșește, pasul de confirmare vizibil. |
+| 9:00–10:30 | Deploy pe Vercel, testat pe telefon, video de 60 s cu `⏺ Rec`, slide-uri cu cifrele din sondaj. |
+| 10:30–12:00 | **Îngheț de cod.** Cel puțin 3 repetiții de pitch și răspunsuri la întrebările grele. |
 
-**Fluxul demo:** primești un brief → editezi pe pânză → apeși „Arată clientului” → clientul AI se uită la design, răspunde vocal cu feedback (uneori contradictoriu) → după 3 runde primești un scor la comunicare și la cum ai aplicat feedback-ul.
+## Pitch-ul (3 minute)
 
-| Piesă | Din template | De scris |
-|---|---|---|
-| Pânza editabilă + export imagine | `DesignCanvas`, `exportPNG()` | — |
-| Clientul „vede” designul | `ask({ files: [png] })` | schema `ClientReply { mood, feedback, demands[] }` + persona |
-| Voce (client vorbește, designerul răspunde) | `speak()`, `useSpeechRecognition` | — |
-| Verificări obiective (contrast, lizibilitate) | `auditDesign()` | le treceți în prompt, ca feedback-ul să fie corect |
-| Scor final | `ask()` | schema `Score { communication, design, notes[] }` |
+| Timp | Conținut |
+|---|---|
+| 0:00–0:10 | Identitatea într-o frază și categoria în care intrați. |
+| 0:10–0:30 | Persoana și durerea, cu dovada: „11 din 14 oameni întrebați azi…”. |
+| 0:30–2:00 | Demo live, un singur flux. Ideal, cineva din juriu încearcă. Arătați pasul în care omul confirmă sau corectează. |
+| 2:00–2:20 | Ce folosiți de la Adobe (PDF Embed, add-on Express) și de ce AI-ul e folosit responsabil. |
+| 2:20–2:45 | Cine plătește, cât, primul segment de piață, numărat de jos în sus. |
+| 2:45–3:00 | Ce urmează: un plan pe 30 de zile (de exemplu publicarea în marketplace-ul Express). |
 
-**Fișiere noi:** `src/pages/ClientPage.tsx` (~200 linii), `src/lib/client.ts` (persona-uri, scheme, ~80 linii).
-**Risc principal:** clientul AI sună generic. **Soluție:** 3 persona-uri scrise de mână („patronul de pizzerie care vrea totul mai mare”), cu cerințe ascunse.
-**Estimare flux complet:** 4–5 ore.
+Aveți pregătite și o variantă de 30 de secunde și una de 5 minute.
 
-## 2. Editor de design fără mâini (accesibilitate)
+## Plan de avarie
 
-**Fluxul demo:** cineva din juriu face un afiș cu mâinile la spate: capul mută cursorul, privirea ținută 1 s pe un buton îl apasă, wink = apucă/lasă, iar vocea dă comenzi („scrie Concert vineri, mare, alb”).
+| Ce se strică | Ce faceți |
+|---|---|
+| Internetul din sală | hotspot de pe telefon; aplicația rulează local cu `npm run dev` |
+| Cota sau cheia AI (eroare 429/401) | schimbați `AI_PROVIDER` (gemini ↔ anthropic), iar la nevoie bifați **Mod demo**: răspunsuri simulate realiste |
+| AI-ul răspunde prost la demo | citatele neverificate apar marcate cu ✗, nimic nu se modifică fără aprobare. Spuneți asta, e un punct forte. |
+| Demo-ul pică de tot | video-ul de 60 s înregistrat cu `⏺ Rec` |
+| Adobe PDF Embed nu se încarcă | viewer-ul trece automat pe pdf.js |
+| Supabase nu merge | datele rămân în browser (localStorage), sondajul merge între tab-uri |
 
-| Piesă | Din template | De scris |
-|---|---|---|
-| Cursor controlat cu capul + click prin menținere + drag | `useFace` + `usePointerCursor` (demo complet în `/body`) | calibrare (sensibilitate, zonă moartă) |
-| Comenzi vocale → acțiuni pe pânză | `defineAction` + `useVoiceAgent` (demo în `/agent`) | 2–3 acțiuni în plus (aliniere, duplicare) |
-| Pânza | `DesignCanvas`, undo/redo | butoane mari (min 64px) pentru ținte ușoare |
-| Verificare accesibilitate rezultat | `auditDesign()` | — |
+## Testul înainte de eveniment
 
-**Fișiere noi:** `src/pages/HandsFreePage.tsx` (~150 linii) care combină `/body` și `/agent`.
-**Risc principal:** cursorul tremură sau lumina e slabă. **Soluție:** calibrare la start („uită-te în centru 2 s”) și mărirea zonei moarte.
-**Estimare flux complet:** 3–4 ore. Restul timpului merge pe calibrare și pe testarea cu oameni.
-
-## 3. Proba de stradă: afișul în locul real
-
-**Fluxul demo:** fotografiezi bannerul din sală → atingi 4 colțuri → apare designul tău acolo → tragi slider-ul la 8 m → textul devine ilizibil → „Repară automat” mărește textele până trec auditul → AI-ul explică ce s-a schimbat.
-
-| Piesă | Din template | De scris |
-|---|---|---|
-| Poză + 4 colțuri + perspectivă | `/mockup`, `drawImageToQuad()` | — |
-| Simulare distanță + daltonism | `distanceBlurPx()`, `simulateImageData()` | — |
-| Audit WCAG + lizibilitate | `auditDesign()` | — |
-| Repară automat | `Design` JSON | funcție care mărește `fontSize` până trece auditul (~40 linii) |
-| Critica AI pe imaginea compusă | `ask({ files })` (există în `/mockup`) | prompt specific clientului (tipografie, primărie) |
-
-**Fișiere noi:** extindeți `MockupPage.tsx` sau faceți o copie (~100 linii noi).
-**Risc principal:** poza făcută în sală e strâmbă sau întunecată. **Soluție:** aveți 3 poze bune pregătite pe telefon.
-**Estimare flux complet:** 2–3 ore. E ideea cu cel mai mult timp rămas pentru business și polish.
-
-## 4. Sala decide: designul construit live de public
-
-**Fluxul demo:** QR pe ecran → 10–30 de telefoane intră → fiecare primește un element al afișului și îl mută cu joystick-ul → votează între 3 variante generate de AI → afișul final apare pe ecran și se descarcă prin QR.
-
-| Piesă | Din template | De scris |
-|---|---|---|
-| Telefoane ca controllere + vot | `useControllers`, layout-urile `gamepad` și `choices` (demo în `/screen`) | atribuirea unui element per jucător |
-| Variante generate | `ask({ schema: AiDesign })` ×3 | — |
-| Afișul pe ecran + QR | `DesignCanvas`, `shareDesign()` | mutarea elementelor din `snapshots` (~60 linii) |
-
-**Fișiere noi:** `src/pages/CrowdPage.tsx` (~200 linii).
-**Risc principal:** Wi-Fi-ul din sală. **Soluție:** Supabase + hotspot și testat dinainte cu 5 telefoane.
-**Estimare flux complet:** 4–5 ore.
-
----
-
-## Prompt de start pentru asistentul AI de cod
-
-```
-Citește AGENTS.md. Vreau o pagină nouă /<ruta> pentru ideea: <descriere în 2 propoziții>.
-Fluxul: <pas 1> → <pas 2> → <pas 3>.
-Refolosește: <modulele din tabelul de mai sus>.
-Fiecare apel ask() are schemă Zod și mock realist. Nu modifica modulele din src/modules,
-doar compune-le. Adaugă ruta în App.tsx (Switch + NAV_GROUPS). Rulează npm run typecheck la final.
-```
+Repetiție completă pe tema „Resource Wise” (ITFest 2023): 4 ore de construit și 3 minute de pitch, cronometrate.
+Fiecare membru explică cu voce tare un fișier din nucleu: `src/lib/ai.ts`, `src/lib/documents.ts`, `src/lib/agent.ts` sau `src/lib/store.ts`.
+**Ce nu poate explica nimeni din echipă se scoate.**

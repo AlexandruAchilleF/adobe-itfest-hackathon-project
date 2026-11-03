@@ -167,3 +167,38 @@ export function auditDesign(design: Design, physicalWidthCm = 29.7): TextAudit[]
     ];
   });
 }
+
+// ── Reparare automată (deterministă) ──
+export interface FixResult {
+  design: Design;
+  /** ce s-a schimbat, în cuvinte, pentru UI și pitch */
+  changes: string[];
+}
+
+/**
+ * Face toate textele lizibile de la `distanceM` și conforme WCAG AA:
+ * mărește fontul până la minimul necesar și, dacă e nevoie, trece textul pe alb sau negru.
+ */
+export function autoFixDesign(design: Design, { physicalWidthCm = 29.7, distanceM = 2 } = {}): FixResult {
+  const changes: string[] = [];
+  const pxPerCm = design.width / physicalWidthCm;
+  const elements = design.elements.map((el, i) => {
+    if (el.type !== "text") return el;
+    let next = el;
+    const minSize = Math.ceil((distanceM * CM_PER_METER * pxPerCm) / CAP_HEIGHT);
+    if (el.fontSize < minSize) {
+      const fontSize = Math.min(minSize, Math.round(design.width / 5));
+      next = { ...next, fontSize };
+      changes.push(`„${el.text.slice(0, 30)}”: font ${el.fontSize}px → ${fontSize}px (lizibil de la ${distanceM} m)`);
+    }
+    const bg = backgroundUnder(design, i);
+    const large = next.fontSize * (1080 / design.width) >= 24;
+    if (wcagLevel(contrastRatio(next.fill, bg), large) === "fail") {
+      const fill = contrastRatio("#ffffff", bg) >= contrastRatio("#000000", bg) ? "#ffffff" : "#000000";
+      changes.push(`„${el.text.slice(0, 30)}”: culoare ${next.fill} → ${fill} (contrast ${contrastRatio(next.fill, bg)} → ${contrastRatio(fill, bg)})`);
+      next = { ...next, fill };
+    }
+    return next;
+  });
+  return { design: { ...design, elements }, changes };
+}

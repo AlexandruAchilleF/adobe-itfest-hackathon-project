@@ -63,7 +63,7 @@ Reguli pentru întrebări bune (din *The Mom Test*):
 | 0:00–0:20 | **Problema**, cu o persoană concretă și un număr. |
 | 0:20–0:30 | **Ce am construit**, într-o propoziție. |
 | 0:30–1:45 | **Demo live**: cineva din juriu îl încearcă. Un singur flux, cap-coadă. |
-| 1:45–2:15 | **Dovada**: rezultatele sondajului și câți oameni au încercat azi (`?kiosk=1` numără). |
+| 1:45–2:15 | **Dovada**: rezultatele sondajului făcut azi cu oameni reali și interviurile de dinainte. |
 | 2:15–2:45 | **Business**: cine plătește, preț, primul segment, cum ajungeți la ei. |
 | 2:45–3:00 | **Ce urmează** și ce v-ar trebui (pilot, grant, de ex. Adobe Fund for Design). |
 
@@ -78,4 +78,4 @@ Cele mai frecvente sunt:
 
 - **Mod demo** (`?demo=1`): AI-ul răspunde cu date simulate dacă pică internetul.
 - **⏺ Rec**: înregistrați un video de 60 s cu demo-ul care merge, ca rezervă.
-- **Kiosk** (`?kiosk=1`): la jurizarea la masă, aplicația revine singură la ecranul de start.
+- **Pasul de confirmare**: arătați în demo că AI-ul propune și omul aprobă sau corectează. E răspunsul la „ce se întâmplă când AI-ul greșește?”.

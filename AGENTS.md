@@ -1,32 +1,33 @@
 # Instrucțiuni pentru asistenți AI de cod
 
-Template de hackathon: Vite + React 19 + TypeScript + Tailwind v4, funcții serverless în `api/` (Vercel).
-UI-ul și comentariile sunt în română.
+Template de hackathon (12 ore, juriu Adobe): Vite + React 19 + TypeScript + Tailwind v4, funcții serverless în `api/` (Vercel).
+UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`.
+
+## Principiul
+Un om, un input haotic, o transformare AI, un rezultat editabil. **Nu adăuga funcționalități în afara fluxului cerut.**
+Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din UI.
 
 ## Arhitectură
-- `api/*.ts`: funcții serverless cu semnătură Web standard (`export function POST(request: Request): Response`). În dev sunt servite de `server/vite-api-plugin.ts`, iar pe Vercel rulează nativ. Importurile relative din `api/` și `server/` folosesc extensia `.js`.
-- `server/ai.ts`: un singur endpoint AI. Furnizorii sunt în `server/providers/` (gemini, anthropic), iar `mock` e implicit fără chei. Schema primită se normalizează în `server/schema.ts`.
-- `shared/ai-contract.ts`: tipurile cererii și răspunsului AI, comune clientului și serverului.
-- `src/lib/ai.ts`: `ask({ prompt, schema: ZodSchema, files, mock })` → `{ data }` validat. Folosește-l pentru orice apel AI și nu face `fetch` direct.
-- `src/lib/design.ts`: formatul `Design` (rect, circle, text, line, path, image) și `AiDesign` (subsetul pe care îl generează AI-ul). Toate câmpurile din `AiDesign` sunt obligatorii, pentru compatibilitate cu structured outputs.
-- `src/modules/*`: module independente (camera: mâini/față/corp, voice, audio, controller, canvas, rooms, adobe, demo: kiosk/recorder/stats, hardware). Paginile din `src/pages/` sunt demo-uri și exemple de folosire.
-- `src/lib/agent.ts`: comenzi în limbaj natural → acțiuni (`defineAction`, `runAgent`, `useVoiceAgent`). Pentru control vocal sau text al aplicației, adaugă acțiuni, nu un parser propriu.
-- `src/lib/business.ts` și `src/lib/survey.ts`: business canvas (schemă Zod) și agregarea sondajului de validare.
-- `src/modules/pointer/`: cursor virtual. Orice sursă (cap, mână, telefon) → evenimente reale de mouse/pointer, cu dwell click. Pentru control fără mouse folosește-l, nu reimplementa click-uri.
-- `src/lib/perspective.ts` (omografie, `drawImageToQuad`) și `src/lib/accessibility.ts` (contrast WCAG, daltonism, lizibilitate la distanță, `auditDesign`): verificări deterministe, de pus lângă AI.
-- `docs/PLAN-12H.md`: planul pe ore și ideile verificate. `docs/BUSINESS.md`: ghidul de pitch.
-- Logica pură (gesturi, față, corp, audio, protocol controller, sondaj) e separată de hook-uri și are teste în `tests/`. Păstrează separarea asta.
-- Paginile deschise pe telefon din QR (`/view`, `/controller`, `/s`) sunt în lista `BARE` din `App.tsx` și nu au meniu.
+- `api/*.ts`: funcții serverless cu semnătură Web standard (`export function POST(request: Request): Response`). În dev sunt servite de `server/vite-api-plugin.ts`. Importurile relative din `api/` și `server/` folosesc extensia `.js`.
+  - `api/ai.ts`: un singur endpoint AI (Gemini, Claude sau `mock`, implicit fără chei).
+  - `api/geocode.ts`: adresă → coordonate (Nominatim, cu cache).
+- `src/lib/ai.ts`: `ask({ prompt, schema, files, mock })` → `{ data }` validat cu Zod. Folosește-l pentru orice apel AI.
+- `src/lib/documents.ts`: logică pură pentru PDF (linii, cuprins H1–H3, secțiuni, context cu `[p. N]`, `verifyCitations`). `src/modules/documents/pdfjs.ts` face citirea în browser. `src/lib/docAi.ts`: `askDocument`, `rankSections`.
+- `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`) sau localStorage.
+- `src/lib/agent.ts` + `src/lib/useVoiceAgent.ts` + `src/components/ConfirmActions.tsx`: limbaj natural → acțiuni. `kind: "write"` cere confirmarea omului.
+- `src/lib/design.ts` + `src/modules/canvas/`: designul editabil (Fabric.js v7). `src/lib/accessibility.ts`: audit WCAG, lizibilitate, `autoFixDesign`.
+- `src/recipes/needs.ts`: domeniul exemplu (schemă, seed, scor). Acesta se schimbă după temă.
+- Rețetele: `src/pages/DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`, `MapPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
 
 ## Reguli
-- Orice apel `ask()` nou primește un `mock` realist, ca modul demo (`?demo=1`) să meargă offline. Orice `defineAction` primește `examples` și `mockArgs`.
-- Ecranul mare care deține starea unei camere folosește `useRoom(..., { authority: true })`.
+- Fiecare `ask()` primește un `mock` realist, construit din inputul utilizatorului dacă se poate. Fiecare `defineAction` are `examples` și `mockArgs`.
+- AI-ul propune, omul confirmă: acțiunile care modifică date sunt `kind: "write"`, iar datele extrase de AI se arată într-un formular de verificare înainte de salvare.
+- Preferă verificări deterministe lângă AI: citate căutate în text, scoruri calculate, audit. Nu lăsa AI-ul să inventeze cifre.
 - Cheile AI rămân pe server (fără prefix `VITE_`). În browser ajung doar `VITE_SUPABASE_*`, `VITE_ADOBE_PDF_CLIENT_ID` și `VITE_APP_NAME`.
-- Nu face `setState` la fiecare cadru video. Pune logica per-cadru în `onFrame` din `useHands` și desenează pe `<canvas>` cu `requestAnimationFrame`.
-- Fabric.js v7 are originea implicită în centru. Când creezi obiecte cu x/y ca stânga-sus, setează `originX: "left", originY: "top"`.
-- O pagină nouă se adaugă ca rută în `src/App.tsx` (`Switch` și `NAV_GROUPS`).
+- Fabric.js v7 are originea implicită în centru. Pentru x/y de tip stânga-sus, setează `originX: "left", originY: "top"`.
+- O pagină nouă se adaugă în `src/App.tsx` (`Switch` și `NAV_GROUPS`). Paginile pentru telefon (`/view`, `/s`) sunt în `BARE`.
+- Logica pură stă separat de componente și are teste în `tests/`.
 
 ## Comenzi
-- `npm run dev`: aplicația + `/api`
-- `npm run typecheck`, `npm test` (vitest), `npm run e2e` (Playwright, cameră falsă, AI mock)
-- `npm run check`: tot înainte de commit
+- `npm run dev`, `npm run typecheck`, `npm test`, `npm run e2e`
+- `npm run check`: tot, înainte de commit
