@@ -7,6 +7,7 @@ Nu e un produs. E o pornire rapidă: patru **rețete** (fluxuri complete, testat
 
 > 📋 Citiți întâi: [`docs/PLAN-12H.md`](docs/PLAN-12H.md) (tema → rețeta, rolurile, programul pe ore, pitch-ul, planul de avarie),
 > [`docs/PROBLEME.md`](docs/PROBLEME.md) (probleme reale de validat înainte) și [`docs/BUSINESS.md`](docs/BUSINESS.md) (cine plătește, piață, adopție).
+> Lentila juriului, pe care o aplică și asistentul AI la fiecare decizie: [`docs/JURIU.md`](docs/JURIU.md); deciziile echipei: [`docs/BRIEF.md`](docs/BRIEF.md). Cu Claude Code: `/brief` la start, `/juriu` înainte de pitch.
 > Integrările Adobe se pregătesc dinainte: [`docs/ADOBE-SETUP.md`](docs/ADOBE-SETUP.md).
 
 ## Rețetele

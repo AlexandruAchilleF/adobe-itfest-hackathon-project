@@ -1,11 +1,12 @@
 # Instrucțiuni pentru asistenți AI de cod
 
 Template de hackathon (12 ore, juriu Adobe): Vite + React 19 + TypeScript + Tailwind v4, funcții serverless în `api/` (Vercel).
-UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`.
+UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`. La start, echipa rulează `/brief`; înainte de pitch, `/juriu`.
 
-## Principiul
-Un om, un input haotic, o transformare AI, un rezultat editabil. **Nu adăuga funcționalități în afara fluxului cerut.**
-Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din UI.
+## Înainte de orice schimbare
+- Citește `docs/BRIEF.md`: brief-ul Adobe, ideea aleasă, cerințele și deciziile. Codul servește fraza de acolo și bifează cerințele din tabel.
+- **Lentila juriului:** când propui sau alegi o idee, o funcționalitate, un text din UI, date de seed sau pitch-ul, aplică `docs/JURIU.md` și spune în răspuns ce întrebare mută și unde se vede în demo. Ce nu mută niciuna rămâne pentru „după hackathon”.
+- Un flux complet, nu mai multe începute. Adaptează modulele existente (schema, seed, prompturi, texte) înainte să scrii module noi.
 
 ## Arhitectură
 - `api/*.ts`: funcții serverless cu semnătură Web standard (`export function POST(request: Request): Response`). În dev sunt servite de `server/vite-api-plugin.ts`. Importurile relative din `api/` și `server/` folosesc extensia `.js`.

@@ -5,17 +5,8 @@ Pe scurt: **un om, un input haotic, o transformare AI, un rezultat editabil**, p
 
 ## Ce notează juriul Adobe
 
-Criteriile publicate de Adobe la hackathoanele lor (fără ponderi):
-1. **Valoare pentru utilizatori**: o persoană concretă, cu o problemă pe care o are acum.
-2. **Unicitate**: nu „ChatGPT pentru X”.
-3. **Fezabilitate și „intenția de a construi”**: un plan credibil pentru ce urmează după hackathon.
-4. **Relevanța pentru categorie**: spuneți în prima frază în ce categorie intrați.
-5. **Claritate**: un pitch de cam 3 minute, cu valoarea spusă devreme.
-
-Juriile Adobe au lăudat explicit echipele care **și-au validat ideea cu utilizatori**. Întrebări la care trebuie să aveți răspuns:
-- „De ce e nevoie de AI aici?”
-- „Ce se întâmplă când AI-ul greșește?”
-- „Puteți explica codul?”
+Criteriile, întrebările grele și cum le aplicați la fiecare decizie: [`JURIU.md`](JURIU.md). Deciziile echipei se notează în [`BRIEF.md`](BRIEF.md).
+Cu Claude Code: `/brief` la start (brief → cerințe bifabile → 3 idei punctate), `/juriu` la ora 6 și înainte de pitch.
 
 ## Tema → rețeta de pornire
 
@@ -43,7 +34,7 @@ La 2–3 oameni, rolurile 3 și 4 se împart între ceilalți.
 
 | Ora | Ce faceți |
 |---|---|
-| 0:00–0:30 | Tema → alegeți rețeta din tabelul de mai sus → o frază: „Ajutăm [cine] să [ce] fără [durere]”. |
+| 0:00–0:30 | Brief-ul → `/brief` → alegeți ideea și rețeta din tabelul de mai sus → o frază: „Ajutăm [cine] să [ce] fără [durere]”. |
 | 0:30–1:30 | **Fără cod.** 5 interviuri pe hol cu participanți și mentori, plus business canvas (`/business`) și sondajul pornit (`/survey`, QR pe masă). În paralel, cineva schimbă schema și datele de seed. |
 | 1:30–6:00 | Un singur flux, cap-coadă. La 6:00 trebuie să meargă, chiar dacă e urât. |
 | 6:00 | **Nu se mai adaugă funcționalități.** |
