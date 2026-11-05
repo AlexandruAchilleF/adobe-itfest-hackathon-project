@@ -10,20 +10,22 @@ Fișierul de lucru e `src/scenario/scenarios/<nume>.ts`. Activarea: `src/scenari
 - [ ] `app.name`, `app.tagline` (fraza „Ajutăm X să Y fără Z” din `docs/BRIEF.md`), `app.impactLabel` (ce numărați: „porții salvate”).
 - [ ] `roles`: cuvintele din brief pentru cele două părți. Dacă brief-ul spune „donor” și „shelter”, scrieți „Donator” și „Adăpost”, nu „Vecin”.
 - [ ] `categories`: 4–6 categorii din brief, ultima „altele”.
-- [ ] `request.actions`: textele butoanelor, în limba omului din interviuri („Vin să iau”, „Am predat”, „Am primit”).
+- [ ] `flow`: stările și pașii din brief, cu rolul care face fiecare pas. `label` e textul butonului, în limba omului din interviuri („Vin să iau”, „Am predat”, „Am primit”). Măcar un pas cu `outcome: "done"` (confirmarea celui care a cerut) și unul cu `outcome: "failed"` („n-a mers”).
+- [ ] `business`: problema, plătitorul și dovezile (cine a spus ce cifră). Apar pe `/start`.
+- [ ] `documents` (dacă cererea pornește de la un bon, o factură, un formular): `rules` cu plafoanele din politica firmei și un `sample` cu o greșeală pe care verificarea o prinde.
 - [ ] `request.addPlaceholder` și `offerPlaceholder`: o frază reală, ideal spusă de cineva la interviu.
 - [ ] `seed.people`: 4 + 4 oameni cu nume plauzibile și zone reale din București. Numere de telefon evident false (`0722 000 xxx`).
 - [ ] `seed.requests`: 8–10 cereri, cu adrese și coordonate reale. 2–3 confirmate (ca să existe clasament), una livrată (ca să se vadă confirmarea în demo), una acceptată.
 - [ ] `seed.reports`: 3 rapoarte la 4–45 de minute în urmă.
 - [ ] `points` și `ranks`: numele rangurilor din brief sau din lumea omului. Verificați pe `/clasament` că primul loc nu e la egalitate.
-- [ ] `notify`: mesajele SMS citite cu voce tare. Au sub 160 de caractere?
-- [ ] `mascot.enabled`: doar dacă omul e copil, vârstnic sau neexpert, sau dacă brief-ul e ludic. Altfel `false`. Dacă rămâne: alt nume, altă culoare, altă `persona`.
-- [ ] `npm test` trece. `validateScenario` prinde roluri greșite, categorii inexistente, etape fără giver. `tests/urme.test.ts` prinde numele din scenariul vechi rămase în cod.
+- [ ] `notify` pe pași: mesajele SMS citite cu voce tare. Au sub 160 de caractere?
+- [ ] `mascot`: rămâne (decizia echipei), dar pe temă: alt `name`, altă `color`, altă `persona`, iar omul cu design schimbă desenul din `Mascot.tsx` dacă are timp. Vorbește doar despre stări reale (verificări, așteptări, confirmări) și stă cel mult 10–15 secunde în demo.
+- [ ] `npm test` trece. `validateScenario` și `validateFlow` prind roluri greșite, categorii inexistente, stări fără ieșire și pași imposibili în seed. `tests/urme.test.ts` prinde numele din scenariul vechi rămase în cod.
 - [ ] Pe `/start` scrie „✓ Config-ul trece verificările”.
 
 ## 2. Urme de template (înainte de ora 6)
 
-- [ ] `features.optionalModules: false`. Meniul arată doar Harta, Profilul, Clasamentul și Raportează.
+- [ ] `features.optionalModules: false`. Meniul arată doar paginile scenariului.
 - [ ] `VITE_APP_NAME` pe Vercel (sau doar `app.name`).
 - [ ] `/business` și `/survey` au fost folosite? Ștergeți exemplul cu licitațiile SEAP din canvas dacă îl arătați juriului.
 - [ ] Nicio pagină din meniu nu spune „template”, „rețetă”, „demo” sau „exemplu”.

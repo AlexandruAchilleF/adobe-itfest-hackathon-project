@@ -8,16 +8,18 @@ Pe scurt: **un om, un input haotic, o transformare AI, un rezultat editabil**, p
 Criteriile, întrebările grele și cum le aplicați la fiecare decizie: [`JURIU.md`](JURIU.md). Deciziile echipei se notează în [`BRIEF.md`](BRIEF.md).
 Cu Claude Code: `/brief` la start (brief → cerințe bifabile → 3 idei punctate), `/juriu` la ora 6 și înainte de pitch.
 
-## Tema → rețeta de pornire
+## Brief-ul → piesele din template
 
-| Dacă tema e despre… | Șanse (estimare) | Porniți de la | Ce schimbați |
-|---|---|---|---|
-| Asistent AI, agenți, „vorbește cu aplicația” | ~25% | `/assistant` | acțiunile (`defineAction`) și datele |
-| Documente, PDF, „Rethink Reading”, educație | ~20% + 5% | `/docs` | documentul, persona, întrebările |
-| Civic: Smart City, resurse, comunitate | ~20% | `/map` | schema din `src/recipes/needs.ts` și datele de seed |
-| Accesibilitate, design incluziv, conținut creativ | ~10% + 7% | `/design` | brief-ul, formatul, regulile auditului |
+La ITFest, Adobe a dat de fiecare dată un scenariu cu funcționalități opționale numite (2023: ResourceWise, cu hartă și gamificare; 2024, dedus: raportare live pe hartă). Nu alegeți o „rețetă” după cuvinte-cheie: mapați fiecare cerință pe o piesă. Pașii sunt în `docs/BRIEF.md` („Prima oră”), piesele în `README.md`.
 
-Estimările vin din temele anterioare: ITFest 2023 a avut „Smart City” și „Resource Wise”, Adobe India 2025 „Rethink Reading”, iar Adobe Express a avut categorii despre workflow și documente. Tema reală se anunță la start. Cel mai ieftin indiciu: întrebați ce s-a prezentat la workshopul Adobe de la ITFest din 22 octombrie.
+| Dacă brief-ul seamănă cu… | Porniți de la scenariul | Ce schimbați |
+|---|---|---|
+| un proces între oameni dintr-o organizație (aprobări, cereri interne, deconturi, documente) | `deconturi` | `roles`, `flow`, `documents.rules`, `seed` |
+| oameni care au ceva și oameni care au nevoie, pe o hartă (resurse, voluntariat, sesizări) | `vecini` | `roles`, `flow`, `categories`, `reports`, `points`, `seed` |
+| citit și înțeles documente lungi | modulul `/docs` + `flow` pentru ce urmează după citire | documentul, întrebările |
+| un material creativ sau accesibilitate | modulul `/design` | brief-ul, formatul, regulile auditului |
+
+Cel mai ieftin indiciu despre temă: întrebați ce s-a prezentat la workshopul Adobe de la ITFest din 22 octombrie.
 
 ## Rolurile (stabilite înainte)
 
@@ -68,6 +70,6 @@ Aveți pregătite și o variantă de 30 de secunde și una de 5 minute.
 
 ## Testul înainte de eveniment
 
-Repetiție completă pe tema „Resource Wise” (ITFest 2023): 4 ore de construit și 3 minute de pitch, cronometrate.
+Repetiție completă pe tema „Resource Wise” (ITFest 2023): 4 ore de construit și 3 minute de pitch, cronometrate. Adaptarea config-ului, făcută de asistent, e descrisă în `docs/REPETITIE-2023.md`; repetați-o voi, cu ceasul pornit.
 Fiecare membru explică cu voce tare un fișier din nucleu: `src/lib/ai.ts`, `src/lib/documents.ts`, `src/lib/agent.ts` sau `src/lib/store.ts`.
 **Ce nu poate explica nimeni din echipă se scoate.**

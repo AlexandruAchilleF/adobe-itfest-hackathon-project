@@ -9,7 +9,10 @@ import { scenario } from "../scenario/config";
 
 // Cerințele tipice din briefurile ITFest × Adobe → piesa din template care le acoperă.
 const BRIEF_MAP = [
-  { need: "două tipuri de oameni (cine are / cine are nevoie)", piece: "scenario.roles + comutatorul „Sunt” din antet", href: "/harta" },
+  { need: "un proces între oameni: cine cere, cine aprobă, cine execută", piece: "scenario.roles + scenario.flow (pași, retur cu motiv, „n-a mers”)", href: "/harta" },
+  { need: "documente, bonuri, facturi, formulare", piece: "scenario.documents → AI citește, codul verifică (sumă, CUI, dată, duplicate, plafoane)", href: "/harta" },
+  { need: "eficiență, „cât durează”, optimizarea unui proces", piece: "/cronometru: timp pe pas, blocaje, reminder, cost din cifre spuse de oameni", href: "/cronometru" },
+  { need: "un document final, raport, proces-verbal", piece: "/fisa/:id: fapte din date + rezumat editabil, tipărit ca PDF", href: "/harta" },
   { need: "Interactive Mapping, găsește în apropiere", piece: "/harta: cereri pe hartă + potrivire cu scor determinist", href: "/harta" },
   { need: "Gamification, puncte, recompense", piece: "scenario.points + ranks → /profil, /clasament", href: "/clasament" },
   { need: "raportare în timp real, la locația curentă", piece: "scenario.reports → /raport pe telefon, live pe hartă", href: "/raport" },
@@ -36,6 +39,14 @@ export function HomePage({ status }: { status: AppStatus }) {
       </section>
 
       <Card title={`Scenariul activ: ${scenario.app.name} (${scenario.id})`}>
+        <dl className="mb-3 space-y-1 text-sm" data-testid="scenario-business">
+          <dt className="text-xs uppercase text-slate-500">Problema</dt>
+          <dd>{scenario.business.problem}</dd>
+          <dt className="text-xs uppercase text-slate-500">Cine plătește</dt>
+          <dd>{scenario.business.payer}</dd>
+          <dt className="text-xs uppercase text-slate-500">Dovezi de la oameni reali</dt>
+          <dd className={scenario.business.evidence.length ? "" : "text-amber-200"}>{scenario.business.evidence.length ? scenario.business.evidence.join(" · ") : "Niciuna încă: cifrele de mai sus sunt ipoteze. Faceți interviurile."}</dd>
+        </dl>
         {problems.length ? (
           <ul className="space-y-1 text-sm text-rose-300" data-testid="scenario-problems">
             {problems.map((p) => (
