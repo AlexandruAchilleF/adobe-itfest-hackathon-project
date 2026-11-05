@@ -147,7 +147,8 @@ export interface Scenario {
   features: {
     /** potrivirea „ce poți oferi” → cereri, cu scor determinist + explicație AI */
     matching: boolean;
-    /** Documente, Design, Asistent, AI și ghidul template-ului apar în meniu la „Module opționale” */
+    /** Documente, Design, Asistent, AI, validarea și ghidul template-ului apar în meniu la „Pentru echipă”.
+     *  Rutele merg oricum; înainte de pitch puneți false, ca juriul să vadă un singur drum. */
     optionalModules: boolean;
   };
   mascot: {
@@ -158,6 +159,8 @@ export interface Scenario {
     persona: string;
     /** turul ghidat (pornește cu ?tour=1); la pitch, maxim 3 pași */
     tour: boolean;
+    /** paginile pe care mascota nu apare (ex: business canvas, documente) */
+    hiddenOn: string[];
   };
   seed: {
     people: PersonSeed[];

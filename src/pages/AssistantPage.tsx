@@ -214,7 +214,7 @@ export function AssistantPage() {
             În cod: <Code>defineAction({"{ kind: \"read\" | \"write\", ... }"})</Code> + <Code>useVoiceAgent</Code> + <Code>{"<ConfirmActions />"}</Code>.
           </p>
         </div>
-        <Card tour="assist-list" title={shown ? `Rezultate (${list.length})` : `Toate ${scenario.request.plural} (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
+        <Card tour="assist-list" title={shown ? `Rezultate (${list.length})` : `${scenario.request.plural[0].toUpperCase()}${scenario.request.plural.slice(1)} (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
           <ul className="space-y-2" data-testid="assistant-list">
             {list.map((r) => (
               <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">

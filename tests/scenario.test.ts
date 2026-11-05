@@ -73,3 +73,20 @@ describe("mock-ul de structurare (modul demo)", async () => {
     expect(m.address).toContain("Calea Moșilor");
   });
 });
+
+describe("meniul și mascota din config", async () => {
+  const { mainNav, showMascot, teamNav } = await import("../src/scenario/nav");
+  it("meniul principal folosește cuvintele scenariului și ascunde raportarea dacă e oprită", () => {
+    expect(mainNav(vecini).map((n) => n.label)).toEqual(["Harta", "Profilul meu", "Clasament", "Raportează"]);
+    expect(mainNav({ ...vecini, reports: { ...vecini.reports, enabled: false } }).map((n) => n.href)).not.toContain("/raport");
+  });
+  it("rețetele vechi apar doar cu optionalModules", () => {
+    expect(teamNav(vecini).map((n) => n.href)).toContain("/docs");
+    expect(teamNav({ ...vecini, features: { ...vecini.features, optionalModules: false } })).toEqual([]);
+  });
+  it("mascota: oprită din config sau ascunsă pe anumite pagini", () => {
+    expect(showMascot(vecini, "/harta")).toBe(true);
+    expect(showMascot(vecini, "/business")).toBe(false);
+    expect(showMascot({ ...vecini, mascot: { ...vecini.mascot, enabled: false } }, "/harta")).toBe(false);
+  });
+});

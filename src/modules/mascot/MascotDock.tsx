@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ConfirmActions } from "../../components/ConfirmActions";
 import { type AgentAction, defineAction } from "../../lib/agent";
 import { useVoiceAgent } from "../../lib/useVoiceAgent";
+import { scenario } from "../../scenario/config";
 import { MASCOT_NAME, MascotFigure } from "./Mascot";
 import { mascot, type MascotState } from "./mascot";
 import { type MascotPage, mascotPage, matchRoute, type Route, tourReducer } from "./page";
@@ -23,8 +24,10 @@ export function MascotDock({ routes }: { routes: Route[] }) {
   const [hidden, setHidden] = useState(false);
   const [text, setText] = useState("");
   const [tour, dispatch] = useReducer(tourReducer, null);
-  const tourRef = useRef(page?.tour);
-  tourRef.current = page?.tour;
+  // turul se poate opri din scenariu (scenario.mascot.tour)
+  const pageTour = scenario.mascot.tour ? page?.tour : undefined;
+  const tourRef = useRef(pageTour);
+  tourRef.current = pageTour;
 
   useEffect(() => mascot.subscribe(setState), []);
   useEffect(() => mascotPage.subscribe(setPage), []);
@@ -63,7 +66,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
 
   const agent = useVoiceAgent({
     actions: [...globalActions, ...(page?.actions ?? [])],
-    persona: `Ești ${MASCOT_NAME}, un arici prietenos care ajută utilizatorul să folosească aplicația. Răspunzi scurt și cald, în română. Pagina curentă: ${page?.title ?? "pagina de start"}.`,
+    persona: `Ești ${MASCOT_NAME}, ${scenario.mascot.persona}, în aplicația „${scenario.app.name}”. Ajuți utilizatorul să o folosească. Răspunzi scurt și cald, în română. Pagina curentă: ${page?.title ?? "pagina de start"}.`,
     context: () => page?.context?.() ?? "",
   });
 
@@ -97,14 +100,14 @@ export function MascotDock({ routes }: { routes: Route[] }) {
 
   // ?tour=1 → pornește turul singur (pentru pitch)
   useEffect(() => {
-    if (!page?.tour?.length) return;
-    if (new URLSearchParams(location.search).get("tour") === "1") dispatch({ type: "start", steps: page.tour });
-  }, [page]);
+    if (!pageTour?.length) return;
+    if (new URLSearchParams(location.search).get("tour") === "1") dispatch({ type: "start", steps: pageTour });
+  }, [page]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (hidden) {
     return (
       <button onClick={() => setHidden(false)} className="fixed bottom-4 right-4 z-[1200] rounded-full bg-slate-800 px-3 py-2 text-xs text-slate-300 print:hidden">
-        🦔 {MASCOT_NAME}
+        {MASCOT_NAME}
       </button>
     );
   }
@@ -185,8 +188,8 @@ export function MascotDock({ routes }: { routes: Route[] }) {
               </button>
             </form>
             <div className="mt-2 flex flex-wrap gap-1">
-              {page?.tour?.length ? (
-                <button className="rounded-full bg-amber-100 px-2 py-0.5 text-xs" onClick={() => dispatch({ type: "start", steps: page.tour! })}>
+              {pageTour?.length ? (
+                <button className="rounded-full bg-amber-100 px-2 py-0.5 text-xs" onClick={() => dispatch({ type: "start", steps: pageTour })}>
                   ▶ Arată-mi cum merge
                 </button>
               ) : null}

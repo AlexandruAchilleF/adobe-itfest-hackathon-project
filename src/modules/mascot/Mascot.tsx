@@ -1,12 +1,14 @@
 // Țepi, ariciul: mascota care arată, prin expresie, ce face AI-ul (ascultă, se gândește,
 // a verificat sursa, a găsit o problemă). Personaj original, desenat în SVG.
-// Numele și culoarea se schimbă din .env: VITE_MASCOT_NAME, VITE_MASCOT_COLOR.
+// Numele, culoarea și dacă apare deloc vin din scenariu (src/scenario/config.ts, `mascot`);
+// VITE_MASCOT_NAME și VITE_MASCOT_COLOR din .env le suprascriu.
 
 import { useMemo } from "react";
+import { scenario } from "../../scenario/config";
 import type { MascotMood } from "./mascot";
 
-export const MASCOT_NAME = (import.meta.env.VITE_MASCOT_NAME as string | undefined) || "Țepi";
-const COLOR = (import.meta.env.VITE_MASCOT_COLOR as string | undefined) || "#8b5e3c";
+export const MASCOT_NAME = (import.meta.env.VITE_MASCOT_NAME as string | undefined) || scenario.mascot.name;
+const COLOR = (import.meta.env.VITE_MASCOT_COLOR as string | undefined) || scenario.mascot.color;
 
 /** Țepii: zigzag pe spatele ariciului (de la ceafă, peste creștet, până jos la spate). */
 function spikesPath(cx: number, cy: number, inner: number, outer: number, from: number, to: number, count: number) {

@@ -9,6 +9,9 @@ import { adobeClientId } from "./modules/adobe/AdobePdfViewer";
 import { RecordButton } from "./modules/demo/RecordButton";
 import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
+import { ScenarioHome } from "./pages/ScenarioHome";
+import { scenario } from "./scenario/config";
+import { mainNav, showMascot, teamNav } from "./scenario/nav";
 import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
 import { LiveProvider } from "./lib/live";
 import { outbox, people, reports, requests } from "./scenario/model";
@@ -32,27 +35,13 @@ const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
 const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
 const Loading = () => <p className="p-6 text-sm text-slate-500">Se încarcă…</p>;
 
-export const NAV_GROUPS = [
-  {
-    label: "Validare",
-    items: [
-      { href: "/business", label: "Business canvas" },
-      { href: "/survey", label: "Sondaj" },
-    ],
-  },
-  {
-    label: "Rețete",
-    items: [
-      { href: "/docs", label: "Documente" },
-      { href: "/design", label: "Design editabil" },
-      { href: "/assistant", label: "Asistent" },
-      { href: "/harta", label: "Harta cererilor" },
-      { href: "/profil", label: "Profilul meu" },
-      { href: "/clasament", label: "Clasament" },
-    ],
-  },
-  { label: "Unelte", items: [{ href: "/ai", label: "AI" }] },
-];
+const S = scenario;
+
+// Meniul vine din scenariu (src/scenario/nav.ts): un singur drum pentru juriu. Restul (validare,
+// rețetele vechi, ghidul template-ului) stă la „Pentru echipă” și dispare cu features.optionalModules = false.
+const MAIN_NAV = mainNav(S);
+const TEAM_NAV = teamNav(S);
+export const NAV_GROUPS = [{ label: "", items: MAIN_NAV }, ...(TEAM_NAV.length ? [{ label: "Pentru echipă", items: TEAM_NAV }] : [])];
 
 /** Paginile deschise pe telefon din QR: fără meniu. */
 const BARE: Array<[string, ComponentType]> = [
@@ -103,19 +92,26 @@ function Shell() {
       <header className="sticky top-0 z-[1100] border-b print:hidden border-slate-800 bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
           <Link href="/" className="font-bold tracking-tight">
-            ⚡ {import.meta.env.VITE_APP_NAME || "Hackathon Template"}
+            {import.meta.env.VITE_APP_NAME || S.app.name}
           </Link>
           <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            {NAV_GROUPS.map((g) => (
-              <div key={g.label} className="flex items-center gap-0.5">
-                <span className="mr-1 text-[10px] font-semibold uppercase tracking-wider text-slate-600">{g.label}</span>
-                {g.items.map((n) => (
-                  <Link key={n.href} href={n.href} className={`rounded-lg px-2 py-1 ${location === n.href ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`}>
-                    {n.label}
-                  </Link>
-                ))}
-              </div>
+            {MAIN_NAV.map((n) => (
+              <Link key={n.href} href={n.href} className={`rounded-lg px-2 py-1 ${location === n.href ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`}>
+                {n.label}
+              </Link>
             ))}
+            {TEAM_NAV.length > 0 && (
+              <details className="relative">
+                <summary className="cursor-pointer list-none rounded-lg px-2 py-1 text-xs text-slate-500 hover:text-white">Pentru echipă ▾</summary>
+                <div className="absolute left-0 z-[1300] mt-1 flex w-48 flex-col rounded-xl border border-slate-800 bg-slate-950 p-1 shadow-xl">
+                  {TEAM_NAV.map((n) => (
+                    <Link key={n.href} href={n.href} className={`rounded-lg px-3 py-1.5 ${location === n.href ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`}>
+                      {n.label}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            )}
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <RoleSwitcher />
@@ -138,7 +134,8 @@ function Shell() {
       <main className="mx-auto max-w-6xl px-4 py-8 print:max-w-none print:p-0">
         <Suspense fallback={<Loading />}>
         <Switch>
-          <Route path="/">
+          <Route path="/" component={ScenarioHome} />
+          <Route path="/start">
             <HomePage status={status} />
           </Route>
           <Route path="/docs" component={DocsPage} />
@@ -159,7 +156,7 @@ function Shell() {
         </Switch>
         </Suspense>
       </main>
-      <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />
+      {showMascot(S, location) && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
     </div>
   );
 }

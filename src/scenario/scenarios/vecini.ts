@@ -67,6 +67,7 @@ export const vecini = defineScenario({
     color: "#8b5e3c",
     persona: "un arici prietenos care vorbește rar și clar, pentru oameni în vârstă",
     tour: true,
+    hiddenOn: ["/business", "/survey", "/start"],
   },
   seed: {
     people: [

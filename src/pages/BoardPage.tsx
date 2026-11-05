@@ -321,7 +321,7 @@ export function BoardPage() {
               </div>
             </Card>
           )}
-          <Card title={`Toate ${S.request.plural} (${visible.length})`}>
+          <Card title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} (${visible.length})`}>
             <ul className="space-y-1" data-testid="request-list">
               {visible.map((r) => (
                 <li key={r.id}>

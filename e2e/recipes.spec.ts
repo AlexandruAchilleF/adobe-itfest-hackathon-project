@@ -11,10 +11,17 @@ async function offline(page: Page) {
 
 test.beforeEach(async ({ page }) => offline(page));
 
-test("start: tema → rețeta potrivită", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Un om, un input haotic/ })).toBeVisible();
-  await page.getByRole("link", { name: "Documente → răspunsuri verificate →" }).first().click();
+test("start: produsul pentru juriu, ghidul pentru echipă", async ({ page }) => {
+  await page.goto("/?demo=1");
+  await expect(page.getByRole("heading", { name: "Vecin la nevoie" })).toBeVisible();
+  await expect(page.getByTestId("impact")).toContainText("livrări confirmate de ambele părți");
+  await page.getByRole("button", { name: /Sunt vârstnic/ }).click();
+  await expect(page).toHaveURL(/\/harta$/);
+  await expect(page.getByLabel(/Ce îți lipsește/)).toBeVisible();
+
+  await page.goto("/start");
+  await expect(page.getByText("✓ Config-ul trece verificările")).toBeVisible();
+  await page.getByRole("link", { name: "Documente → răspunsuri verificate →" }).click();
   await expect(page).toHaveURL(/\/docs$/);
 });
 
@@ -102,7 +109,7 @@ test("/api/health și AI structurat", async ({ page, request }) => {
 test("tipărire: fără meniu și fără antetul paginii", async ({ page }) => {
   await page.goto("/docs?demo=1");
   await page.emulateMedia({ media: "print" });
-  await expect(page.getByRole("link", { name: "Business canvas" })).toBeHidden();
+  await expect(page.getByRole("link", { name: "Profilul meu" })).toBeHidden();
   await expect(page.getByRole("heading", { name: /Documente → răspunsuri verificate/ })).toBeHidden();
 });
 
@@ -114,7 +121,7 @@ test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }
   await box.getByRole("button", { name: "↵" }).click();
   await expect(page.getByTestId("outline")).toContainText("2.2 Capacitatea tehnică");
 
-  await box.getByLabel(/Mesaj pentru/).fill("du-mă la harta cererilor");
+  await box.getByLabel(/Mesaj pentru/).fill("du-mă la hartă");
   await box.getByRole("button", { name: "↵" }).click();
   await expect(page).toHaveURL(/\/harta/);
 });
