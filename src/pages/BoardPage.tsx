@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
+import { confirmationReward, giverStats } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { type Actor, apply, availableEvents, createRequest, isExpired, type LifecycleEvent, type Request } from "../lib/lifecycle";
 import { type Rec, useCollection } from "../lib/store";
@@ -58,7 +59,9 @@ export function BoardPage() {
   const [origin, setOrigin] = useState<(LatLng & { label: string }) | null>(null);
   const [matches, setMatches] = useState<Array<{ id: string; score: number; why: string }>>([]);
 
-  const actor: Actor | null = me ? { handle: me.handle, role: me.role } : null;
+  const [notice, setNotice] = useState<string | null>(null);
+  const all = items.map((r) => r.data);
+  const actor: Actor | null = me ? { handle: me.handle, role: me.role, suspended: me.role === "giver" && giverStats(me.handle, all, S).suspended } : null;
   const mine = (r: Request) => r.receiver === me?.handle || r.giver === me?.handle;
   const visible = items.filter((r) => (filter === "toate" ? true : filter === "ale mele" ? mine(r.data) : r.data.category === filter));
   const points = useMemo(
@@ -84,6 +87,17 @@ export function BoardPage() {
       const next = apply(rec.data, event, actor);
       await update(rec.id, next);
       setSelected(rec.id);
+      if (event === "confirm" && next.giver) {
+        // punctele le calculează codul din istoric; mascota doar le anunță
+        const after = items.map((r) => (r.id === rec.id ? next : r.data));
+        const reward = confirmationReward(all, after, next.giver, S);
+        const msg = `+${reward.gained} puncte pentru ${nameOf(next.giver)}${reward.rankUp ? `. Rang nou: ${reward.rankUp.name}!` : ""}`;
+        setNotice(msg);
+        mascot.say(msg, "celebrate");
+      } else if (event === "dispute") {
+        setNotice(`Am notat „nu am primit”. ${nameOf(rec.data.giver)} pierde ${S.points.disputePenalty} puncte.`);
+        mascot.say("Am notat că n-a ajuns. Nu se mai socotește ca livrare.", "worried");
+      } else setNotice(null);
     } catch (err) {
       fail(err);
     } finally {
@@ -227,6 +241,16 @@ export function BoardPage() {
         </div>
       </PageHeader>
       <ErrorNote error={dbError} />
+      {notice && (
+        <p role="status" className="mb-4 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3 text-sm text-accent" data-testid="notice">
+          {notice}
+        </p>
+      )}
+      {actor?.suspended && (
+        <p role="alert" className="mb-4 rounded-xl border border-rose-500/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+          Contul tău e suspendat după prea multe „nu am primit”. Nu mai poți accepta {S.request.plural} noi.
+        </p>
+      )}
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap gap-1">

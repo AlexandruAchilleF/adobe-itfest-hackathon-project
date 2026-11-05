@@ -70,3 +70,23 @@ test("două tab-uri: ce acceptă vecinul apare la vârstnic fără refresh", asy
   await page.getByTestId("steps").getByRole("button", { name: "Mă ocup eu" }).click();
   await expect(other.getByTestId("request-list").locator("li", { hasText: "Apă plată, 6 sticle" })).toContainText("acceptat", { timeout: 8000 });
 });
+
+test("gamificare: confirmarea dă puncte, profilul și clasamentul se schimbă", async ({ page }) => {
+  await fresh(page, "elena");
+  await page.goto("/clasament?demo=1");
+  const board = page.getByTestId("leaderboard");
+  await expect(board.locator("li").first()).toContainText("Mihai Stan");
+  await expect(board.locator("li", { hasText: "Elena Dobre" })).toContainText("0");
+
+  // Elena a livrat apa pentru weekend; domnul Georgescu confirmă
+  await page.goto("/harta?demo=1&ca=domnul-georgescu");
+  await page.getByTestId("request-list").getByRole("button", { name: /Apă pentru weekend/ }).click();
+  await page.getByTestId("steps").getByRole("button", { name: "Am primit", exact: true }).click();
+  await expect(page.getByTestId("notice")).toContainText("+44 puncte pentru Elena Dobre. Rang nou: Vecin de încredere!");
+
+  await page.goto("/clasament?demo=1");
+  await expect(board.locator("li").first()).toContainText("Elena Dobre");
+  await page.goto("/profil?demo=1&ca=elena");
+  await expect(page.getByTestId("profile-points")).toContainText("44");
+  await expect(page.getByTestId("profile-rank")).toContainText("Vecin de încredere");
+});

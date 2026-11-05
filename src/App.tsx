@@ -23,6 +23,8 @@ const BusinessPage = page(() => import("./pages/BusinessPage"), "BusinessPage");
 const DesignPage = page(() => import("./pages/DesignPage"), "DesignPage");
 const DocsPage = page(() => import("./pages/DocsPage"), "DocsPage");
 const BoardPage = page(() => import("./pages/BoardPage"), "BoardPage");
+const ProfilePage = page(() => import("./pages/ProfilePage"), "ProfilePage");
+const LeaderboardPage = page(() => import("./pages/LeaderboardPage"), "LeaderboardPage");
 const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
@@ -43,6 +45,8 @@ export const NAV_GROUPS = [
       { href: "/design", label: "Design editabil" },
       { href: "/assistant", label: "Asistent" },
       { href: "/harta", label: "Harta cererilor" },
+      { href: "/profil", label: "Profilul meu" },
+      { href: "/clasament", label: "Clasament" },
     ],
   },
   { label: "Unelte", items: [{ href: "/ai", label: "AI" }] },
@@ -137,6 +141,8 @@ function Shell() {
           <Route path="/design" component={DesignPage} />
           <Route path="/assistant" component={AssistantPage} />
           <Route path="/harta" component={BoardPage} />
+          <Route path="/profil" component={ProfilePage} />
+          <Route path="/clasament" component={LeaderboardPage} />
           <Route path="/map">
             <Redirect to="/harta" />
           </Route>
