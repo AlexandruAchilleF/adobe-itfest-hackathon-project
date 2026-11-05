@@ -91,7 +91,7 @@ export function AssistantPage() {
       }),
       defineAction({
         name: "request_step",
-        description: `Face un pas din fluxul cererii, ca utilizatorul curent: ${scenario.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
+        description: `Face un pas în flux, ca utilizatorul curent: ${scenario.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
         args: z.object({ id: z.string().describe("id-ul din lista de context"), event: z.enum(EVENTS) }),
         run: async ({ id, event }) => {
           const r = itemsRef.current.find((x) => x.id === id);

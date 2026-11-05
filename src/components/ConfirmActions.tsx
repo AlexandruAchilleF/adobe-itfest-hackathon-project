@@ -21,8 +21,14 @@ export function ConfirmActions({ pending, describe }: { pending: PendingConfirma
               onChange={(e) => setChecked(values.map((v, j) => (j === i ? e.target.checked : v)))}
             />
             <span>
-              <b>{c.description}</b>
-              <span className="block font-mono text-xs text-slate-400">{describe ? describe(c.name, c.args) : JSON.stringify(c.args)}</span>
+              {c.summary ? (
+                <b>{c.summary}</b>
+              ) : (
+                <>
+                  <b>{c.description}</b>
+                  <span className="block font-mono text-xs text-slate-400">{describe ? describe(c.name, c.args) : JSON.stringify(c.args)}</span>
+                </>
+              )}
             </span>
           </li>
         ))}

@@ -5,6 +5,7 @@
 // Tot textul de domeniu vine din src/scenario/config.ts.
 
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "wouter";
 import { z } from "zod";
 import { QrPanel } from "../components/QrPanel";
 import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
@@ -12,6 +13,7 @@ import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
 import { checkDocument, Doc } from "../lib/checks";
 import { giverStats } from "../lib/gamification";
+import { formatDuration, segments } from "../lib/metrics";
 import { useMe } from "../lib/identity";
 import { type Actor, available, createRequest, isExpired, type Request, stateOf, toneOf, waitingOn } from "../lib/flow";
 import { ageLabel, ageMinutes, freshness, visibleReports } from "../lib/reports";
@@ -103,6 +105,16 @@ export function BoardPage() {
   );
   const points = [...requestPoints, ...reportPoints];
   const sel = items.find((r) => r.id === selected) ?? null;
+
+  // mascota spune când cererea deschisă stă de mult la cineva (stare reală, calculată din istoric)
+  useEffect(() => {
+    if (!sel) return;
+    const cur = segments(S.flow, sel.data).find((x) => x.current);
+    if (cur && cur.minutes >= 24 * 60) {
+      const who = cur.who ? nameOf(cur.who) : cur.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(" sau ");
+      mascot.say(`„${sel.data.title}” stă la ${who} de ${formatDuration(cur.minutes)}. Vezi „Unde se blochează”.`, "worried");
+    }
+  }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
   // documentele atașate cererilor (bonuri, facturi), pentru verificarea de duplicate
   const docOf = (r: Rec<Request>) => {
     const parsed = Doc.safeParse(r.data.extra?.doc);
@@ -204,9 +216,15 @@ export function BoardPage() {
     }
   }
 
-  const byTitle = (input: string) => {
-    const w = input.toLowerCase();
-    return items.find((r) => r.data.title.toLowerCase().split(/\s+/).some((t) => t.length > 3 && w.includes(t))) ?? sel ?? items[0];
+  // pentru modul demo: cererea la care se referă fraza („aprobă decontul lui Andrei”), preferând-o pe cea
+  // la care pasul chiar se poate face acum de omul curent
+  const byTitle = (input: string, event?: string) => {
+    const w = input.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const norm = (x: string) => x.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const words = (x: string) => norm(x).split(/[\s,]+/).filter((t) => t.length > 3);
+    const pool = event && actor ? items.filter((r) => available(S.flow, r.data, actor).some((t) => t.id === event)) : items;
+    const hit = (r: Rec<Request>) => [...words(r.data.title), ...words(nameOf(r.data.requester))].some((t) => w.includes(t));
+    return pool.find(hit) ?? items.find(hit) ?? pool[0] ?? sel ?? items[0];
   };
   const EVENT_IDS = S.flow.transitions.map((t) => t.id) as [string, ...string[]];
 
@@ -226,7 +244,11 @@ export function BoardPage() {
       defineAction({
         name: "request_step",
         kind: "write",
-        description: `Face un pas pentru o ${S.request.singular}: ${S.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
+        description: `Face un pas în flux (${S.request.singular}): ${S.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
+        describe: ({ id, event }) => {
+          const r = items.find((x) => x.id === id);
+          return `${S.flow.transitions.find((t) => t.id === event)?.label ?? event}: „${r?.data.title ?? id}”${r ? ` (${r.data.quantity} ${r.data.unit}, ${nameOf(r.data.requester)})` : ""}`;
+        },
         args: z.object({ id: z.string().describe("id-ul din context"), event: z.enum(EVENT_IDS) }),
         run: async ({ id, event }) => {
           const rec = items.find((r) => r.id === id);
@@ -238,7 +260,7 @@ export function BoardPage() {
           const t = input.toLowerCase();
           // pasul al cărui text apare cel mai bine în cerere („nu am primit” bate „am primit”)
           const event = [...S.flow.transitions].sort((a, b) => b.label.length - a.label.length).find((x) => t.includes(x.label.toLowerCase()))?.id ?? S.flow.transitions[0].id;
-          return { id: byTitle(input)?.id ?? "", event };
+          return { id: byTitle(input, event)?.id ?? "", event };
         },
       }),
       ...(S.features.matching
@@ -355,6 +377,9 @@ export function BoardPage() {
               <div className="mt-4">
                 <Timeline r={sel.data} nameOf={nameOf} />
               </div>
+              <Link href={`/fisa/${sel.id}`} className="mt-3 inline-block text-sm text-accent hover:underline">
+                Fișa pentru tipărit (PDF) →
+              </Link>
             </Card>
           )}
           <Card title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} (${visible.length})`}>

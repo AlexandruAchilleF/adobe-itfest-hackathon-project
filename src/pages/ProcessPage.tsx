@@ -2,6 +2,8 @@
 // Costul în bani se calculează doar din cifrele introduse de om (din interviuri), nu din presupuneri.
 
 import { useState } from "react";
+import { z } from "zod";
+import { defineAction } from "../lib/agent";
 import { Button, Card, PageHeader } from "../components/ui";
 import { useMe } from "../lib/identity";
 import { formatDuration, monthlyCost, processStats } from "../lib/metrics";
@@ -29,7 +31,39 @@ export function ProcessPage() {
 
   useMascotPage({
     title: "Unde se blochează",
-    context: () => `Blocaj: ${st.bottleneck?.label ?? "—"}. Cea mai veche așteptare: ${longest ? `${longest.title}, ${formatDuration(longest.minutes)}` : "—"}.`,
+    context: () => [`Blocaj: ${st.bottleneck?.label ?? "—"}.`, ...st.waiting.map((w) => `id=${w.id} | ${w.title} | așteaptă de ${formatDuration(w.minutes)} | la ${w.who ? nameOf(w.who) : w.waitingOn.join(", ")}`)].join("\n"),
+    actions: [
+      defineAction({
+        name: "send_reminder",
+        kind: "write",
+        description: `Trimite un reminder (${S.notify.channel}) omului la care așteaptă ceva (${S.request.singular})`,
+        describe: ({ id }) => {
+          const w = st.waiting.find((x) => x.id === id);
+          return w ? `Trimite ${S.notify.channel.toUpperCase()} către ${w.who ? nameOf(w.who) : w.waitingOn.map((r) => roleOf(r).label).join(", ")}: „${w.title}” așteaptă de ${formatDuration(w.minutes)}` : "Trimite un reminder";
+        },
+        args: z.object({ id: z.string().describe("id-ul din context") }),
+        run: async ({ id }) => {
+          const w = st.waiting.find((x) => x.id === id);
+          if (!w) throw new Error("nu așteaptă nimic cu id-ul ăsta");
+          await remind(w);
+        },
+        examples: ["amintește-i celui care întârzie", "trimite un reminder", "grăbește-l pe contabil"],
+        mockArgs: (input: string) => {
+          const t = input.toLowerCase();
+          const match = st.waiting.find((w) => w.waitingOn.some((r) => t.includes(roleOf(r).label.toLowerCase())) || (w.who && t.includes(nameOf(w.who).split(" ")[0].toLowerCase())));
+          return { id: (match ?? longest)?.id ?? "" };
+        },
+      }),
+      defineAction({
+        name: "explain_bottleneck",
+        kind: "read",
+        description: "Spune unde se pierde cel mai mult timp",
+        args: z.object({}),
+        run: () => mascot.say(st.bottleneck ? `Cel mai mult se așteaptă la „${st.bottleneck.label}”: în medie ${formatDuration(st.bottleneck.avgMinutes)}.` : "Încă nu sunt date.", "idle"),
+        examples: ["unde se blochează", "ce durează cel mai mult"],
+        mockArgs: {},
+      }),
+    ],
   });
 
   async function remind(w: (typeof st.waiting)[number]) {

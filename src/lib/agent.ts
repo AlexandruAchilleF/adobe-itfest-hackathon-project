@@ -33,12 +33,16 @@ export interface AgentAction<A extends AnyArgs = AnyArgs> {
   examples?: string[];
   /** Argumentele folosite în modul demo (sau o funcție care le construiește din cerere). */
   mockArgs?: z.infer<A> | ((input: string) => z.infer<A>);
+  /** Ce va face, în cuvinte, pentru pasul de confirmare (ex: „Aprobă „Prânz cu clientul” (236 lei)”). */
+  describe?: (args: z.infer<A>) => string;
 }
 
 export interface PlannedCall {
   name: string;
   description: string;
   args: unknown;
+  /** textul pentru om, dacă acțiunea are `describe` */
+  summary?: string;
 }
 
 export function defineAction<A extends AnyArgs>(action: AgentAction<A>): AgentAction {
@@ -153,7 +157,7 @@ export async function runAgent(opts: RunOptions): Promise<AgentTurn> {
   const writes = checked.filter((c) => c.action && (c.action.kind ?? "write") === "write");
   const approved = new Set<Checked>();
   if (opts.confirm && writes.length) {
-    const answers = await opts.confirm(writes.map((c) => ({ name: c.name, description: c.action!.description, args: c.args })));
+    const answers = await opts.confirm(writes.map((c) => ({ name: c.name, description: c.action!.description, args: c.args, ...(c.action!.describe ? { summary: c.action!.describe(c.args as never) } : {}) })));
     writes.forEach((c, i) => answers[i] && approved.add(c));
   } else {
     writes.forEach((c) => approved.add(c));

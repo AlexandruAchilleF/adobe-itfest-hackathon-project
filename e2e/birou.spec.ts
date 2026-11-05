@@ -92,3 +92,48 @@ test("cronometrul: unde se blochează, cine așteaptă, reminder, cost din cifre
   await page.getByLabel("cost orar (lei)").fill("60");
   await expect(page.getByTestId("process-cost")).toContainText("30 ore și 1.800 lei pe lună");
 });
+
+test("mascota: „aprobă decontul lui Andrei” cere confirmarea, apoi aprobă", async ({ page }) => {
+  await fresh(page, "maria");
+  await page.getByTestId("mascot").getByRole("button", { name: /Vorbește cu Bonița/ }).click();
+  const box = page.getByRole("dialog", { name: /Vorbește cu Bonița/ });
+  await box.getByLabel(/Mesaj pentru/).fill("aprobă decontul lui Andrei");
+  await box.getByRole("button", { name: "↵" }).click();
+  const confirm = page.getByRole("dialog", { name: "Confirmă acțiunile" });
+  await expect(confirm).toContainText("Aprobă: „Prânz cu clientul” (236 lei, Andrei Munteanu)");
+  await confirm.getByRole("button", { name: "Aprobă" }).click();
+  await expect(page.getByTestId("request-list").locator("li", { hasText: "Prânz cu clientul" })).toContainText("aprobat, de plătit");
+});
+
+test("cererea care stă de mult: mascota spune la cine; reminder din conversație", async ({ page }) => {
+  await fresh(page, "irina");
+  await page.getByTestId("request-list").getByRole("button", { name: /Taxi aeroport/ }).click();
+  await expect(page.getByTestId("mascot")).toContainText("„Taxi aeroport” stă la contabil de 3 zile");
+
+  await page.goto("/cronometru?demo=1");
+  await expect(page.getByTestId("process-waiting")).toContainText("Taxi aeroport");
+  await page.getByTestId("mascot").getByRole("button", { name: /Vorbește cu Bonița/ }).click();
+  const box = page.getByRole("dialog", { name: /Vorbește cu Bonița/ });
+  await box.getByLabel(/Mesaj pentru/).fill("trimite un reminder la contabil");
+  await box.getByRole("button", { name: "↵" }).click();
+  const confirm = page.getByRole("dialog", { name: "Confirmă acțiunile" });
+  await expect(confirm).toContainText("Trimite SMS către Contabil: „Taxi aeroport” așteaptă de 3 zile");
+  await confirm.getByRole("button", { name: "Aprobă" }).click();
+  await expect(page.getByText("Reminder simulat către Irina Vasile.")).toBeVisible();
+});
+
+test("fișa pentru tipărit: faptele din date, rezumatul propus și editabil", async ({ page }) => {
+  await fresh(page, "ioana");
+  await page.getByTestId("request-list").getByRole("button", { name: /Benzină deplasare/ }).click();
+  await page.getByRole("link", { name: /Fișa pentru tipărit/ }).click();
+  const rec = page.getByTestId("record");
+  await expect(rec).toContainText("Valoare: 210 lei");
+  await expect(rec).toContainText("Manager: Maria Constantin");
+  await expect(rec).toContainText("✓ Cod fiscal");
+  const summary = rec.getByLabel("Rezumat");
+  await expect(summary).toHaveValue(/Ioana Petrescu a solicitat „Benzină deplasare Ploiești”/);
+  await summary.fill("Deplasare aprobată pentru clientul din Ploiești.");
+  await page.emulateMedia({ media: "print" });
+  await expect(rec.getByRole("button", { name: /Tipărește/ })).toBeHidden();
+  await expect(rec).toContainText("Ioana Petrescu a confirmat că a primit banii");
+});
