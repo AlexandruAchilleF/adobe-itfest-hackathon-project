@@ -4,8 +4,6 @@ import { auditDesign, autoFixDesign, estimateTextHeight } from "../src/lib/acces
 import { defineAction, mockPlan, runAgent } from "../src/lib/agent";
 import type { Design } from "../src/lib/design";
 import { createCollection, memoryBackend } from "../src/lib/store";
-import { distanceKm } from "../src/modules/map/geo";
-import { baselineScore, Need, seedNeeds } from "../src/recipes/needs";
 
 describe("store (CRUD cu seed)", () => {
   const Item = z.object({ name: z.string(), n: z.number() });
@@ -38,24 +36,22 @@ describe("store (CRUD cu seed)", () => {
     expect((await c.list()).map((r) => r.data.name)).toEqual(["bun"]);
   });
 
+  it("două tab-uri pe același storage văd scrierile celuilalt (două roluri în demo)", async () => {
+    const mem: Record<string, string> = {};
+    const storage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => void (mem[k] = v) };
+    const tabA = createCollection("t5", Item, [], memoryBackend(storage));
+    const tabB = createCollection("t5", Item, [], memoryBackend(storage));
+    expect(await tabB.list()).toHaveLength(0);
+    await tabA.add({ name: "din A", n: 1 });
+    expect((await tabB.list()).map((r) => r.data.name)).toEqual(["din A"]);
+  });
+
   it("persistă în storage dacă e dat", async () => {
     const mem: Record<string, string> = {};
     const storage = { getItem: (k: string) => mem[k] ?? null, setItem: (k: string, v: string) => void (mem[k] = v) };
     await createCollection("t4", Item, [], memoryBackend(storage)).add({ name: "x", n: 1 });
     const again = createCollection("t4", Item, [], memoryBackend(storage));
     expect((await again.list())[0].data.name).toBe("x");
-  });
-});
-
-describe("domeniul exemplu: nevoi + potrivire", () => {
-  it("datele de seed respectă schema", () => seedNeeds.forEach((n) => expect(Need.safeParse(n).success).toBe(true)));
-  it("distanța București Nord–Titan e plauzibilă", () => expect(distanceKm({ lat: 44.4466, lng: 26.0731 }, { lat: 44.416, lng: 26.173 })).toBeGreaterThan(7));
-  it("scorul favorizează urgența și apropierea, iar rezolvatele au 0", () => {
-    const origin = { lat: 44.416, lng: 26.173 };
-    const near = { ...seedNeeds[3], urgency: 5, lat: 44.417, lng: 26.172 };
-    const far = { ...near, lat: 44.5, lng: 25.9 };
-    expect(baselineScore(near, origin)).toBeGreaterThan(baselineScore(far, origin));
-    expect(baselineScore({ ...near, status: "rezolvat" }, origin)).toBe(0);
   });
 });
 

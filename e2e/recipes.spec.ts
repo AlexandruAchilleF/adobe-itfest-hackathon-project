@@ -54,43 +54,26 @@ test("design: generează, auditul găsește probleme, repararea le rezolvă, QR"
   await expect(page.getByAltText(/Cod QR/)).toBeVisible();
 });
 
-test("hartă: datele de seed, adăugare în limbaj natural cu verificare, potrivire", async ({ page }) => {
-  await page.goto("/map?demo=1");
-  await page.getByRole("button", { name: "Resetează datele demo" }).click();
-  await expect(page.getByText("8 înregistrări")).toBeVisible();
-  await expect(page.locator(".leaflet-interactive")).toHaveCount(8);
-
-  await page.getByPlaceholder(/La cantina de pe Calea Moșilor/).fill("Școala din Titan are nevoie de 10 laptopuri pentru elevi");
-  await page.getByRole("button", { name: "Structurează" }).click();
-  await expect(page.getByText("Verifică înainte să salvezi:")).toBeVisible();
-  await page.getByLabel("Categorie").selectOption("educație");
-  await page.getByRole("button", { name: "Salvează pe hartă" }).click();
-  await expect(page.getByText("9 înregistrări")).toBeVisible();
-
-  await page.getByRole("button", { name: "Găsește potriviri" }).click();
-  await expect(page.getByText(/\/100/).first()).toBeVisible();
-});
-
 test("asistent: citește direct, modificarea cere aprobare", async ({ page }) => {
-  await page.goto("/map?demo=1");
+  await page.goto("/harta?demo=1&ca=andrei");
   await page.getByRole("button", { name: "Resetează datele demo" }).click();
-  await expect(page.getByText("8 înregistrări")).toBeVisible();
+  await expect(page.getByText("8 cereri")).toBeVisible();
   await page.goto("/assistant?demo=1");
-  const input = page.getByPlaceholder(/marchează păturile/);
+  const input = page.getByPlaceholder(/cererile urgente/);
 
-  await input.fill("arată-mi nevoile urgente");
+  await input.fill("arată-mi cererile urgente");
   await page.getByRole("button", { name: "Trimite" }).click();
-  await expect(page.getByText("✓ find_needs")).toBeVisible();
+  await expect(page.getByText("✓ find_requests")).toBeVisible();
   await expect(page.getByText(/Rezultate \(\d+\)/)).toBeVisible();
 
-  await input.fill("marchează păturile ca rezolvat");
+  await input.fill("mă ocup eu de apă plată");
   await page.getByRole("button", { name: "Trimite" }).click();
   const dialog = page.getByRole("dialog", { name: "Confirmă acțiunile" });
-  await expect(dialog).toContainText("„Pături și saci de dormit” → rezolvat");
+  await expect(dialog).toContainText("„Apă plată, 6 sticle” → Mă ocup eu");
   await dialog.getByRole("button", { name: "Aprobă" }).click();
-  await expect(page.getByText("✓ set_status")).toBeVisible();
+  await expect(page.getByText("✓ request_step")).toBeVisible();
   await page.getByRole("button", { name: "Arată tot" }).click();
-  await expect(page.getByTestId("needs-list").locator("li", { hasText: "Pături și saci de dormit" })).toContainText("rezolvat");
+  await expect(page.getByTestId("assistant-list").locator("li", { hasText: "Apă plată, 6 sticle" })).toContainText("acceptat");
 });
 
 test("validare: business canvas → sondaj → rezultate pentru pitch", async ({ context, page }) => {
@@ -131,9 +114,9 @@ test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }
   await box.getByRole("button", { name: "↵" }).click();
   await expect(page.getByTestId("outline")).toContainText("2.2 Capacitatea tehnică");
 
-  await box.getByLabel(/Mesaj pentru/).fill("du-mă la hartă");
+  await box.getByLabel(/Mesaj pentru/).fill("du-mă la harta cererilor");
   await box.getByRole("button", { name: "↵" }).click();
-  await expect(page).toHaveURL(/\/map/);
+  await expect(page).toHaveURL(/\/harta/);
 });
 
 test("mascota: turul ghidat evidențiază pașii (?tour=1 pentru pitch)", async ({ page }) => {

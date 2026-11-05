@@ -1,26 +1,35 @@
 // Rețeta ASISTENT AI („vorbește cu aplicația"): cererile în limbaj natural devin acțiuni
 // reale pe date. Citirile se execută direct; ORICE modificare așteaptă aprobarea omului.
-// Aici: un coordonator de voluntari care lucrează pe aceleași date ca harta.
+// Aici: aceleași cereri ca pe hartă (src/scenario/config.ts), cu pașii din ciclul lor.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { ConfirmActions } from "../components/ConfirmActions";
 import { Button, Card, Code, ErrorNote, PageHeader, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
+import { useMe } from "../lib/identity";
+import { apply, createRequest, type Request, STATES } from "../lib/lifecycle";
 import { type Rec, useCollection } from "../lib/store";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { geocode } from "../modules/map/geo";
 import { mascot } from "../modules/mascot/mascot";
 import { useMascotPage } from "../modules/mascot/page";
-import { CATEGORIES, CATEGORY_COLORS, type Need, needs, STATUSES } from "../recipes/needs";
+import { scenario } from "../scenario/config";
+import { categoryOf, requests } from "../scenario/model";
+import { StatusPill } from "../scenario/ui/parts";
 
 const ANY = "toate";
+const CAT_IDS = scenario.categories.map((c) => c.id) as [string, ...string[]];
+const EVENTS = ["accept", "cancel", "deliver", "confirm", "dispute", "reopen"] as const;
 
 export function AssistantPage() {
-  const { items, add, update, remove } = useCollection(needs);
+  const { items, add, update, remove } = useCollection(requests);
+  const { me } = useMe();
   const itemsRef = useRef(items);
   itemsRef.current = items;
-  const [shown, setShown] = useState<Array<Rec<Need>> | null>(null);
+  const meRef = useRef(me);
+  meRef.current = me;
+  const [shown, setShown] = useState<Array<Rec<Request>> | null>(null);
   const [text, setText] = useState("");
 
   const byTitle = (input: string) => {
@@ -31,12 +40,12 @@ export function AssistantPage() {
   const actions = useMemo(
     () => [
       defineAction({
-        name: "find_needs",
+        name: "find_requests",
         kind: "read",
-        description: "Caută și afișează nevoi după categorie, status, urgență minimă sau text",
+        description: `Caută și afișează ${scenario.request.plural} după categorie, status, urgență minimă sau text`,
         args: z.object({
-          category: z.enum([ANY, ...CATEGORIES]),
-          status: z.enum([ANY, ...STATUSES]),
+          category: z.enum([ANY, ...CAT_IDS]),
+          status: z.enum([ANY, ...STATES]),
           min_urgency: z.number().describe("1-5; 1 = toate"),
           text: z.string().describe("cuvinte de căutat în titlu/descriere/adresă; gol = oricare"),
         }),
@@ -52,45 +61,54 @@ export function AssistantPage() {
             ),
           );
         },
-        examples: ["arată-mi nevoile urgente", "ce e deschis la educație", "caută în Berceni"],
+        examples: ["arată-mi cererile urgente", "ce e deschis", "caută în Berceni"],
         mockArgs: { category: ANY, status: "deschis", min_urgency: 4, text: "" },
       }),
       defineAction({
-        name: "add_need",
-        description: "Adaugă o nevoie nouă",
+        name: "add_request",
+        description: `Adaugă o ${scenario.request.singular} nouă, în numele meu`,
         args: z.object({
           title: z.string(),
-          category: z.enum(CATEGORIES),
+          category: z.enum(CAT_IDS),
           description: z.string(),
-          quantity: z.string(),
+          quantity: z.number(),
+          unit: z.string(),
           urgency: z.number(),
           address: z.string(),
         }),
         run: async (a) => {
+          const who = meRef.current;
+          if (who?.role !== "receiver") throw new Error(`doar ${scenario.roles.receiver.label.toLowerCase()} poate cere`);
           const geo = await geocode(a.address);
-          await add({ ...a, urgency: Math.min(5, Math.max(1, Math.round(a.urgency))), lat: geo?.lat ?? 44.4268, lng: geo?.lng ?? 26.1025, status: "deschis", contact: "" });
+          await add(createRequest({ ...a, urgency: Math.min(5, Math.max(1, Math.round(a.urgency))), lat: geo?.lat ?? scenario.app.center.lat, lng: geo?.lng ?? scenario.app.center.lng, receiver: who.handle }));
         },
-        examples: ["adaugă o nevoie", "e nevoie de", "trebuie"],
-        mockArgs: (input) => ({ title: input.split(/\s+/).slice(0, 5).join(" "), category: "altele" as const, description: input, quantity: "", urgency: 3, address: "București" }),
+        examples: ["adaugă o cerere", "am nevoie de", "îmi trebuie"],
+        mockArgs: (input) => ({ title: input.split(/\s+/).slice(0, 5).join(" "), category: CAT_IDS.at(-1)!, description: input, quantity: 1, unit: "bucată", urgency: 3, address: "București" }),
       }),
       defineAction({
-        name: "set_status",
-        description: "Schimbă statusul unei nevoi (deschis / în lucru / rezolvat)",
-        args: z.object({ id: z.string().describe("id-ul din lista de context"), status: z.enum(STATUSES) }),
-        run: async ({ id, status }) => {
+        name: "request_step",
+        description: "Face un pas din ciclul cererii (accept, cancel, deliver, confirm, dispute, reopen), ca utilizatorul curent",
+        args: z.object({ id: z.string().describe("id-ul din lista de context"), event: z.enum(EVENTS) }),
+        run: async ({ id, event }) => {
           const r = itemsRef.current.find((x) => x.id === id);
-          if (!r) throw new Error("nu există o nevoie cu acest id");
-          await update(id, { ...r.data, status });
+          const who = meRef.current;
+          if (!r) throw new Error("nu există o cerere cu acest id");
+          if (!who) throw new Error("nu știu cine ești");
+          await update(id, apply(r.data, event, { handle: who.handle, role: who.role }));
         },
-        examples: ["marchează ca rezolvat", "s-a rezolvat", "e în lucru"],
-        mockArgs: (input) => ({ id: byTitle(input)?.id ?? "", status: "rezolvat" as const }),
+        examples: ["mă ocup eu de apă", "am livrat", "am primit", "nu am primit"],
+        mockArgs: (input) => {
+          const t = input.toLowerCase();
+          const event = t.includes("nu am primit") ? ("dispute" as const) : t.includes("primit") ? ("confirm" as const) : t.includes("livr") ? ("deliver" as const) : ("accept" as const);
+          return { id: byTitle(input)?.id ?? "", event };
+        },
       }),
       defineAction({
-        name: "delete_need",
-        description: "Șterge o nevoie",
+        name: "delete_request",
+        description: "Șterge o cerere",
         args: z.object({ id: z.string() }),
         run: async ({ id }) => remove(id),
-        examples: ["șterge nevoia"],
+        examples: ["șterge cererea"],
         mockArgs: (input) => ({ id: byTitle(input)?.id ?? "" }),
       }),
     ],
@@ -99,7 +117,7 @@ export function AssistantPage() {
 
   const agent = useVoiceAgent({
     actions,
-    persona: "Ești asistentul unui coordonator de voluntari dintr-un ONG din București. Răspunzi scurt, în română.",
+    persona: `Ești asistentul aplicației „${scenario.app.name}”. Utilizatorul curent: ${me?.name ?? "?"} (${me ? scenario.roles[me.role].label : "?"}). Răspunzi scurt, în română.`,
     context: () => itemsRef.current.map((r) => `id=${r.id} | ${r.data.title} | ${r.data.category} | ${r.data.status} | urgență ${r.data.urgency} | ${r.data.address}`).join("\n"),
   });
 
@@ -123,7 +141,7 @@ export function AssistantPage() {
   useMascotPage({
     title: "Asistent cu confirmare",
     tour: [
-      { target: "assist-input", text: "Cere ce vrei, cu vocea sau în scris: „ce e urgent?”, „marchează păturile ca rezolvate”." },
+      { target: "assist-input", text: "Cere ce vrei, cu vocea sau în scris: „ce e urgent?”, „am livrat apa”." },
       { target: "assist-list", text: "Citirile le fac direct. Orice modificare ți-o arăt întâi și o fac doar dacă aprobi." },
       { target: "assist-log", text: "Aici vezi tot ce am făcut și ce a fost respins: nimic nu se întâmplă pe ascuns." },
     ],
@@ -159,7 +177,7 @@ export function AssistantPage() {
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="ex: marchează păturile ca rezolvate"
+                placeholder="ex: arată-mi cererile urgente"
                 className="min-w-0 flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm"
               />
               <Button type="submit" disabled={!text.trim() || agent.thinking}>
@@ -172,9 +190,9 @@ export function AssistantPage() {
             pending={agent.pending}
             describe={(name, args) => {
               const a = args as Record<string, unknown>;
-              if (name === "set_status") return `„${titleOf(a.id)}” → ${a.status}`;
-              if (name === "delete_need") return `șterge „${titleOf(a.id)}”`;
-              if (name === "add_need") return `${a.title} · ${a.category} · urgență ${a.urgency} · ${a.address}`;
+              if (name === "request_step") return `„${titleOf(a.id)}” → ${scenario.request.actions[a.event as (typeof EVENTS)[number]]}`;
+              if (name === "delete_request") return `șterge „${titleOf(a.id)}”`;
+              if (name === "add_request") return `${a.title} · ${a.category} · urgență ${a.urgency} · ${a.address}`;
               return JSON.stringify(args);
             }}
           />
@@ -189,25 +207,23 @@ export function AssistantPage() {
                   </p>
                 </li>
               ))}
-              {!agent.log.length && <li className="text-slate-500">Încearcă: „ce nevoi urgente avem?” sau „marchează păturile ca rezolvate”.</li>}
+              {!agent.log.length && <li className="text-slate-500">Încearcă: „arată-mi cererile urgente” sau „mă ocup eu de apă”.</li>}
             </ul>
           </Card>
           <p className="text-xs text-slate-500">
             În cod: <Code>defineAction({"{ kind: \"read\" | \"write\", ... }"})</Code> + <Code>useVoiceAgent</Code> + <Code>{"<ConfirmActions />"}</Code>.
           </p>
         </div>
-        <Card tour="assist-list" title={shown ? `Rezultate (${list.length})` : `Toate nevoile (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
-          <ul className="space-y-2" data-testid="needs-list">
+        <Card tour="assist-list" title={shown ? `Rezultate (${list.length})` : `Toate ${scenario.request.plural} (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
+          <ul className="space-y-2" data-testid="assistant-list">
             {list.map((r) => (
               <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">
-                <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: CATEGORY_COLORS[r.data.category] }} />
+                <span className="shrink-0">{categoryOf(r.data.category).icon}</span>
                 <span className="min-w-0 flex-1">
                   <b>{r.data.title}</b> <span className="text-slate-400">· {r.data.address}</span>
                 </span>
                 <span className="text-xs text-slate-400">urgență {r.data.urgency}</span>
-                <span className={`rounded-full px-2 py-0.5 text-xs ${r.data.status === "rezolvat" ? "bg-emerald-500/20 text-emerald-300" : r.data.status === "în lucru" ? "bg-sky-500/20 text-sky-300" : "bg-amber-500/20 text-amber-300"}`}>
-                  {r.data.status}
-                </span>
+                <StatusPill status={r.data.status} />
               </li>
             ))}
           </ul>

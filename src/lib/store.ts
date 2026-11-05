@@ -26,8 +26,9 @@ const uid = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.ra
 /** Backend în memorie, cu persistență opțională (localStorage în browser). */
 export function memoryBackend(storage?: Pick<Storage, "getItem" | "setItem">): Backend {
   const mem = new Map<string, Array<Rec<unknown>>>();
+  // Cu storage, citim de fiecare dată din el: alt tab (alt rol în demo) poate fi scris între timp.
   const read = (c: string) => {
-    if (!mem.has(c)) {
+    if (storage || !mem.has(c)) {
       let rows: Array<Rec<unknown>> = [];
       try {
         rows = JSON.parse(storage?.getItem(`hackathon:db:${c}`) ?? "[]");
@@ -143,6 +144,18 @@ function collectionListeners(name: string) {
   let set = allListeners.get(name);
   if (!set) allListeners.set(name, (set = new Set()));
   return set;
+}
+
+/** Ascultă schimbările unei colecții din tab-ul ăsta (folosit de src/lib/live.ts). */
+export function subscribeCollection(name: string, listener: () => void): () => void {
+  const set = collectionListeners(name);
+  set.add(listener);
+  return () => void set.delete(listener);
+}
+
+/** Cere reîncărcarea unei colecții (ex: alt telefon a schimbat-o). */
+export function refreshCollection(name: string): void {
+  collectionListeners(name).forEach((l) => l());
 }
 
 /** Hook React: lista se reîncarcă automat după add/update/remove din orice componentă. */

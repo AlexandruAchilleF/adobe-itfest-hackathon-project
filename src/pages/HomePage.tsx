@@ -7,7 +7,7 @@ import { useMascotPage } from "../modules/mascot/page";
 const THEMES = [
   { theme: "Asistent AI / agenți / „vorbește cu aplicația”", odds: "~25%", recipe: "/assistant", name: "Asistent cu confirmare" },
   { theme: "Documente, PDF, „Rethink Reading”, educație", odds: "~20% + 5%", recipe: "/docs", name: "Documente → răspunsuri verificate" },
-  { theme: "Civic: Smart City, resurse, comunitate", odds: "~20%", recipe: "/map", name: "Hartă + potrivire" },
+  { theme: "Civic: Smart City, resurse, comunitate", odds: "~20%", recipe: "/harta", name: "Harta cererilor" },
   { theme: "Accesibilitate, design incluziv, conținut creativ", odds: "~10% + 7%", recipe: "/design", name: "Input haotic → design editabil" },
 ];
 
@@ -15,7 +15,7 @@ const RECIPES = [
   { href: "/docs", title: "Documente → răspunsuri verificate", flow: "PDF → structură JSON (local) → întrebare → răspuns cu citate verificate în text → salt la pagină", who: "ex: firma mică ce pierde o zi citind un caiet de sarcini ca să afle dacă poate licita" },
   { href: "/design", title: "Input haotic → design editabil", flow: "text / voce / poză → design propus de AI → editare → audit de lizibilitate + reparare → QR", who: "ex: magazinul online care trebuie să respecte cerințele de accesibilitate din 2025" },
   { href: "/assistant", title: "Asistent cu confirmare", flow: "cerere în limbaj natural → acțiuni pe date → omul aprobă orice modificare", who: "ex: coordonatorul de voluntari care lucrează din telefon" },
-  { href: "/map", title: "Hartă + potrivire", flow: "nevoi pe hartă → adăugare în limbaj natural → potrivire ofertă ↔ nevoie cu scor", who: "ex: ONG-ul care nu știe cine poate ajuta, unde" },
+  { href: "/harta", title: "Harta cererilor", flow: "nevoi pe hartă → adăugare în limbaj natural → potrivire ofertă ↔ nevoie cu scor", who: "ex: ONG-ul care nu știe cine poate ajuta, unde" },
 ];
 
 export function HomePage({ status }: { status: AppStatus }) {

@@ -20,8 +20,9 @@ UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`. La st
 - `src/components/EditableText.tsx`: text propus de AI, editabil de om (pentru fișe, rapoarte, oferte). Pentru tipărire, ascunde UI-ul cu `print:hidden`.
 - PDF-uri exemplu: HTML în `samples-src/` → `node scripts/make-sample-pdf.mjs samples-src/x.html` → `public/samples/x.pdf`.
 - `src/modules/mascot/`: mascota (Țepi), stratul care face ideea memorabilă. Orice pagină nouă apelează `useMascotPage({ title, actions, context, tour })`: `actions` sunt `defineAction` (Țepi le rulează din conversație, cele `write` cer aprobarea), `tour` sunt pași `{ target, text }` legați de elemente cu `data-tour` (sau `<Card tour="…">`). `?tour=1` pornește turul la pitch. Navigarea între pagini e globală (`MascotDock` primește rutele din `App.tsx`). `ask()` o pune automat pe „thinking” și „worried”; după o verificare folosește `mascot.say(mesaj, mood)` sau `moodForChecks(trecute, total)`. Nu o folosi ca decor: doar pentru stări reale.
-- `src/recipes/needs.ts`: domeniul exemplu (schemă, seed, scor). Acesta se schimbă după temă.
-- Rețetele: `src/pages/DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`, `MapPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
+- `src/scenario/config.ts`: **scenariul activ** (domeniul brief-ului: roluri, categorii, texte, puncte, ranguri, rapoarte, seed). Un scenariu e un fișier în `src/scenario/scenarios/`. Paginile nu au text de domeniu scris în ele: îl citesc din `scenario`. `src/scenario/model.ts`: schemele, colecțiile și `validateScenario`.
+- `src/lib/lifecycle.ts`: ciclul cererii (deschis → acceptat → livrat → confirmat / contestat), pur. `src/lib/identity.ts`: roluri fără login (`useMe`, `?ca=<handle>`). `src/lib/live.tsx`: sincronizare live peste `rooms`.
+- Pagina scenariului: `src/pages/BoardPage.tsx` (`/harta`). Rețetele opționale: `DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
 
 ## Reguli
 - Fiecare `ask()` primește un `mock` realist, construit din inputul utilizatorului dacă se poate. Fiecare `defineAction` are `examples` și `mockArgs`.

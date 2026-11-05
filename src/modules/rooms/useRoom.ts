@@ -97,10 +97,12 @@ export function useRoom<S = Record<string, unknown>>(
     };
   }, [code, me]);
 
-  // actualizează numele/meta în presence
+  // actualizează numele/meta în presence. `meta` vine des ca obiect nou la fiecare render
+  // (`meta: { role: "screen" }`), deci comparăm conținutul, altfel intră în buclă de render.
+  const metaKey = JSON.stringify(meta ?? null);
   useEffect(() => {
     transportRef.current?.updatePresence({ ...me, name, meta });
-  }, [name, meta, me]);
+  }, [name, metaKey, me]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = useCallback(
     (type: string, data: unknown = null) => transportRef.current?.send({ type, data, from: me.id }),

@@ -1,5 +1,5 @@
 import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
-import { Link, Route, Switch, useLocation } from "wouter";
+import { Link, Redirect, Route, Switch, useLocation } from "wouter";
 import type { HealthResponse } from "../shared/ai-contract";
 import { Pill } from "./components/ui";
 import { aiHealth } from "./lib/ai";
@@ -9,6 +9,9 @@ import { adobeClientId } from "./modules/adobe/AdobePdfViewer";
 import { RecordButton } from "./modules/demo/RecordButton";
 import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
+import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
+import { LiveProvider } from "./lib/live";
+import { people, requests } from "./scenario/model";
 
 // Fiecare pagină se încarcă doar când e deschisă (pdf.js, harta și Fabric sunt mari),
 // ca pagina de sondaj de pe telefon să pornească repede.
@@ -19,7 +22,7 @@ const AssistantPage = page(() => import("./pages/AssistantPage"), "AssistantPage
 const BusinessPage = page(() => import("./pages/BusinessPage"), "BusinessPage");
 const DesignPage = page(() => import("./pages/DesignPage"), "DesignPage");
 const DocsPage = page(() => import("./pages/DocsPage"), "DocsPage");
-const MapPage = page(() => import("./pages/MapPage"), "MapPage");
+const BoardPage = page(() => import("./pages/BoardPage"), "BoardPage");
 const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
@@ -39,7 +42,7 @@ export const NAV_GROUPS = [
       { href: "/docs", label: "Documente" },
       { href: "/design", label: "Design editabil" },
       { href: "/assistant", label: "Asistent" },
-      { href: "/map", label: "Hartă + potrivire" },
+      { href: "/harta", label: "Harta cererilor" },
     ],
   },
   { label: "Unelte", items: [{ href: "/ai", label: "AI" }] },
@@ -58,7 +61,17 @@ export interface AppStatus {
   demo: boolean;
 }
 
+const LIVE_COLLECTIONS = [requests.name, people.name];
+
 export function App() {
+  return (
+    <LiveProvider collections={LIVE_COLLECTIONS}>
+      <Shell />
+    </LiveProvider>
+  );
+}
+
+function Shell() {
   const [location] = useLocation();
   const [demo, setDemo] = useState(isDemoMode);
   const [ai, setAi] = useState<HealthResponse | null>(null);
@@ -97,6 +110,7 @@ export function App() {
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
+            <RoleSwitcher />
             <RecordButton />
             <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400" title="AI simulat — merge fără internet și fără chei">
               <input
@@ -122,7 +136,10 @@ export function App() {
           <Route path="/docs" component={DocsPage} />
           <Route path="/design" component={DesignPage} />
           <Route path="/assistant" component={AssistantPage} />
-          <Route path="/map" component={MapPage} />
+          <Route path="/harta" component={BoardPage} />
+          <Route path="/map">
+            <Redirect to="/harta" />
+          </Route>
           <Route path="/business" component={BusinessPage} />
           <Route path="/survey" component={SurveyPage} />
           <Route path="/ai" component={AiPage} />
