@@ -13,6 +13,10 @@ export interface MapPoint extends LatLng {
   color?: string;
   /** mărimea punctului (ex: urgența), 1..5 */
   weight?: number;
+  /** 0..1, pentru rapoarte care se estompează cu vechimea */
+  opacity?: number;
+  /** „report” = punct mic cu contur punctat (raport live), altfel cerere */
+  kind?: "report";
 }
 
 interface Props {
@@ -53,12 +57,15 @@ export function MapView({ points, selectedId, onSelect, origin, className = "h-[
     g.clearLayers();
     for (const p of points) {
       const selected = p.id === selectedId;
+      const report = p.kind === "report";
       L.circleMarker([p.lat, p.lng], {
-        radius: 6 + (p.weight ?? 2) * 2 + (selected ? 4 : 0),
-        color: selected ? "#ffffff" : "#0b1020",
-        weight: selected ? 3 : 1,
+        radius: report ? 7 : 6 + (p.weight ?? 2) * 2 + (selected ? 4 : 0),
+        color: selected ? "#ffffff" : report ? (p.color ?? "#fff") : "#0b1020",
+        weight: selected ? 3 : report ? 2 : 1,
+        dashArray: report ? "3 3" : undefined,
         fillColor: p.color ?? "#f5a524",
-        fillOpacity: 0.9,
+        fillOpacity: (report ? 0.55 : 0.9) * (p.opacity ?? 1),
+        opacity: p.opacity ?? 1,
       })
         .bindTooltip(p.label)
         .on("click", () => onSelectRef.current?.(p.id))

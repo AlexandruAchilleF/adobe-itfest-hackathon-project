@@ -25,3 +25,15 @@ export async function geocode(q: string): Promise<(LatLng & { label: string }) |
     return null;
   }
 }
+
+/** Locația curentă din browser (cere permisiunea). null dacă e refuzată, lipsește sau durează prea mult. */
+export function currentPosition(timeoutMs = 8000): Promise<(LatLng & { accuracy: number }) | null> {
+  return new Promise((resolve) => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude, accuracy: Math.round(p.coords.accuracy) }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 60_000 },
+    );
+  });
+}

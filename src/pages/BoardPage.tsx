@@ -4,14 +4,16 @@
 //  - fiecare pas din ciclu e un buton al omului care are voie să-l facă (src/lib/lifecycle.ts)
 // Tot textul de domeniu vine din src/scenario/config.ts.
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { z } from "zod";
+import { QrPanel } from "../components/QrPanel";
 import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
 import { confirmationReward, giverStats } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { type Actor, apply, availableEvents, createRequest, isExpired, type LifecycleEvent, type Request } from "../lib/lifecycle";
+import { ageLabel, ageMinutes, freshness, visibleReports } from "../lib/reports";
 import { type Rec, useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
 import { MapView } from "../modules/map/MapView";
@@ -20,7 +22,7 @@ import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
-import { baselineScore, categoryOf, requests } from "../scenario/model";
+import { baselineScore, categoryOf, reports, reportTypeOf, requests } from "../scenario/model";
 import { StatusPill, Timeline } from "../scenario/ui/parts";
 
 const S = scenario;
@@ -44,6 +46,14 @@ const Match = z.object({
 export function BoardPage() {
   const { items, add, update, error: dbError, reset } = useCollection(requests);
   const { me, nameOf } = useMe();
+  const live = useCollection(reports);
+  const [showReports, setShowReports] = useState(S.reports.enabled);
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 30_000); // rapoartele se estompează cu vechimea
+    return () => clearInterval(t);
+  }, []);
+  const recentReports = S.reports.enabled ? visibleReports(live.items, S.reports) : [];
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("toate");
   const [error, setError] = useState<{ msg: string; hint?: string } | null>(null);
@@ -64,7 +74,16 @@ export function BoardPage() {
   const actor: Actor | null = me ? { handle: me.handle, role: me.role, suspended: me.role === "giver" && giverStats(me.handle, all, S).suspended } : null;
   const mine = (r: Request) => r.receiver === me?.handle || r.giver === me?.handle;
   const visible = items.filter((r) => (filter === "toate" ? true : filter === "ale mele" ? mine(r.data) : r.data.category === filter));
-  const points = useMemo(
+  const reportPoints = (showReports ? recentReports : []).map((r) => ({
+    id: `raport:${r.id}`,
+    lat: r.data.lat,
+    lng: r.data.lng,
+    label: `${reportTypeOf(r.data.type).icon} ${reportTypeOf(r.data.type).label}${r.data.note ? `: ${r.data.note}` : ""} · ${ageLabel(ageMinutes(r.data))}`,
+    color: reportTypeOf(r.data.type).color,
+    opacity: freshness(r.data, S.reports),
+    kind: "report" as const,
+  }));
+  const requestPoints = useMemo(
     () =>
       visible.map((r) => ({
         id: r.id,
@@ -76,6 +95,7 @@ export function BoardPage() {
       })),
     [visible],
   );
+  const points = [...requestPoints, ...reportPoints];
   const sel = items.find((r) => r.id === selected) ?? null;
   const fail = (err: unknown) => setError({ msg: (err as Error).message, hint: err instanceof AiError ? err.hint : undefined });
 
@@ -235,7 +255,7 @@ export function BoardPage() {
           <Pill ok={null}>
             {items.length} {S.request.plural}
           </Pill>
-          <Button variant="ghost" onClick={() => void reset()}>
+          <Button variant="ghost" onClick={() => void Promise.all([reset(), live.reset()])}>
             Resetează datele demo
           </Button>
         </div>
@@ -259,9 +279,14 @@ export function BoardPage() {
                 {f === "toate" || f === "ale mele" ? f : `${categoryOf(f).icon} ${categoryOf(f).label}`}
               </button>
             ))}
+            {S.reports.enabled && (
+              <button onClick={() => setShowReports((v) => !v)} className={`ml-auto rounded-full px-3 py-1 text-xs ${showReports ? "bg-sky-300 text-slate-900" : "bg-slate-800 text-slate-300"}`} aria-pressed={showReports}>
+                📍 rapoarte live ({recentReports.length})
+              </button>
+            )}
           </div>
           <div data-tour="board-map">
-            <MapView points={points} selectedId={selected} onSelect={setSelected} origin={origin} />
+            <MapView points={points} selectedId={selected} onSelect={(id) => !id.startsWith("raport:") && setSelected(id)} origin={origin} />
           </div>
           {sel && (
             <Card
@@ -385,6 +410,20 @@ export function BoardPage() {
             </Card>
           )}
           <ErrorNote error={error?.msg} hint={error?.hint} />
+          {S.reports.enabled && (
+            <Card title={S.reports.title}>
+              <QrPanel url={`${location.origin}/raport`} size={150} label="Scanează și raportează de pe telefon" />
+              <ul className="mt-4 space-y-1 text-sm" data-testid="live-reports">
+                {recentReports.slice(0, 5).map((r) => (
+                  <li key={r.id} className="flex gap-2 rounded-lg bg-slate-800/50 px-3 py-1.5" style={{ opacity: Math.max(0.5, freshness(r.data, S.reports)) }}>
+                    <span>{reportTypeOf(r.data.type).icon}</span>
+                    <span className="min-w-0 flex-1 truncate">{r.data.note || reportTypeOf(r.data.type).label}</span>
+                    <span className="shrink-0 text-xs text-slate-400">{ageLabel(ageMinutes(r.data))}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
         </div>
       </div>
     </div>

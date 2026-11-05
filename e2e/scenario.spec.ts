@@ -90,3 +90,27 @@ test("gamificare: confirmarea dă puncte, profilul și clasamentul se schimbă",
   await expect(page.getByTestId("profile-points")).toContainText("44");
   await expect(page.getByTestId("profile-rank")).toContainText("Vecin de încredere");
 });
+
+test("raport rapid de pe telefon: locația curentă, ora, apare live pe hartă", async ({ context, page }) => {
+  await fresh(page, "andrei");
+  await expect(page.getByTestId("live-reports").locator("li")).toHaveCount(3);
+  const pins = page.locator(".leaflet-interactive");
+  const before = await pins.count();
+
+  await context.grantPermissions(["geolocation"]);
+  await context.setGeolocation({ latitude: 44.4355, longitude: 26.1025 });
+  const phone = await context.newPage();
+  await offline(phone);
+  await phone.setViewportSize({ width: 390, height: 800 });
+  await phone.goto("/raport");
+  await expect(phone.getByTestId("report-location")).toContainText("precizie");
+  await phone.getByLabel("Detaliu").fill("Lângă Universitate");
+  await phone.getByRole("button", { name: /Apă gratuită/ }).click();
+  await expect(phone.getByRole("status")).toContainText("trimis la");
+  await expect(phone.getByTestId("recent-reports").locator("li").first()).toContainText("Lângă Universitate");
+
+  // harta de pe laptop îl primește fără refresh
+  await expect(page.getByTestId("live-reports").locator("li").first()).toContainText("Lângă Universitate", { timeout: 8000 });
+  await expect(page.getByTestId("live-reports").locator("li").first()).toContainText("acum");
+  await expect(pins).toHaveCount(before + 1);
+});
