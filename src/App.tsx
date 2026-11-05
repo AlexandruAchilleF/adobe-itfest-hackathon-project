@@ -28,6 +28,7 @@ const DocsPage = page(() => import("./pages/DocsPage"), "DocsPage");
 const BoardPage = page(() => import("./pages/BoardPage"), "BoardPage");
 const ProfilePage = page(() => import("./pages/ProfilePage"), "ProfilePage");
 const LeaderboardPage = page(() => import("./pages/LeaderboardPage"), "LeaderboardPage");
+const ProcessPage = page(() => import("./pages/ProcessPage"), "ProcessPage");
 const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
@@ -147,6 +148,7 @@ function Shell() {
           <Route path="/harta" component={BoardPage} />
           <Route path="/profil" component={ProfilePage} />
           <Route path="/clasament" component={LeaderboardPage} />
+          <Route path="/cronometru" component={ProcessPage} />
           <Route path="/map">
             <Redirect to="/harta" />
           </Route>

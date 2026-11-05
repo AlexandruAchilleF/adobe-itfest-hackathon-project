@@ -72,3 +72,23 @@ test("trei roluri: managerul trimite înapoi cu motiv, aprobă, contabilul plăt
   await expect(page.getByTestId("timeline")).toContainText("Maria Constantin a trimis înapoi — Scrie numele clientului");
   await expect(page.getByTestId("timeline")).toContainText("Andrei Munteanu a confirmat că a primit banii");
 });
+
+test("cronometrul: unde se blochează, cine așteaptă, reminder, cost din cifre introduse", async ({ page }) => {
+  await fresh(page, "irina");
+  await page.goto("/cronometru?demo=1");
+  await expect(page.getByTestId("process-summary")).toContainText("în medie de la cerere la încheiere (2 încheiate)");
+  await expect(page.getByTestId("process-summary")).toContainText("pasul unde se pierde cel mai mult timp");
+  const waiting = page.getByTestId("process-waiting").locator("li");
+  // aprobat acum 3 zile, încă neplătit: contabilul e cel așteptat
+  await expect(waiting.first()).toContainText("Taxi aeroport");
+  await expect(waiting.first()).toContainText("de 3 zile la contabil");
+  await waiting.first().getByRole("button", { name: "Trimite reminder" }).click();
+  await expect(page.getByText("Reminder simulat către Irina Vasile.")).toBeVisible();
+  await expect(page.getByTestId("process-waiting")).toContainText("la Bianca Stoica");
+
+  await expect(page.getByTestId("process-cost")).toContainText("Nu le ghiciți");
+  await page.getByLabel("deconturi pe lună").fill("120");
+  await page.getByLabel(/minute de lucru manual/).fill("15");
+  await page.getByLabel("cost orar (lei)").fill("60");
+  await expect(page.getByTestId("process-cost")).toContainText("30 ore și 1.800 lei pe lună");
+});

@@ -77,10 +77,10 @@ describe("mock-ul de structurare (modul demo)", async () => {
 describe("meniul și mascota din config", async () => {
   const { mainNav, showMascot, teamNav } = await import("../src/scenario/nav");
   it("meniul principal folosește cuvintele scenariului și ascunde raportarea dacă e oprită", () => {
-    expect(mainNav(vecini).map((n) => n.label)).toEqual(["Harta", "Profilul meu", "Clasament", "Raportează"]);
+    expect(mainNav(vecini).map((n) => n.label)).toEqual(["Harta", "Profilul meu", "Clasament", "Unde se blochează", "Raportează"]);
     expect(mainNav({ ...vecini, reports: { ...vecini.reports, enabled: false } }).map((n) => n.href)).not.toContain("/raport");
     const office = mainNav({ ...vecini, features: { ...vecini.features, map: false, gamification: false } });
-    expect(office.map((n) => n.label)).toEqual(["Cereri", "Profilul meu", "Raportează"]);
+    expect(office.map((n) => n.label)).toEqual(["Cereri", "Profilul meu", "Unde se blochează", "Raportează"]);
   });
   it("rețetele vechi apar doar cu optionalModules", () => {
     expect(teamNav(vecini).map((n) => n.href)).toContain("/docs");

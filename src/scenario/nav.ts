@@ -22,6 +22,7 @@ export function mainNav(s: Scenario): NavItem[] {
     { href: "/harta", label: s.features.map ? "Harta" : `${s.request.plural[0].toUpperCase()}${s.request.plural.slice(1)}` },
     { href: "/profil", label: "Profilul meu" },
     ...(s.features.gamification ? [{ href: "/clasament", label: "Clasament" }] : []),
+    { href: "/cronometru", label: "Unde se blochează" },
     ...(s.reports.enabled ? [{ href: "/raport", label: "Raportează" }] : []),
   ];
 }
