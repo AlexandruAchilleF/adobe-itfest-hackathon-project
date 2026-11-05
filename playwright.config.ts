@@ -20,9 +20,11 @@ export default defineConfig({
   projects: [
     { name: "vecini", testMatch: ["scenario.spec.ts", "recipes.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5199" } },
     { name: "deconturi", testMatch: ["birou.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5198" } },
+    { name: "resurse", testMatch: ["repetitie.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5197" } },
   ],
   webServer: [
     { command: "npx vite --port 5199 --strictPort", url: "http://localhost:5199", reuseExistingServer: false, env: { ...env, VITE_SCENARIO: "vecini" } },
     { command: "npx vite --port 5198 --strictPort", url: "http://localhost:5198", reuseExistingServer: false, env: { ...env, VITE_SCENARIO: "deconturi" } },
+    { command: "npx vite --port 5197 --strictPort", url: "http://localhost:5197", reuseExistingServer: false, env: { ...env, VITE_SCENARIO: "resurse" } },
   ],
 });

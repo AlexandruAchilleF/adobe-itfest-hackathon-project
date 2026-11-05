@@ -11,7 +11,7 @@ import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
 import { ScenarioHome } from "./pages/ScenarioHome";
 import { scenario } from "./scenario/config";
-import { mainNav, showMascot, teamNav } from "./scenario/nav";
+import { mainNav, pitchMode, showMascot, teamNav } from "./scenario/nav";
 import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
 import { LiveProvider } from "./lib/live";
 import { outbox, people, reports, requests } from "./scenario/model";
@@ -120,7 +120,8 @@ function Shell() {
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <RoleSwitcher />
-            <RecordButton />
+            {!pitchMode(S) && <RecordButton />}
+            {!pitchMode(S) && (
             <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400" title="AI simulat — merge fără internet și fără chei">
               <input
                 type="checkbox"
@@ -133,6 +134,7 @@ function Shell() {
               Mod demo
               {ai && <Pill ok={demo ? null : ai.active !== "mock"}>AI: {demo ? "mock" : ai.active}</Pill>}
             </label>
+            )}
           </div>
         </div>
       </header>

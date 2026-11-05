@@ -25,6 +25,7 @@ import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
+import { pitchMode } from "../scenario/nav";
 import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests, roleOf } from "../scenario/model";
 import { useSteps } from "../scenario/useSteps";
 import { ChecksList, DocTable, DocumentIntake } from "../scenario/ui/DocumentIntake";
@@ -111,8 +112,10 @@ export function BoardPage() {
     if (!sel) return;
     const cur = segments(S.flow, sel.data).find((x) => x.current);
     if (cur && cur.minutes >= 24 * 60) {
-      const who = cur.who ? nameOf(cur.who) : cur.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(" sau ");
-      mascot.say(`„${sel.data.title}” stă la ${who} de ${formatDuration(cur.minutes)}. Vezi „Unde se blochează”.`, "worried");
+      const roles = cur.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(" sau ");
+      // „stă la Irina” doar dacă e cineva anume; altfel nu a preluat-o încă nimeni din rolul ăla
+      const msg = cur.who ? `„${sel.data.title}” stă la ${nameOf(cur.who)} de ${formatDuration(cur.minutes)}.` : `„${sel.data.title}” așteaptă de ${formatDuration(cur.minutes)} și n-a preluat-o încă nimeni (${roles}).`;
+      mascot.say(`${msg} Vezi „Unde se blochează”.`, "worried");
     }
   }, [selected]); // eslint-disable-line react-hooks/exhaustive-deps
   // documentele atașate cererilor (bonuri, facturi), pentru verificarea de duplicate
@@ -294,9 +297,11 @@ export function BoardPage() {
           <Pill ok={null}>
             {items.length} {S.request.plural}
           </Pill>
-          <Button variant="ghost" onClick={() => void Promise.all([reset(), live.reset(), sent.reset()])}>
-            Resetează datele demo
-          </Button>
+          {!pitchMode(S) && (
+            <Button variant="ghost" onClick={() => void Promise.all([reset(), live.reset(), sent.reset()])}>
+              Resetează datele demo
+            </Button>
+          )}
         </div>
       </PageHeader>
       <ErrorNote error={dbError} />

@@ -10,6 +10,7 @@ import { useCollection } from "../lib/store";
 import { useMascotPage } from "../modules/mascot/page";
 import { scenario } from "../scenario/config";
 import { requests, roleOf } from "../scenario/model";
+import { pitchMode } from "../scenario/nav";
 import { Avatar } from "../scenario/ui/parts";
 
 const S = scenario;
@@ -43,6 +44,18 @@ export function ScenarioHome() {
       <section>
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{S.app.name}</h1>
         <p className="mt-2 max-w-3xl text-lg text-slate-300">{S.app.tagline}</p>
+        {/* cifra spusă de un om real, în primele secunde ale demo-ului (docs/JURIU.md, întrebarea 2) */}
+        {S.business.evidence[0] ? (
+          <p className="mt-3 max-w-3xl border-l-2 border-accent pl-3 text-sm text-slate-300" data-testid="evidence">
+            {S.business.evidence[0]}
+          </p>
+        ) : (
+          !pitchMode(S) && (
+            <p className="mt-3 text-xs text-amber-200" data-testid="evidence-missing">
+              Lipsește cifra de la un om real (scenario.business.evidence). Aici o vede juriul în primele secunde.
+            </p>
+          )
+        )}
       </section>
       <div className={`grid gap-4 ${Object.keys(S.roles).length > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`} data-testid="roles">
         {[S.flow.requester, ...Object.keys(S.roles).filter((r) => r !== S.flow.requester)].map((role) => (

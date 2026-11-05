@@ -30,7 +30,8 @@ export function requestSchema(s: Scenario) {
 export function buildRequestSeed(s: Scenario, now: Date = new Date()): Request[] {
   const roleOf = (h: string) => s.seed.people.find((p) => p.handle === h)?.role ?? "?";
   return s.seed.requests.map((r, i) => {
-    const start = new Date(now.getTime() - (r.hoursAgo ?? (s.seed.requests.length - i) * 3) * 3600_000);
+    // implicit, cererile din seed sunt eșalonate pe ultimele ore (câte una pe oră), ca „acum X” să pară o zi obișnuită
+    const start = new Date(now.getTime() - (r.hoursAgo ?? s.seed.requests.length - i) * 3600_000);
     const base = createRequest(
       s.flow,
       {

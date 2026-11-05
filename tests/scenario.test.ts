@@ -86,6 +86,11 @@ describe("meniul și mascota din config", async () => {
     expect(teamNav(vecini).map((n) => n.href)).toContain("/docs");
     expect(teamNav({ ...vecini, features: { ...vecini.features, optionalModules: false } })).toEqual([]);
   });
+  it("modul de pitch ascunde uneltele echipei", async () => {
+    const { pitchMode } = await import("../src/scenario/nav");
+    expect(pitchMode(vecini)).toBe(false);
+    expect(pitchMode({ ...vecini, features: { ...vecini.features, optionalModules: false } })).toBe(true);
+  });
   it("mascota: oprită din config sau ascunsă pe anumite pagini", () => {
     expect(showMascot(vecini, "/harta")).toBe(true);
     expect(showMascot(vecini, "/business")).toBe(false);
@@ -116,4 +121,12 @@ TOTAL 87,00`;
       total: 87,
     });
   });
+});
+
+describe("toate scenariile din SCENARIOS", async () => {
+  const { SCENARIOS } = await import("../src/scenario/config");
+  for (const [id, s] of Object.entries(SCENARIOS)) {
+    it(`${id}: config-ul trece verificările`, () => expect(validateScenario(s)).toEqual([]));
+    it(`${id}: id-ul din fișier e cel din SCENARIOS`, () => expect(s.id).toBe(id));
+  }
 });

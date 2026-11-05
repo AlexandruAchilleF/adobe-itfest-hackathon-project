@@ -121,7 +121,7 @@ export function ProcessPage() {
               <span className="min-w-0 flex-1">
                 <b>{w.title}</b> <StatusPill status={w.state} />
                 <span className="block text-xs text-slate-400">
-                  de {formatDuration(w.minutes)} la {w.who ? nameOf(w.who) : w.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(", ")}
+                  {w.who ? `de ${formatDuration(w.minutes)} la ${nameOf(w.who)}` : `de ${formatDuration(w.minutes)}, nepreluată încă (${w.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(", ")})`}
                 </span>
               </span>
               <Button variant="ghost" onClick={() => void remind(w)}>

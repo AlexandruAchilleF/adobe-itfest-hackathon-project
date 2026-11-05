@@ -81,7 +81,7 @@ test("cronometrul: unde se blochează, cine așteaptă, reminder, cost din cifre
   const waiting = page.getByTestId("process-waiting").locator("li");
   // aprobat acum 3 zile, încă neplătit: contabilul e cel așteptat
   await expect(waiting.first()).toContainText("Taxi aeroport");
-  await expect(waiting.first()).toContainText("de 3 zile la contabil");
+  await expect(waiting.first()).toContainText("de 3 zile, nepreluată încă (contabil)");
   await waiting.first().getByRole("button", { name: "Trimite reminder" }).click();
   await expect(page.getByText("Reminder simulat către Irina Vasile.")).toBeVisible();
   await expect(page.getByTestId("process-waiting")).toContainText("la Bianca Stoica");
@@ -108,7 +108,7 @@ test("mascota: „aprobă decontul lui Andrei” cere confirmarea, apoi aprobă"
 test("cererea care stă de mult: mascota spune la cine; reminder din conversație", async ({ page }) => {
   await fresh(page, "irina");
   await page.getByTestId("request-list").getByRole("button", { name: /Taxi aeroport/ }).click();
-  await expect(page.getByTestId("mascot")).toContainText("„Taxi aeroport” stă la contabil de 3 zile");
+  await expect(page.getByTestId("mascot")).toContainText("„Taxi aeroport” așteaptă de 3 zile și n-a preluat-o încă nimeni (contabil)");
 
   await page.goto("/cronometru?demo=1");
   await expect(page.getByTestId("process-waiting")).toContainText("Taxi aeroport");

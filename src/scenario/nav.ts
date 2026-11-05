@@ -30,4 +30,7 @@ export function mainNav(s: Scenario): NavItem[] {
 /** „Pentru echipă” apare doar cu features.optionalModules; rutele merg oricum. */
 export const teamNav = (s: Scenario): NavItem[] => (s.features.optionalModules ? TEAM_NAV : []);
 
+/** Modul de pitch: fără „Pentru echipă”, fără bife de demo, fără butoane de resetare în fața juriului. */
+export const pitchMode = (s: Scenario): boolean => !s.features.optionalModules;
+
 export const showMascot = (s: Scenario, path: string): boolean => s.mascot.enabled && !s.mascot.hiddenOn.includes(path);
