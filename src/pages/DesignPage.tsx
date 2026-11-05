@@ -14,7 +14,11 @@ import { AiDesign, type Design, designSystemPrompt, exampleDesign } from "../lib
 import { downloadDataUrl, downloadText, shareDesign } from "../lib/share";
 import { useCamera } from "../modules/camera/useCamera";
 import { DesignCanvas, type DesignCanvasHandle } from "../modules/canvas/DesignCanvas";
+import { z } from "zod";
 import { mascot } from "../modules/mascot/mascot";
+import { defineAction } from "../lib/agent";
+import { useMascotPage } from "../modules/mascot/page";
+
 import { useSpeechRecognition } from "../modules/voice/speech";
 
 // cm = lățimea la care e văzut de fapt; m = distanța tipică de privire
@@ -64,7 +68,8 @@ export function DesignPage() {
   const audit = auditDesign(design, f.cm);
   const problems = audit.filter((a) => a.level === "fail" || a.readableFromM < distance).length;
 
-  async function generate() {
+  async function generate(text: string = brief) {
+    setBrief(text);
     setBusy(true);
     setError(null);
     setShareUrl(null);
@@ -72,10 +77,10 @@ export function DesignPage() {
     try {
       const { data } = await ask({
         system: designSystemPrompt(f.width, f.height),
-        prompt: `Creează un design pentru: ${brief}\nFormat: ${f.label}, ${f.width}x${f.height}px, văzut de la ~${f.m} m.${photo ? "\nImaginea atașată e un material/schiță existentă: păstrează informația, îmbunătățește designul." : ""}`,
+        prompt: `Creează un design pentru: ${text}\nFormat: ${f.label}, ${f.width}x${f.height}px, văzut de la ~${f.m} m.${photo ? "\nImaginea atașată e un material/schiță existentă: păstrează informația, îmbunătățește designul." : ""}`,
         schema: AiDesign,
         files: photo ? [photo] : undefined,
-        mock: mockDesign(brief, f.width, f.height),
+        mock: mockDesign(text, f.width, f.height),
       });
       const next = { ...data, width: f.width, height: f.height };
       setDesign(next);
@@ -96,6 +101,38 @@ export function DesignPage() {
     await ref.current?.setDesign(result.design);
   }
 
+  useMascotPage({
+    title: "Design editabil",
+    context: () => `Design curent: ${design.title}, format ${f.label}, privit de la ${distance} m. Probleme de lizibilitate: ${problems}.`,
+    actions: [
+      defineAction({
+        name: "make_design",
+        kind: "read",
+        description: "Generează un design nou din ce trebuie comunicat",
+        args: z.object({ brief: z.string().describe("ce trebuie comunicat, în cuvintele utilizatorului") }),
+        run: ({ brief: b }) => generate(b),
+        examples: ["fă un design pentru"],
+        mockArgs: (input: string) => ({ brief: input.replace(/^.*?(fă|creează)( un)? design( pentru)?\s*/i, "") || input }),
+      }),
+      defineAction({ name: "fix_design", description: "Repară automat textele care nu se citesc", args: z.object({}), run: fix, examples: ["repară designul", "fă-l să se citească"], mockArgs: {} }),
+      defineAction({
+        name: "set_distance",
+        kind: "read",
+        description: "Schimbă distanța de la care e privit designul (în metri)",
+        args: z.object({ meters: z.number() }),
+        run: ({ meters }) => setDistance(Math.min(6, Math.max(0.2, meters))),
+        examples: ["privit de la 2 metri"],
+        mockArgs: (input: string) => ({ meters: Number(input.match(/[\d.,]+/)?.[0]?.replace(",", ".") ?? 1) }),
+      }),
+    ],
+    tour: [
+      { target: "design-brief", text: "Spune-mi ce trebuie comunicat: scris, dictat sau din poza unui material vechi." },
+      { target: "design-canvas", text: "Eu propun designul, dar e al tău: dublu-click pe text, trage de colțuri, Ctrl+Z." },
+      { target: "design-audit", text: "Aici verific, fără AI, dacă se citește de la distanța reală și dacă are contrast. Dacă nu, îl repar." },
+      { target: "design-export", text: "La final îl descarci sau îl iei pe telefon prin QR." },
+    ],
+  });
+
   return (
     <div>
       <PageHeader
@@ -104,7 +141,7 @@ export function DesignPage() {
       />
       <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
         <div className="min-w-0 space-y-4">
-          <Card title="1. Ce trebuie comunicat">
+          <Card title="1. Ce trebuie comunicat" tour="design-brief">
             <textarea value={brief} onChange={(e) => setBrief(e.target.value)} className="h-28 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" />
             {speech.interim && <p className="mt-1 text-sm italic text-slate-400">{speech.interim}…</p>}
             <div className="mt-2 flex flex-wrap gap-2">
@@ -165,13 +202,13 @@ export function DesignPage() {
                   </option>
                 ))}
               </select>
-              <Button variant="primary" onClick={generate} disabled={busy || !brief.trim()}>
+              <Button variant="primary" onClick={() => void generate()} disabled={busy || !brief.trim()}>
                 {busy && <Spinner />} 2. Generează
               </Button>
             </div>
             <ErrorNote error={error?.msg} hint={error?.hint} />
           </Card>
-          <Card title={`3. Se citește? ${problems === 1 ? "— o problemă" : problems ? `— ${problems} probleme` : "— ✓"}`}>
+          <Card tour="design-audit" title={`3. Se citește? ${problems === 1 ? "— o problemă" : problems ? `— ${problems} probleme` : "— ✓"}`}>
             <label className="block text-sm">
               Privit de la <b>{distance} m</b> <span className="text-xs text-slate-500">(lățime reală {f.cm} cm)</span>
               <input type="range" min={0.2} max={6} step={0.05} value={distance} onChange={(e) => setDistance(Number(e.target.value))} className="w-full" />
@@ -194,7 +231,7 @@ export function DesignPage() {
               </ul>
             )}
           </Card>
-          <Card title="4. Ia-l acasă">
+          <Card title="4. Ia-l acasă" tour="design-export">
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => downloadDataUrl(ref.current!.exportPNG(2), "design.png")}>PNG</Button>
               <Button onClick={() => downloadText(ref.current!.exportSVG(), "design.svg")}>SVG</Button>
@@ -218,7 +255,7 @@ export function DesignPage() {
             )}
           </Card>
         </div>
-        <div className="relative min-w-0">
+        <div className="relative min-w-0" data-tour="design-canvas">
           <DesignCanvas ref={ref} design={design} onChange={setDesign} className="max-w-[640px] overflow-hidden rounded-xl shadow-2xl" />
           {busy && <div className="absolute inset-0 grid max-w-[640px] place-items-center rounded-xl bg-slate-950/60 text-sm">Generez…</div>}
         </div>

@@ -2,8 +2,8 @@
 // a verificat sursa, a găsit o problemă). Personaj original, desenat în SVG.
 // Numele și culoarea se schimbă din .env: VITE_MASCOT_NAME, VITE_MASCOT_COLOR.
 
-import { useEffect, useMemo, useState } from "react";
-import { mascot, type MascotMood, type MascotState } from "./mascot";
+import { useMemo } from "react";
+import type { MascotMood } from "./mascot";
 
 export const MASCOT_NAME = (import.meta.env.VITE_MASCOT_NAME as string | undefined) || "Țepi";
 const COLOR = (import.meta.env.VITE_MASCOT_COLOR as string | undefined) || "#8b5e3c";
@@ -94,36 +94,5 @@ export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood
         </g>
       )}
     </svg>
-  );
-}
-
-/** Mascota plutitoare din colțul ecranului, cu bula de mesaj. Se montează o dată, în App. */
-export function MascotDock() {
-  const [state, setState] = useState<MascotState>(mascot.get());
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => mascot.subscribe(setState), []);
-  useEffect(() => {
-    const t = setInterval(() => mascot.tick(), 500);
-    return () => clearInterval(t);
-  }, []);
-  if (hidden) {
-    return (
-      <button onClick={() => setHidden(false)} className="fixed bottom-4 right-4 z-[1200] rounded-full bg-slate-800 px-3 py-2 text-xs text-slate-300 print:hidden">
-        🦔 {MASCOT_NAME}
-      </button>
-    );
-  }
-  return (
-    <div className="pointer-events-none fixed bottom-3 right-3 z-[1200] flex items-end gap-1 print:hidden" data-testid="mascot" data-mood={state.mood}>
-      {state.message && (
-        <div className="pointer-events-auto mb-14 max-w-[240px] rounded-2xl rounded-br-sm bg-white px-3 py-2 text-sm text-slate-900 shadow-xl" role="status" aria-live="polite">
-          <b className="block text-xs text-slate-500">{MASCOT_NAME}</b>
-          {state.message}
-        </div>
-      )}
-      <button className="pointer-events-auto" onClick={() => setHidden(true)} title={`Ascunde-l pe ${MASCOT_NAME}`}>
-        <MascotFigure mood={state.mood} />
-      </button>
-    </div>
   );
 }

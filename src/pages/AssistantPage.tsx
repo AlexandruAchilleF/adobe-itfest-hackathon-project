@@ -11,6 +11,7 @@ import { type Rec, useCollection } from "../lib/store";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { geocode } from "../modules/map/geo";
 import { mascot } from "../modules/mascot/mascot";
+import { useMascotPage } from "../modules/mascot/page";
 import { CATEGORIES, CATEGORY_COLORS, type Need, needs, STATUSES } from "../recipes/needs";
 
 const ANY = "toate";
@@ -119,6 +120,15 @@ export function AssistantPage() {
     else if (done) mascot.say(last.say.replace(/^\(demo\)\s*/, ""), "happy");
   }, [agent.log]);
 
+  useMascotPage({
+    title: "Asistent cu confirmare",
+    tour: [
+      { target: "assist-input", text: "Cere ce vrei, cu vocea sau în scris: „ce e urgent?”, „marchează păturile ca rezolvate”." },
+      { target: "assist-list", text: "Citirile le fac direct. Orice modificare ți-o arăt întâi și o fac doar dacă aprobi." },
+      { target: "assist-log", text: "Aici vezi tot ce am făcut și ce a fost respins: nimic nu se întâmplă pe ascuns." },
+    ],
+  });
+
   const titleOf = (id: unknown) => items.find((r) => r.id === id)?.data.title ?? String(id);
   const list = shown ?? items;
 
@@ -130,7 +140,7 @@ export function AssistantPage() {
       />
       <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
         <div className="min-w-0 space-y-4">
-          <Card title="Spune sau scrie">
+          <Card title="Spune sau scrie" tour="assist-input">
             <div className="flex gap-2">
               <Button variant={agent.listening ? "danger" : "primary"} onClick={agent.listening ? agent.stopListening : agent.listen} disabled={!agent.supported}>
                 {agent.listening ? "■ Ascult…" : "🎤 Vorbește"}
@@ -168,7 +178,7 @@ export function AssistantPage() {
               return JSON.stringify(args);
             }}
           />
-          <Card title="Jurnal">
+          <Card title="Jurnal" tour="assist-log">
             <ul className="max-h-72 space-y-3 overflow-auto text-sm">
               {[...agent.log].reverse().map((t, i) => (
                 <li key={i} className="rounded-xl bg-slate-800/60 p-3">
@@ -186,7 +196,7 @@ export function AssistantPage() {
             În cod: <Code>defineAction({"{ kind: \"read\" | \"write\", ... }"})</Code> + <Code>useVoiceAgent</Code> + <Code>{"<ConfirmActions />"}</Code>.
           </p>
         </div>
-        <Card title={shown ? `Rezultate (${list.length})` : `Toate nevoile (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
+        <Card tour="assist-list" title={shown ? `Rezultate (${list.length})` : `Toate nevoile (${list.length})`} actions={shown && <Button variant="ghost" onClick={() => setShown(null)}>Arată tot</Button>}>
           <ul className="space-y-2" data-testid="needs-list">
             {list.map((r) => (
               <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">

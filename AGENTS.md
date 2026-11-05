@@ -18,7 +18,7 @@ Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din 
 - `src/lib/design.ts` + `src/modules/canvas/`: designul editabil (Fabric.js v7). `src/lib/accessibility.ts`: audit WCAG, lizibilitate, `autoFixDesign`.
 - `src/components/EditableText.tsx`: text propus de AI, editabil de om (pentru fișe, rapoarte, oferte). Pentru tipărire, ascunde UI-ul cu `print:hidden`.
 - PDF-uri exemplu: HTML în `samples-src/` → `node scripts/make-sample-pdf.mjs samples-src/x.html` → `public/samples/x.pdf`.
-- `src/modules/mascot/`: mascota (Țepi). `ask()` o pune automat pe „thinking” și „worried” la erori. În pagini, după o verificare, folosește `mascot.say(mesaj, mood)` sau `moodForChecks(trecute, total)`. Nu o folosi ca decor: doar pentru stări reale (ascultă, verificat, problemă).
+- `src/modules/mascot/`: mascota (Țepi), stratul care face ideea memorabilă. Orice pagină nouă apelează `useMascotPage({ title, actions, context, tour })`: `actions` sunt `defineAction` (Țepi le rulează din conversație, cele `write` cer aprobarea), `tour` sunt pași `{ target, text }` legați de elemente cu `data-tour` (sau `<Card tour="…">`). `?tour=1` pornește turul la pitch. Navigarea între pagini e globală (`MascotDock` primește rutele din `App.tsx`). `ask()` o pune automat pe „thinking” și „worried”; după o verificare folosește `mascot.say(mesaj, mood)` sau `moodForChecks(trecute, total)`. Nu o folosi ca decor: doar pentru stări reale.
 - `src/recipes/needs.ts`: domeniul exemplu (schemă, seed, scor). Acesta se schimbă după temă.
 - Rețetele: `src/pages/DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`, `MapPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
 

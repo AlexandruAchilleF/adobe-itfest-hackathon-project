@@ -24,9 +24,22 @@ export function Button({
   );
 }
 
-export function Card({ title, children, className = "", actions }: { title?: ReactNode; children: ReactNode; className?: string; actions?: ReactNode }) {
+export function Card({
+  title,
+  children,
+  className = "",
+  actions,
+  tour,
+}: {
+  title?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  actions?: ReactNode;
+  /** ținta pentru turul ghidat al mascotei (data-tour) */
+  tour?: string;
+}) {
   return (
-    <section className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-5 ${className}`}>
+    <section data-tour={tour} className={`rounded-2xl border border-slate-800 bg-slate-900/60 p-5 ${className}`}>
       {(title || actions) && (
         <div className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-base font-semibold text-slate-100">{title}</h2>}

@@ -38,3 +38,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path { animation: none; }
 }
+
+/* elementul arătat de mascotă în turul ghidat */
+@keyframes mascot-ring { 0%, 100% { box-shadow: 0 0 0 3px #f5a524 } 50% { box-shadow: 0 0 0 8px rgb(245 165 36 / 0.35) } }
+.mascot-highlight { position: relative; z-index: 30; border-radius: 14px; animation: mascot-ring 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .mascot-highlight { animation: none; box-shadow: 0 0 0 4px #f5a524; } }

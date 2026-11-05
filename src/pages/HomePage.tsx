@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import type { AppStatus } from "../App";
 import { Card, Code, Pill } from "../components/ui";
+import { useMascotPage } from "../modules/mascot/page";
 
 // Teme probabile (estimare din cercetare, vezi docs/PLAN-12H.md) → rețeta de pornire.
 const THEMES = [
@@ -19,6 +20,14 @@ const RECIPES = [
 
 export function HomePage({ status }: { status: AppStatus }) {
   const ai = status.ai;
+  useMascotPage({
+    title: "Start",
+    tour: [
+      { target: "home-themes", text: "Când se anunță tema, caută-o aici: îți spun din ce rețetă să pornești." },
+      { target: "home-recipes", text: "Fiecare rețetă e un flux complet care merge deja. Schimbi doar domeniul: schema, datele, prompturile." },
+      { target: "home-validation", text: "Primele 90 de minute: vorbește cu oameni. Business canvas-ul și sondajul îți dau cifrele pentru pitch." },
+    ],
+  });
   return (
     <div className="space-y-10">
       <section>
@@ -29,7 +38,7 @@ export function HomePage({ status }: { status: AppStatus }) {
         </p>
       </section>
 
-      <Card title="Tema anunțată → de unde porniți">
+      <Card title="Tema anunțată → de unde porniți" tour="home-themes">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-slate-500">
@@ -58,7 +67,7 @@ export function HomePage({ status }: { status: AppStatus }) {
       </Card>
 
       <section>
-        <h2 className="text-lg font-semibold">Rețete (fluxuri complete, gata de adaptat)</h2>
+        <h2 className="text-lg font-semibold" data-tour="home-recipes">Rețete (fluxuri complete, gata de adaptat)</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           {RECIPES.map((r) => (
             <Link key={r.href} href={r.href} className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-accent/60">
@@ -71,7 +80,7 @@ export function HomePage({ status }: { status: AppStatus }) {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Înainte de cod: validarea">
+        <Card title="Înainte de cod: validarea" tour="home-validation">
           <ul className="space-y-1 text-sm text-slate-300">
             <li>
               <Link href="/business" className="text-accent">

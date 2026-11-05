@@ -10,6 +10,8 @@ import { useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
 import { MapView } from "../modules/map/MapView";
 import { mascot } from "../modules/mascot/mascot";
+import { defineAction } from "../lib/agent";
+import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { baselineScore, CATEGORIES, CATEGORY_COLORS, type Need, needs, STATUSES } from "../recipes/needs";
 
@@ -71,12 +73,13 @@ export function MapPage() {
     }
   }
 
-  async function match() {
+  async function match(text: string = offer) {
+    setOffer(text);
     setBusy("match");
     setError(null);
     try {
-      const where = offer.match(/(?:zona|cartierul|în|la)\s+([A-ZĂÂÎȘȚ][\p{L}\s-]+)/u)?.[1];
-      const geo = await geocode(`${where ?? offer}, București`);
+      const where = text.match(/(?:zona|cartierul|în|la)\s+([A-ZĂÂÎȘȚ][\p{L}\s-]+)/u)?.[1];
+      const geo = await geocode(`${where ?? text}, București`);
       setOrigin(geo);
       const open = items.filter((r) => r.data.status !== "rezolvat");
       const ranked = open
@@ -85,7 +88,7 @@ export function MapPage() {
       const list = ranked.map(({ r, base, km }) => `id=${r.id} | ${r.data.title} | ${r.data.category} | ${r.data.quantity} | urgență ${r.data.urgency} | ${km ?? "?"} km | scor de bază ${base}`).join("\n");
       const { data } = await ask({
         system: "Potrivești o ofertă de ajutor cu nevoi reale. Pornești de la scorul de bază (urgență + distanță) și îl ajustezi doar dacă oferta se potrivește clar mai bine sau mai rău. Alegi top 3.",
-        prompt: `Oferta: ${offer}\n\nNevoi deschise:\n${list}`,
+        prompt: `Oferta: ${text}\n\nNevoi deschise:\n${list}`,
         schema: Match,
         mock: { matches: ranked.slice(0, 3).map(({ r, base, km }) => ({ id: r.id, score: base, why: `(demo) Urgență ${r.data.urgency}/5${km !== null ? `, la ${km} km` : ""}.` })) },
       });
@@ -102,6 +105,36 @@ export function MapPage() {
   }
 
   const sel = items.find((r) => r.id === selected);
+
+  useMascotPage({
+    title: "Hartă + potrivire",
+    context: () => `${items.length} înregistrări pe hartă, filtru: ${filter}.`,
+    actions: [
+      defineAction({
+        name: "find_help",
+        kind: "read",
+        description: "Găsește nevoile potrivite pentru ce poate oferi cineva",
+        args: z.object({ offer: z.string().describe("ce poate oferi și unde") }),
+        run: ({ offer: o }) => match(o),
+        examples: ["pot ajuta cu mașina în Titan"],
+        mockArgs: (input: string) => ({ offer: input }),
+      }),
+      defineAction({
+        name: "filter_category",
+        kind: "read",
+        description: "Arată pe hartă doar o categorie",
+        args: z.object({ category: z.enum(["toate", ...CATEGORIES]) }),
+        run: ({ category }) => setFilter(category),
+        examples: ["arată doar educație"],
+        mockArgs: (input: string) => ({ category: CATEGORIES.find((c) => input.toLowerCase().includes(c)) ?? ("toate" as const) }),
+      }),
+    ],
+    tour: [
+      { target: "map-map", text: "Fiecare punct e o nevoie reală. Culoarea e categoria, mărimea e urgența." },
+      { target: "map-offer", text: "Spune ce poți oferi și unde ești: calculez distanța și urgența, apoi îți explic potrivirile." },
+      { target: "map-add", text: "Oricine poate adăuga o nevoie, scrisă cum ar spune-o. O structurez, iar tu o verifici înainte de salvare." },
+    ],
+  });
   return (
     <div>
       <PageHeader title="Hartă + potrivire" description="Nevoi reale pe hartă, adăugate în limbaj natural și potrivite cu cine poate ajuta. Rețeta pentru teme civice („Smart City”, „Resource Wise”).">
@@ -126,7 +159,7 @@ export function MapPage() {
               </button>
             ))}
           </div>
-          <MapView points={points} selectedId={selected} onSelect={setSelected} origin={origin} />
+          <div data-tour="map-map"><MapView points={points} selectedId={selected} onSelect={setSelected} origin={origin} /></div>
           {sel && (
             <Card title={sel.data.title}>
               <p className="text-sm text-slate-300">{sel.data.description}</p>
@@ -144,9 +177,9 @@ export function MapPage() {
           )}
         </div>
         <div className="space-y-4">
-          <Card title="Cine poate ajuta?">
+          <Card title="Cine poate ajuta?" tour="map-offer">
             <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" />
-            <Button variant="primary" className="mt-2" onClick={match} disabled={busy !== null || !offer.trim()}>
+            <Button variant="primary" className="mt-2" onClick={() => void match()} disabled={busy !== null || !offer.trim()}>
               {busy === "match" && <Spinner />} Găsește potriviri
             </Button>
             <ol className="mt-3 space-y-2">
@@ -167,7 +200,7 @@ export function MapPage() {
               })}
             </ol>
           </Card>
-          <Card title="Adaugă o nevoie (cum ai spune-o)">
+          <Card title="Adaugă o nevoie (cum ai spune-o)" tour="map-add">
             <textarea
               value={raw}
               onChange={(e) => setRaw(e.target.value)}

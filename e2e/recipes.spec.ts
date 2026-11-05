@@ -122,3 +122,29 @@ test("tipărire: fără meniu și fără antetul paginii", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Business canvas" })).toBeHidden();
   await expect(page.getByRole("heading", { name: /Documente → răspunsuri verificate/ })).toBeHidden();
 });
+
+test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }) => {
+  await page.goto("/docs?demo=1");
+  await page.getByTestId("mascot").getByRole("button", { name: /Vorbește cu/ }).click();
+  const box = page.getByRole("dialog", { name: /Vorbește cu/ });
+  await box.getByLabel(/Mesaj pentru/).fill("deschide exemplul");
+  await box.getByRole("button", { name: "↵" }).click();
+  await expect(page.getByTestId("outline")).toContainText("2.2 Capacitatea tehnică");
+
+  await box.getByLabel(/Mesaj pentru/).fill("du-mă la hartă");
+  await box.getByRole("button", { name: "↵" }).click();
+  await expect(page).toHaveURL(/\/map/);
+});
+
+test("mascota: turul ghidat evidențiază pașii (?tour=1 pentru pitch)", async ({ page }) => {
+  await page.goto("/design?demo=1&tour=1");
+  const tour = page.getByTestId("mascot-tour");
+  await expect(tour).toContainText("pasul 1 din 4");
+  await expect(page.locator('[data-tour="design-brief"]')).toHaveClass(/mascot-highlight/);
+  await tour.getByRole("button", { name: "Mai departe" }).click();
+  await expect(tour).toContainText("pasul 2 din 4");
+  await expect(page.locator('[data-tour="design-canvas"]')).toHaveClass(/mascot-highlight/);
+  await expect(page.locator('[data-tour="design-brief"]')).not.toHaveClass(/mascot-highlight/);
+  await tour.getByRole("button", { name: "Închide" }).click();
+  await expect(tour).toBeHidden();
+});

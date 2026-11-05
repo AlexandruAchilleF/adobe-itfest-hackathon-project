@@ -27,7 +27,7 @@ Toate patru răspund la întrebarea „ce se întâmplă când AI-ul greșește?
 | **Business canvas** (`/business`) | AI-ul transformă ideea în problemă, utilizator vs. cumpărător, preț, piață numărată de jos în sus, adopție, concurență, riscuri și întrebările grele ale juriului. Export Markdown. |
 | **Sondaj live** (`/survey`) | QR pe masă; oamenii răspund de pe telefon. Rezultatul e o frază de pitch: „11 din 14 (79%) au răspuns Da”. Export CSV. |
 | **⏺ Rec** (în meniu) | înregistrează tab-ul cu sunet, pentru video-ul de rezervă |
-| **Țepi, mascota** (colțul din dreapta-jos) | un arici care arată ce face AI-ul: se gândește la orice apel, se bucură când sursele sunt verificate, se îngrijorează când AI-ul a greșit, ascultă când vorbești. Face vizibil răspunsul la „ce se întâmplă când AI-ul greșește?” și dă produsului o identitate. Nume și culoare: `VITE_MASCOT_NAME`, `VITE_MASCOT_COLOR`; din cod: `mascot.say("…", "happy")`. |
+| **Țepi, mascota** (colțul din dreapta-jos) | stratul care face orice idee memorabilă. Îi scrii sau îi vorbești („deschide exemplul”, „du-mă la hartă”) și face lucrurile în aplicație folosind acțiunile paginii, cu aprobarea ta pentru modificări. „▶ Arată-mi cum merge” pornește un **tur ghidat** care evidențiază pașii; cu `?tour=1` pornește singur (pentru pitch). Reacționează la stări reale: se gândește la apelurile AI, se bucură când o verificare trece, se îngrijorează când AI-ul greșește. Nume și culoare: `VITE_MASCOT_NAME`, `VITE_MASCOT_COLOR`. |
 | **Mod demo** (bifa din meniu sau `?demo=1`) | răspunsuri AI simulate, realiste: merge fără internet și fără chei |
 
 ## Start rapid
@@ -75,6 +75,10 @@ const { items, add, update, remove } = useCollection(items);
 // Acțiuni din limbaj natural, cu confirmare
 defineAction({ name, kind: "read" | "write", description, args: zodObject, run, examples, mockArgs });
 const agent = useVoiceAgent({ actions, context });  // + <ConfirmActions pending={agent.pending} />
+
+// Mascota: o pagină nouă își declară acțiunile și turul, Țepi le folosește singur
+useMascotPage({ title, actions, context: () => "…", tour: [{ target: "pas-1", text: "…" }] });
+<Card tour="pas-1">…</Card>                        // sau data-tour="pas-1" pe orice element
 
 // Text propus de AI, corectat de om (crește pe mai multe rânduri, se tipărește curat)
 <EditableText value={text} onChange={setText} />
