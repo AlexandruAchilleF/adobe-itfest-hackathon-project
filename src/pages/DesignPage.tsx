@@ -171,7 +171,7 @@ export function DesignPage() {
             </div>
             <ErrorNote error={error?.msg} hint={error?.hint} />
           </Card>
-          <Card title={`3. Se citește? ${problems ? `— ${problems} probleme` : "— ✓"}`}>
+          <Card title={`3. Se citește? ${problems === 1 ? "— o problemă" : problems ? `— ${problems} probleme` : "— ✓"}`}>
             <label className="block text-sm">
               Privit de la <b>{distance} m</b> <span className="text-xs text-slate-500">(lățime reală {f.cm} cm)</span>
               <input type="range" min={0.2} max={6} step={0.05} value={distance} onChange={(e) => setDistance(Number(e.target.value))} className="w-full" />

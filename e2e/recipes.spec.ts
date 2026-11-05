@@ -44,7 +44,7 @@ test("design: generează, auditul găsește probleme, repararea le rezolvă, QR"
   await page.goto("/design?demo=1");
   await page.getByRole("button", { name: /Generează/ }).click();
   await expect(page.getByText("Generez…")).toBeHidden();
-  await expect(page.getByText(/— \d+ probleme/)).toBeVisible();
+  await expect(page.getByText(/— (o problemă|\d+ probleme)/)).toBeVisible();
   await expect(page.getByTestId("mascot")).toHaveAttribute("data-mood", "worried");
   await page.getByRole("button", { name: /Repară automat/ }).click();
   await expect(page.getByText(/Se citește\? — ✓/)).toBeVisible();
