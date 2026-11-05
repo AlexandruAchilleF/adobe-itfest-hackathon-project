@@ -9,6 +9,7 @@ import { AiError, ask } from "../lib/ai";
 import { useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
 import { MapView } from "../modules/map/MapView";
+import { mascot } from "../modules/mascot/mascot";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { baselineScore, CATEGORIES, CATEGORY_COLORS, type Need, needs, STATUSES } from "../recipes/needs";
 
@@ -89,7 +90,9 @@ export function MapPage() {
         mock: { matches: ranked.slice(0, 3).map(({ r, base, km }) => ({ id: r.id, score: base, why: `(demo) Urgență ${r.data.urgency}/5${km !== null ? `, la ${km} km` : ""}.` })) },
       });
       const known = new Set(items.map((r) => r.id));
-      setMatches(data.matches.filter((m) => known.has(m.id)).slice(0, 3));
+      const found = data.matches.filter((m) => known.has(m.id)).slice(0, 3);
+      setMatches(found);
+      mascot.say(found.length ? `Am găsit ${found.length} potriviri. Prima e la ${found[0].score}/100.` : "N-am găsit nicio potrivire deschisă.", found.length ? "celebrate" : "worried");
       if (data.matches[0]) setSelected(data.matches[0].id);
     } catch (err) {
       fail(err);

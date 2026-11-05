@@ -10,6 +10,7 @@ import type { ParsedDocument } from "../lib/documents";
 import { downloadText } from "../lib/share";
 import { DocumentViewer, type DocumentViewerHandle } from "../modules/documents/DocumentViewer";
 import { parsePdf } from "../modules/documents/pdfjs";
+import { mascot, moodForChecks } from "../modules/mascot/mascot";
 
 const SAMPLE = "/samples/caiet-de-sarcini-exemplu.pdf";
 
@@ -32,7 +33,9 @@ export function DocsPage() {
     setRanked(null);
     try {
       setFile(f);
-      setDoc(await parsePdf(f));
+      const parsed = await parsePdf(f);
+      setDoc(parsed);
+      mascot.say(`Am citit ${parsed.pages.length} pagini și am găsit ${parsed.outline.length} titluri. Întreabă-mă ceva!`, "happy");
     } catch (err) {
       setError({ msg: `Nu am putut citi PDF-ul: ${(err as Error).message}` });
     } finally {
@@ -106,7 +109,17 @@ export function DocsPage() {
           {doc && (
             <Card title="2. Întreabă documentul">
               <textarea value={question} onChange={(e) => setQuestion(e.target.value)} className="h-20 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" />
-              <Button variant="primary" className="mt-2" disabled={busy !== null || !question.trim()} onClick={() => run("ask", () => askDocument(doc, question), setAnswer)}>
+              <Button variant="primary" className="mt-2" disabled={busy !== null || !question.trim()} onClick={() =>
+                  run(
+                    "ask",
+                    () => askDocument(doc, question),
+                    (a) => {
+                      setAnswer(a);
+                      const r = moodForChecks(a.citations.filter((c) => c.verified).length, a.citations.length);
+                      mascot.say(r.message, r.mood);
+                    },
+                  )
+                }>
                 {busy === "ask" && <Spinner />} Întreabă
               </Button>
               {answer && (

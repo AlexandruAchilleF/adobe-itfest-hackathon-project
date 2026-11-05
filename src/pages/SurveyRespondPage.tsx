@@ -1,6 +1,7 @@
 // Pagina de pe telefon pentru sondaj (/s?code=XXXX).
 import { useState } from "react";
 import { useSearch } from "wouter";
+import { MascotFigure } from "../modules/mascot/Mascot";
 import { useRoom } from "../modules/rooms/useRoom";
 import { ANSWER_EVENT, type SurveyState } from "./SurveyPage";
 
@@ -76,7 +77,9 @@ export function SurveyRespondPage() {
         </>
       ) : (
         <div className="text-center">
-          <p className="text-5xl">🙏</p>
+          <div className="flex justify-center">
+            <MascotFigure mood="celebrate" size={140} />
+          </div>
           <h1 className="mt-4 text-2xl font-bold">Mulțumim!</h1>
           <p className="mt-2 text-slate-400">Răspunsurile tale ne ajută să construim ceva util.</p>
         </div>

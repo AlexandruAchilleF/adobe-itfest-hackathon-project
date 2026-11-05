@@ -28,6 +28,9 @@ test("documente: structură JSON, răspuns cu citat verificat, salt la pagină, 
   await page.getByRole("button", { name: "Întreabă" }).click();
   const answer = page.getByTestId("answer");
   await expect(answer).toContainText("✓ verificat în text");
+  // mascota reacționează: sursa a fost verificată
+  await expect(page.getByTestId("mascot")).toHaveAttribute("data-mood", "happy");
+  await expect(page.getByTestId("mascot")).toContainText("Am verificat sursa");
 
   // click pe un titlu de pe pagina 3 → viewer-ul pdf.js sare acolo
   await outline.getByText("5.1 Depunerea ofertelor").click();
@@ -42,8 +45,10 @@ test("design: generează, auditul găsește probleme, repararea le rezolvă, QR"
   await page.getByRole("button", { name: /Generează/ }).click();
   await expect(page.getByText("Generez…")).toBeHidden();
   await expect(page.getByText(/— \d+ probleme/)).toBeVisible();
+  await expect(page.getByTestId("mascot")).toHaveAttribute("data-mood", "worried");
   await page.getByRole("button", { name: /Repară automat/ }).click();
   await expect(page.getByText(/Se citește\? — ✓/)).toBeVisible();
+  await expect(page.getByTestId("mascot")).toHaveAttribute("data-mood", "celebrate");
   await expect(page.getByText(/font \d+px → \d+px/).first()).toBeVisible();
   await page.getByRole("button", { name: "QR" }).click();
   await expect(page.getByAltText(/Cod QR/)).toBeVisible();

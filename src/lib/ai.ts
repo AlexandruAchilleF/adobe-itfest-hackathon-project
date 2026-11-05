@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 import type { AiAttachment, AiErrorBody, AiProviderName, AiResponse, HealthResponse } from "../../shared/ai-contract";
+import { mascot } from "../modules/mascot/mascot";
 import { isDemoMode } from "./demoMode";
 
 export class AiError extends Error {
@@ -54,6 +55,18 @@ export async function toAttachment(file: string | Blob): Promise<AiAttachment> {
 }
 
 async function post(body: Record<string, unknown>, signal?: AbortSignal): Promise<AiResponse> {
+  mascot.set("thinking");
+  try {
+    const result = await postRaw(body, signal);
+    if (mascot.get().mood === "thinking") mascot.set("idle");
+    return result;
+  } catch (err) {
+    mascot.say(err instanceof AiError && err.hint ? `${err.message} ${err.hint}` : (err as Error).message, "worried");
+    throw err;
+  }
+}
+
+async function postRaw(body: Record<string, unknown>, signal?: AbortSignal): Promise<AiResponse> {
   const res = await fetch("/api/ai", {
     method: "POST",
     headers: { "content-type": "application/json" },

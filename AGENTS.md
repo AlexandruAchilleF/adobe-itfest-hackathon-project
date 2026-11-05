@@ -18,6 +18,7 @@ Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din 
 - `src/lib/design.ts` + `src/modules/canvas/`: designul editabil (Fabric.js v7). `src/lib/accessibility.ts`: audit WCAG, lizibilitate, `autoFixDesign`.
 - `src/components/EditableText.tsx`: text propus de AI, editabil de om (pentru fișe, rapoarte, oferte). Pentru tipărire, ascunde UI-ul cu `print:hidden`.
 - PDF-uri exemplu: HTML în `samples-src/` → `node scripts/make-sample-pdf.mjs samples-src/x.html` → `public/samples/x.pdf`.
+- `src/modules/mascot/`: mascota (Țepi). `ask()` o pune automat pe „thinking” și „worried” la erori. În pagini, după o verificare, folosește `mascot.say(mesaj, mood)` sau `moodForChecks(trecute, total)`. Nu o folosi ca decor: doar pentru stări reale (ascultă, verificat, problemă).
 - `src/recipes/needs.ts`: domeniul exemplu (schemă, seed, scor). Acesta se schimbă după temă.
 - Rețetele: `src/pages/DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`, `MapPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
 
@@ -25,7 +26,7 @@ Adaptează rețeta existentă: schema, datele de seed, prompturile, textele din 
 - Fiecare `ask()` primește un `mock` realist, construit din inputul utilizatorului dacă se poate. Fiecare `defineAction` are `examples` și `mockArgs`.
 - AI-ul propune, omul confirmă: acțiunile care modifică date sunt `kind: "write"`, iar datele extrase de AI se arată într-un formular de verificare înainte de salvare.
 - Preferă verificări deterministe lângă AI: citate căutate în text, scoruri calculate, audit. Nu lăsa AI-ul să inventeze cifre.
-- Cheile AI rămân pe server (fără prefix `VITE_`). În browser ajung doar `VITE_SUPABASE_*`, `VITE_ADOBE_PDF_CLIENT_ID` și `VITE_APP_NAME`.
+- Cheile AI rămân pe server (fără prefix `VITE_`). În browser ajung doar `VITE_SUPABASE_*`, `VITE_ADOBE_PDF_CLIENT_ID`, `VITE_APP_NAME` și `VITE_MASCOT_*`.
 - Fabric.js v7 are originea implicită în centru. Pentru x/y de tip stânga-sus, setează `originX: "left", originY: "top"`.
 - O pagină nouă se adaugă în `src/App.tsx` (`Switch` și `NAV_GROUPS`). Paginile pentru telefon (`/view`, `/s`) sunt în `BARE`.
 - Logica pură stă separat de componente și are teste în `tests/`.

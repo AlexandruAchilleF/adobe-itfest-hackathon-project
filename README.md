@@ -27,6 +27,7 @@ Toate patru răspund la întrebarea „ce se întâmplă când AI-ul greșește?
 | **Business canvas** (`/business`) | AI-ul transformă ideea în problemă, utilizator vs. cumpărător, preț, piață numărată de jos în sus, adopție, concurență, riscuri și întrebările grele ale juriului. Export Markdown. |
 | **Sondaj live** (`/survey`) | QR pe masă; oamenii răspund de pe telefon. Rezultatul e o frază de pitch: „11 din 14 (79%) au răspuns Da”. Export CSV. |
 | **⏺ Rec** (în meniu) | înregistrează tab-ul cu sunet, pentru video-ul de rezervă |
+| **Țepi, mascota** (colțul din dreapta-jos) | un arici care arată ce face AI-ul: se gândește la orice apel, se bucură când sursele sunt verificate, se îngrijorează când AI-ul a greșit, ascultă când vorbești. Face vizibil răspunsul la „ce se întâmplă când AI-ul greșește?” și dă produsului o identitate. Nume și culoare: `VITE_MASCOT_NAME`, `VITE_MASCOT_COLOR`; din cod: `mascot.say("…", "happy")`. |
 | **Mod demo** (bifa din meniu sau `?demo=1`) | răspunsuri AI simulate, realiste: merge fără internet și fără chei |
 
 ## Start rapid

@@ -7,6 +7,7 @@ import { isDemoMode, setDemoMode } from "./lib/demoMode";
 import { supabase } from "./lib/supabase";
 import { adobeClientId } from "./modules/adobe/AdobePdfViewer";
 import { RecordButton } from "./modules/demo/RecordButton";
+import { MascotDock } from "./modules/mascot/Mascot";
 import { HomePage } from "./pages/HomePage";
 
 // Fiecare pagină se încarcă doar când e deschisă (pdf.js, harta și Fabric sunt mari),
@@ -131,6 +132,7 @@ export function App() {
         </Switch>
         </Suspense>
       </main>
+      <MascotDock />
     </div>
   );
 }

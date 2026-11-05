@@ -14,6 +14,7 @@ import { AiDesign, type Design, designSystemPrompt, exampleDesign } from "../lib
 import { downloadDataUrl, downloadText, shareDesign } from "../lib/share";
 import { useCamera } from "../modules/camera/useCamera";
 import { DesignCanvas, type DesignCanvasHandle } from "../modules/canvas/DesignCanvas";
+import { mascot } from "../modules/mascot/mascot";
 import { useSpeechRecognition } from "../modules/voice/speech";
 
 // cm = lățimea la care e văzut de fapt; m = distanța tipică de privire
@@ -76,7 +77,11 @@ export function DesignPage() {
         files: photo ? [photo] : undefined,
         mock: mockDesign(brief, f.width, f.height),
       });
-      setDesign({ ...data, width: f.width, height: f.height });
+      const next = { ...data, width: f.width, height: f.height };
+      setDesign(next);
+      const bad = auditDesign(next, f.cm).filter((a) => a.level === "fail" || a.readableFromM < distance).length;
+      if (bad) mascot.say(`${bad === 1 ? "Un text nu se citește" : `${bad} texte nu se citesc`} de la ${distance} m. Apasă „Repară automat”.`, "worried");
+      else mascot.say("Se citește bine de la distanța aleasă.", "happy");
     } catch (err) {
       setError({ msg: (err as Error).message, hint: err instanceof AiError ? err.hint : undefined });
     } finally {
@@ -87,6 +92,7 @@ export function DesignPage() {
   async function fix() {
     const result = autoFixDesign(ref.current?.getDesign() ?? design, { physicalWidthCm: f.cm, distanceM: distance });
     setChanges(result.changes.length ? result.changes : ["Nimic de reparat: toate textele trec auditul."]);
+    mascot.say(result.changes.length ? `Am reparat ${result.changes.length} ${result.changes.length === 1 ? "problemă" : "probleme"}. Acum se citește.` : "Era deja în regulă.", "celebrate");
     await ref.current?.setDesign(result.design);
   }
 

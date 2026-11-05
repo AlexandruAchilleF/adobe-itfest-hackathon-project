@@ -2,7 +2,7 @@
 // reale pe date. Citirile se execută direct; ORICE modificare așteaptă aprobarea omului.
 // Aici: un coordonator de voluntari care lucrează pe aceleași date ca harta.
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { ConfirmActions } from "../components/ConfirmActions";
 import { Button, Card, Code, ErrorNote, PageHeader, Spinner } from "../components/ui";
@@ -10,6 +10,7 @@ import { defineAction } from "../lib/agent";
 import { type Rec, useCollection } from "../lib/store";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { geocode } from "../modules/map/geo";
+import { mascot } from "../modules/mascot/mascot";
 import { CATEGORIES, CATEGORY_COLORS, type Need, needs, STATUSES } from "../recipes/needs";
 
 const ANY = "toate";
@@ -100,6 +101,23 @@ export function AssistantPage() {
     persona: "Ești asistentul unui coordonator de voluntari dintr-un ONG din București. Răspunzi scurt, în română.",
     context: () => itemsRef.current.map((r) => `id=${r.id} | ${r.data.title} | ${r.data.category} | ${r.data.status} | urgență ${r.data.urgency} | ${r.data.address}`).join("\n"),
   });
+
+  // ariciul ascultă cât e pornit microfonul și cere aprobarea când asistentul vrea să modifice ceva
+  useEffect(() => {
+    if (agent.listening) mascot.set("listening");
+    else if (mascot.get().mood === "listening") mascot.set("idle");
+  }, [agent.listening]);
+  useEffect(() => {
+    if (agent.pending) mascot.say("Înainte să modific ceva, aprobă tu lista de mai jos.", "idle");
+  }, [agent.pending]);
+  useEffect(() => {
+    const last = agent.log.at(-1);
+    if (!last) return;
+    const done = last.actions.filter((a) => a.ok).length;
+    const failed = last.actions.filter((a) => !a.ok && a.error !== "respinsă de utilizator").length;
+    if (failed) mascot.say(`${failed} ${failed === 1 ? "acțiune n-a mers" : "acțiuni n-au mers"}. Uită-te în jurnal.`, "worried");
+    else if (done) mascot.say(last.say.replace(/^\(demo\)\s*/, ""), "happy");
+  }, [agent.log]);
 
   const titleOf = (id: unknown) => items.find((r) => r.id === id)?.data.title ?? String(id);
   const list = shown ?? items;
