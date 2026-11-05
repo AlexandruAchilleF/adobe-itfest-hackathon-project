@@ -114,3 +114,25 @@ test("raport rapid de pe telefon: locația curentă, ora, apare live pe hartă",
   await expect(page.getByTestId("live-reports").locator("li").first()).toContainText("acum");
   await expect(pins).toHaveCount(before + 1);
 });
+
+test("notificare: la livrare pleacă SMS (mock) cu link; din link, „nu am primit”", async ({ page }) => {
+  await fresh(page, "ioana");
+  await page.getByTestId("request-list").getByRole("button", { name: /Apă și sucuri/ }).click();
+  await page.getByTestId("steps").getByRole("button", { name: "Am lăsat la ușă" }).click();
+  await expect(page.getByTestId("notice")).toContainText("SMS simulat către Domnul Ionescu");
+  const sms = page.getByTestId("outbox").locator("li").first();
+  await expect(sms).toContainText("Ioana Marin spune că a lăsat 8 sticle la ușă. Ați primit?");
+  await expect(sms).toContainText("simulat");
+
+  // domnul Ionescu deschide linkul din SMS pe telefon
+  const link = (await sms.textContent())!.match(/https?:\/\/\S+\/c\/[\w-]+/)![0];
+  await page.goto(link);
+  await page.getByLabel("Ce s-a întâmplat").fill("N-a sunat nimeni la ușă");
+  await page.getByRole("button", { name: /Nu am primit/ }).click();
+  await expect(page.getByTestId("confirm-result")).toContainText("Ioana Marin pierde 15 puncte");
+  await expect(page.getByTestId("confirm-result")).toContainText("SMS simulat către Ioana Marin");
+
+  await page.goto("/harta?demo=1");
+  await page.getByTestId("request-list").getByRole("button", { name: /Apă și sucuri/ }).click();
+  await expect(page.getByTestId("timeline")).toContainText("N-a sunat nimeni la ușă");
+});

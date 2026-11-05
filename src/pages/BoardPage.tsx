@@ -10,9 +10,9 @@ import { QrPanel } from "../components/QrPanel";
 import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
-import { confirmationReward, giverStats } from "../lib/gamification";
+import { giverStats } from "../lib/gamification";
 import { useMe } from "../lib/identity";
-import { type Actor, apply, availableEvents, createRequest, isExpired, type LifecycleEvent, type Request } from "../lib/lifecycle";
+import { type Actor, availableEvents, createRequest, isExpired, type LifecycleEvent, type Request } from "../lib/lifecycle";
 import { ageLabel, ageMinutes, freshness, visibleReports } from "../lib/reports";
 import { type Rec, useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
@@ -22,8 +22,9 @@ import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
-import { baselineScore, categoryOf, reports, reportTypeOf, requests } from "../scenario/model";
-import { StatusPill, Timeline } from "../scenario/ui/parts";
+import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests } from "../scenario/model";
+import { useSteps } from "../scenario/useSteps";
+import { StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
 
 const S = scenario;
 const CAT_IDS = S.categories.map((c) => c.id) as [string, ...string[]];
@@ -44,7 +45,9 @@ const Match = z.object({
 });
 
 export function BoardPage() {
-  const { items, add, update, error: dbError, reset } = useCollection(requests);
+  const { items, add, error: dbError, reset } = useCollection(requests);
+  const steps = useSteps();
+  const sent = useCollection(outbox);
   const { me, nameOf } = useMe();
   const live = useCollection(reports);
   const [showReports, setShowReports] = useState(S.reports.enabled);
@@ -104,20 +107,9 @@ export function BoardPage() {
     setBusy("step");
     setError(null);
     try {
-      const next = apply(rec.data, event, actor);
-      await update(rec.id, next);
+      const { notice: n } = await steps.step(rec, event, actor);
       setSelected(rec.id);
-      if (event === "confirm" && next.giver) {
-        // punctele le calculează codul din istoric; mascota doar le anunță
-        const after = items.map((r) => (r.id === rec.id ? next : r.data));
-        const reward = confirmationReward(all, after, next.giver, S);
-        const msg = `+${reward.gained} puncte pentru ${nameOf(next.giver)}${reward.rankUp ? `. Rang nou: ${reward.rankUp.name}!` : ""}`;
-        setNotice(msg);
-        mascot.say(msg, "celebrate");
-      } else if (event === "dispute") {
-        setNotice(`Am notat „nu am primit”. ${nameOf(rec.data.giver)} pierde ${S.points.disputePenalty} puncte.`);
-        mascot.say("Am notat că n-a ajuns. Nu se mai socotește ca livrare.", "worried");
-      } else setNotice(null);
+      setNotice(n);
     } catch (err) {
       fail(err);
     } finally {
@@ -255,7 +247,7 @@ export function BoardPage() {
           <Pill ok={null}>
             {items.length} {S.request.plural}
           </Pill>
-          <Button variant="ghost" onClick={() => void Promise.all([reset(), live.reset()])}>
+          <Button variant="ghost" onClick={() => void Promise.all([reset(), live.reset(), sent.reset()])}>
             Resetează datele demo
           </Button>
         </div>
@@ -410,6 +402,22 @@ export function BoardPage() {
             </Card>
           )}
           <ErrorNote error={error?.msg} hint={error?.hint} />
+          <Card title={`${S.notify.channel === "sms" ? "SMS-uri" : "Emailuri"} trimise`}>
+            <ul className="space-y-2 text-sm" data-testid="outbox">
+              {[...sent.items].reverse().slice(0, 4).map((n) => (
+                <li key={n.id} className="rounded-xl bg-slate-800/50 px-3 py-2">
+                  <p className="text-xs text-slate-400">
+                    {timeOf(n.data.at)} · către {n.data.toName} ({n.data.address}) ·{" "}
+                    <span className={n.data.status === "eșuat" ? "text-rose-300" : n.data.status === "simulat" ? "text-amber-200" : "text-emerald-300"}>{n.data.status}</span>
+                  </p>
+                  <p className="mt-0.5 break-words">{n.data.message}</p>
+                  {n.data.error && <p className="mt-0.5 text-xs text-rose-300">{n.data.error}</p>}
+                </li>
+              ))}
+              {!sent.items.length && <li className="text-slate-500">Nimic încă. Fiecare pas din ciclu anunță cealaltă parte.</li>}
+            </ul>
+            <p className="mt-2 text-xs text-slate-500">„Simulat” = fără cheie Twilio pe server sau în modul demo: mesajul e cel real, doar nu pleacă.</p>
+          </Card>
           {S.reports.enabled && (
             <Card title={S.reports.title}>
               <QrPanel url={`${location.origin}/raport`} size={150} label="Scanează și raportează de pe telefon" />

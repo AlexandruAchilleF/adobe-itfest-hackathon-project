@@ -11,7 +11,7 @@ import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
 import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
 import { LiveProvider } from "./lib/live";
-import { people, reports, requests } from "./scenario/model";
+import { outbox, people, reports, requests } from "./scenario/model";
 
 // Fiecare pagină se încarcă doar când e deschisă (pdf.js, harta și Fabric sunt mari),
 // ca pagina de sondaj de pe telefon să pornească repede.
@@ -29,6 +29,7 @@ const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
 const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
+const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
 const Loading = () => <p className="p-6 text-sm text-slate-500">Se încarcă…</p>;
 
 export const NAV_GROUPS = [
@@ -58,6 +59,7 @@ const BARE: Array<[string, ComponentType]> = [
   ["/view", ViewPage],
   ["/s", SurveyRespondPage],
   ["/raport", ReportPage],
+  ["/c", ConfirmPage],
 ];
 
 export interface AppStatus {
@@ -67,7 +69,7 @@ export interface AppStatus {
   demo: boolean;
 }
 
-const LIVE_COLLECTIONS = [requests.name, people.name, reports.name];
+const LIVE_COLLECTIONS = [requests.name, people.name, reports.name, outbox.name];
 
 export function App() {
   return (

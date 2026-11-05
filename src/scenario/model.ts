@@ -3,6 +3,7 @@
 
 import { z } from "zod";
 import { advanceTo, createRequest, type Request, RequestBase } from "../lib/lifecycle";
+import { outboxFor } from "../lib/notify";
 import { Report, seedReports } from "../lib/reports";
 import { type Collection, createCollection } from "../lib/store";
 import { distanceKm, type LatLng } from "../modules/map/geo";
@@ -79,6 +80,7 @@ export const categoryOf = (id: string): Category => scenario.categories.find((c)
 export const RequestSchema = requestSchema(scenario);
 export const requests: Collection<Request> = createCollection(`${scenario.id}:cereri`, RequestSchema as z.ZodType<Request>, buildRequestSeed(scenario));
 export const reports: Collection<Report> = createCollection(`${scenario.id}:rapoarte`, Report, seedReports(scenario.seed.reports));
+export const outbox = outboxFor(scenario.id);
 export const people: Collection<Person> = createCollection(`${scenario.id}:oameni`, Person, scenario.seed.people as PersonSeed[]);
 
 /** Scor determinist de potrivire (0–100): urgență + apropiere. AI-ul doar îl explică. */
