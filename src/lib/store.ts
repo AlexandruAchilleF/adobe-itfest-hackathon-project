@@ -1,8 +1,8 @@
 // Date persistente simple (CRUD) cu date de seed — forma câștigătorului ITFest (ResourceMe).
 // Cu Supabase: tabela generică `records` (SQL în README). Fără: localStorage în browser.
 //
-//   const needs = createCollection("nevoi", NeedSchema, seedNeeds);
-//   const { items, add, update, remove } = useCollection(needs);
+//   const requests = createCollection("cereri", RequestSchema, seed);
+//   const { items, add, update, remove } = useCollection(requests);
 
 import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod";

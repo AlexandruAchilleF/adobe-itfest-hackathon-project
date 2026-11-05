@@ -61,6 +61,9 @@ export interface AppStatus {
 const LIVE_COLLECTIONS = [requests.name, people.name, reports.name, outbox.name];
 
 export function App() {
+  useEffect(() => {
+    document.title = import.meta.env.VITE_APP_NAME || S.app.name;
+  }, []);
   return (
     <LiveProvider collections={LIVE_COLLECTIONS}>
       <Shell />

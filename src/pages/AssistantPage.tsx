@@ -21,6 +21,8 @@ import { StatusPill } from "../scenario/ui/parts";
 const ANY = "toate";
 const CAT_IDS = scenario.categories.map((c) => c.id) as [string, ...string[]];
 const EVENTS = ["accept", "cancel", "deliver", "confirm", "dispute", "reopen"] as const;
+// exemplu de comandă scris cu cuvintele scenariului, ex: „mă ocup eu de apă plată”
+const ACCEPT_EXAMPLE = `${scenario.request.actions.accept.toLowerCase()} de ${scenario.seed.requests[0]?.title.toLowerCase().split(",")[0] ?? scenario.request.singular}`;
 
 export function AssistantPage() {
   const { items, add, update, remove } = useCollection(requests);
@@ -61,7 +63,7 @@ export function AssistantPage() {
             ),
           );
         },
-        examples: ["arată-mi cererile urgente", "ce e deschis", "caută în Berceni"],
+        examples: ["arată-mi cererile urgente", "ce e deschis", `caută în ${scenario.seed.people[0]?.area ?? "centru"}`],
         mockArgs: { category: ANY, status: "deschis", min_urgency: 4, text: "" },
       }),
       defineAction({
@@ -96,7 +98,7 @@ export function AssistantPage() {
           if (!who) throw new Error("nu știu cine ești");
           await update(id, apply(r.data, event, { handle: who.handle, role: who.role }));
         },
-        examples: ["mă ocup eu de apă", "am livrat", "am primit", "nu am primit"],
+        examples: [ACCEPT_EXAMPLE, "am livrat", "am primit", "nu am primit"],
         mockArgs: (input) => {
           const t = input.toLowerCase();
           const event = t.includes("nu am primit") ? ("dispute" as const) : t.includes("primit") ? ("confirm" as const) : t.includes("livr") ? ("deliver" as const) : ("accept" as const);
@@ -207,7 +209,7 @@ export function AssistantPage() {
                   </p>
                 </li>
               ))}
-              {!agent.log.length && <li className="text-slate-500">Încearcă: „arată-mi cererile urgente” sau „mă ocup eu de apă”.</li>}
+              {!agent.log.length && <li className="text-slate-500">Încearcă: „arată-mi cererile urgente” sau „{ACCEPT_EXAMPLE}”.</li>}
             </ul>
           </Card>
           <p className="text-xs text-slate-500">
