@@ -8,7 +8,7 @@ import { ConfirmActions } from "../components/ConfirmActions";
 import { Button, Card, Code, ErrorNote, PageHeader, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { useMe } from "../lib/identity";
-import { apply, createRequest, type Request, STATES } from "../lib/lifecycle";
+import { apply, createRequest, type Request } from "../lib/flow";
 import { type Rec, useCollection } from "../lib/store";
 import { useVoiceAgent } from "../lib/useVoiceAgent";
 import { geocode } from "../modules/map/geo";
@@ -20,9 +20,11 @@ import { StatusPill } from "../scenario/ui/parts";
 
 const ANY = "toate";
 const CAT_IDS = scenario.categories.map((c) => c.id) as [string, ...string[]];
-const EVENTS = ["accept", "cancel", "deliver", "confirm", "dispute", "reopen"] as const;
+const EVENTS = scenario.flow.transitions.map((t) => t.id) as [string, ...string[]];
+const STATES = scenario.flow.states.map((st) => st.id);
+const labelOf = (id: unknown) => scenario.flow.transitions.find((t) => t.id === id)?.label ?? String(id);
 // exemplu de comandă scris cu cuvintele scenariului, ex: „mă ocup eu de apă plată”
-const ACCEPT_EXAMPLE = `${scenario.request.actions.accept.toLowerCase()} de ${scenario.seed.requests[0]?.title.toLowerCase().split(",")[0] ?? scenario.request.singular}`;
+const ACCEPT_EXAMPLE = `${scenario.flow.transitions[0].label.toLowerCase()} ${scenario.seed.requests[0]?.title.toLowerCase().split(",")[0] ?? scenario.request.singular}`;
 
 export function AssistantPage() {
   const { items, add, update, remove } = useCollection(requests);
@@ -80,28 +82,28 @@ export function AssistantPage() {
         }),
         run: async (a) => {
           const who = meRef.current;
-          if (who?.role !== "receiver") throw new Error(`doar ${scenario.roles.receiver.label.toLowerCase()} poate cere`);
+          if (who?.role !== scenario.flow.requester) throw new Error(`doar ${scenario.roles[scenario.flow.requester].label.toLowerCase()} poate cere`);
           const geo = await geocode(a.address);
-          await add(createRequest({ ...a, urgency: Math.min(5, Math.max(1, Math.round(a.urgency))), lat: geo?.lat ?? scenario.app.center.lat, lng: geo?.lng ?? scenario.app.center.lng, receiver: who.handle }));
+          await add(createRequest(scenario.flow, { ...a, urgency: Math.min(5, Math.max(1, Math.round(a.urgency))), lat: geo?.lat ?? scenario.app.center.lat, lng: geo?.lng ?? scenario.app.center.lng }, who.handle));
         },
         examples: ["adaugă o cerere", "am nevoie de", "îmi trebuie"],
         mockArgs: (input) => ({ title: input.split(/\s+/).slice(0, 5).join(" "), category: CAT_IDS.at(-1)!, description: input, quantity: 1, unit: "bucată", urgency: 3, address: "București" }),
       }),
       defineAction({
         name: "request_step",
-        description: "Face un pas din ciclul cererii (accept, cancel, deliver, confirm, dispute, reopen), ca utilizatorul curent",
+        description: `Face un pas din fluxul cererii, ca utilizatorul curent: ${scenario.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
         args: z.object({ id: z.string().describe("id-ul din lista de context"), event: z.enum(EVENTS) }),
         run: async ({ id, event }) => {
           const r = itemsRef.current.find((x) => x.id === id);
           const who = meRef.current;
           if (!r) throw new Error("nu există o cerere cu acest id");
           if (!who) throw new Error("nu știu cine ești");
-          await update(id, apply(r.data, event, { handle: who.handle, role: who.role }));
+          await update(id, apply(scenario.flow, r.data, event, { handle: who.handle, role: who.role }));
         },
         examples: [ACCEPT_EXAMPLE, "am livrat", "am primit", "nu am primit"],
         mockArgs: (input) => {
           const t = input.toLowerCase();
-          const event = t.includes("nu am primit") ? ("dispute" as const) : t.includes("primit") ? ("confirm" as const) : t.includes("livr") ? ("deliver" as const) : ("accept" as const);
+          const event = [...scenario.flow.transitions].sort((a, b) => b.label.length - a.label.length).find((x) => t.includes(x.label.toLowerCase()))?.id ?? scenario.flow.transitions[0].id;
           return { id: byTitle(input)?.id ?? "", event };
         },
       }),
@@ -192,7 +194,7 @@ export function AssistantPage() {
             pending={agent.pending}
             describe={(name, args) => {
               const a = args as Record<string, unknown>;
-              if (name === "request_step") return `„${titleOf(a.id)}” → ${scenario.request.actions[a.event as (typeof EVENTS)[number]]}`;
+              if (name === "request_step") return `„${titleOf(a.id)}” → ${labelOf(a.event)}`;
               if (name === "delete_request") return `șterge „${titleOf(a.id)}”`;
               if (name === "add_request") return `${a.title} · ${a.category} · urgență ${a.urgency} · ${a.address}`;
               return JSON.stringify(args);

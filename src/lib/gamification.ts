@@ -2,14 +2,16 @@
 // AI-ul nu dă puncte: cel mult propune urgența unei cereri, pe care omul o verifică.
 //
 //   puncte(cerere) = round((base + perUnit × min(cantitate, maxUnits)) × urgency[urgență])
-//   puncte(om)     = Σ cererile confirmate de cel care a primit − disputePenalty × „nu am primit”
+//   puncte(om)     = Σ pașii cu outcome „done” în care omul era legat de cerere (points.role)
+//                    − disputePenalty × pașii cu outcome „failed” (ex: „nu am primit”)
 //
 // Punctele vin doar după confirmarea celui care a primit. „Am livrat” singur nu aduce nimic.
 
 import type { Rank, Scenario } from "../scenario/types";
-import type { Request } from "./lifecycle";
+import { type FlowDef, type Request, toneOf, transitionOf } from "./flow";
 
 type PointsConfig = Scenario["points"];
+type Cfg = Pick<Scenario, "points" | "trust" | "flow">;
 
 export function pointsFor(r: Pick<Request, "quantity" | "urgency">, cfg: PointsConfig): number {
   const units = Math.max(0, Math.min(r.quantity, cfg.maxUnits));
@@ -32,22 +34,29 @@ export interface GiverStats {
   suspended: boolean;
 }
 
-/** Ultimul pas din istoric care aparține omului ăstuia ca giver. */
-const events = (requests: Request[], handle: string) =>
-  requests.flatMap((r) => r.history.filter((h) => h.giver === handle).map((h) => ({ r, h })));
+/** Pașii cu rezultat (reușit / eșuat) în care omul era legat de cerere în rolul care primește puncte. */
+function outcomes(flow: FlowDef, role: string, requests: Request[], handle: string) {
+  return requests.flatMap((r) =>
+    r.history.flatMap((h) => {
+      const outcome = transitionOf(flow, h.event)?.outcome;
+      return outcome && h.actors[role] === handle ? [{ r, outcome }] : [];
+    }),
+  );
+}
 
-export function giverStats(handle: string, requests: Request[], s: Pick<Scenario, "points" | "trust">): GiverStats {
-  const mine = events(requests, handle);
-  const confirmed = mine.filter(({ h }) => h.event === "confirm");
-  const disputes = mine.filter(({ h }) => h.event === "dispute").length;
+export function giverStats(handle: string, requests: Request[], s: Cfg): GiverStats {
+  const mine = outcomes(s.flow, s.points.role, requests, handle);
+  const confirmed = mine.filter((m) => m.outcome === "done");
+  const disputes = mine.filter((m) => m.outcome === "failed").length;
   const earned = confirmed.reduce((sum, { r }) => sum + pointsFor(r, s.points), 0);
+  const bound = requests.filter((r) => r.actors[s.points.role] === handle);
   return {
     handle,
     points: Math.max(0, earned - disputes * s.points.disputePenalty),
     confirmed: confirmed.length,
     units: confirmed.reduce((sum, { r }) => sum + r.quantity, 0),
-    pending: requests.filter((r) => r.giver === handle && r.status === "livrat").length,
-    active: requests.filter((r) => r.giver === handle && r.status === "acceptat").length,
+    pending: bound.filter((r) => toneOf(s.flow, r) === "waiting").length,
+    active: bound.filter((r) => toneOf(s.flow, r) === "progress" || toneOf(s.flow, r) === "returned").length,
     disputes,
     suspended: isSuspended(disputes, s.trust),
   };
@@ -82,7 +91,7 @@ export interface LeaderRow extends GiverStats {
 }
 
 /** Clasamentul celor care dau. La egalitate de puncte: mai multe livrări, apoi numele. */
-export function leaderboard(givers: Array<{ handle: string; name: string }>, requests: Request[], s: Pick<Scenario, "points" | "trust" | "ranks">): LeaderRow[] {
+export function leaderboard(givers: Array<{ handle: string; name: string }>, requests: Request[], s: Cfg & Pick<Scenario, "ranks">): LeaderRow[] {
   return givers
     .map((g) => ({ ...giverStats(g.handle, requests, s), name: g.name }))
     .sort((a, b) => b.points - a.points || b.confirmed - a.confirmed || a.name.localeCompare(b.name, "ro"))
@@ -101,20 +110,21 @@ export interface Impact {
 }
 
 /** Cifrele de impact de pe prima pagină și din pitch. */
-export function impact(requests: Request[]): Impact {
-  const done = requests.filter((r) => r.status === "confirmat");
+export function impact(requests: Request[], s: Pick<Scenario, "flow" | "points">): Impact {
+  const tone = (r: Request) => toneOf(s.flow, r);
+  const done = requests.filter((r) => tone(r) === "done");
   return {
-    units: done.reduce((s, r) => s + r.quantity, 0),
+    units: done.reduce((sum, r) => sum + r.quantity, 0),
     confirmed: done.length,
-    open: requests.filter((r) => r.status === "deschis").length,
-    inProgress: requests.filter((r) => r.status === "acceptat" || r.status === "livrat").length,
-    disputed: requests.filter((r) => r.status === "contestat").length,
-    helpers: new Set(done.map((r) => r.giver).filter(Boolean)).size,
+    open: requests.filter((r) => tone(r) === "open").length,
+    inProgress: requests.filter((r) => ["progress", "waiting", "returned"].includes(tone(r))).length,
+    disputed: requests.filter((r) => tone(r) === "failed").length,
+    helpers: new Set(done.map((r) => r.actors[s.points.role]).filter(Boolean)).size,
   };
 }
 
 /** Ce s-a schimbat după o confirmare: puncte câștigate și, dacă e cazul, rangul nou. */
-export function confirmationReward(before: Request[], after: Request[], handle: string, s: Pick<Scenario, "points" | "trust" | "ranks">) {
+export function confirmationReward(before: Request[], after: Request[], handle: string, s: Cfg & Pick<Scenario, "ranks">) {
   const a = giverStats(handle, before, s).points;
   const b = giverStats(handle, after, s).points;
   const ra = rankFor(a, s.ranks).rank;

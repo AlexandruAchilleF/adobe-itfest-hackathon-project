@@ -25,26 +25,26 @@ describe("validateScenario prinde greșelile de copy-paste", () => {
       ...vecini.seed,
       requests: [
         { ...vecini.seed.requests[0], category: "inexistent" },
-        { ...vecini.seed.requests[0], receiver: "andrei" },
-        { ...vecini.seed.requests[0], stage: "livrat", giver: undefined },
+        { ...vecini.seed.requests[0], requester: "andrei" },
+        { ...vecini.seed.requests[0], steps: [["deliver", "andrei"]] },
       ],
     },
   };
   const problems = validateScenario(broken).join("\n");
   it("categorie inexistentă", () => expect(problems).toContain("categoria inexistent"));
   it("rol greșit", () => expect(problems).toContain("nu are rolul"));
-  it("etapă fără giver", () => expect(problems).toContain("cere un giver"));
+  it("pași imposibili în seed", () => expect(problems).toContain("Seed:"));
   it("ranguri", () => expect(problems).toContain("Primul rang"));
 });
 
 describe("seed-ul are istoric generat de ciclul real", () => {
   const seed = buildRequestSeed(vecini, new Date("2026-11-07T12:00:00Z"));
-  it("etapele din config devin statusuri", () => {
-    expect(seed.map((r) => r.status)).toEqual(vecini.seed.requests.map((r) => r.stage ?? "deschis"));
+  it("pașii din config devin statusuri", () => {
+    expect(seed.map((r) => r.status)).toEqual(["deschis", "deschis", "deschis", "deschis", "acceptat", "confirmat", "confirmat", "livrat"]);
   });
-  it("cererile confirmate au confirm în istoric, cu giver-ul din seed", () => {
+  it("cererile confirmate au confirm în istoric, cu cine a ajutat", () => {
     const done = seed.find((r) => r.status === "confirmat")!;
-    expect(done.history.at(-1)).toMatchObject({ event: "confirm", giver: done.giver });
+    expect(done.history.at(-1)).toMatchObject({ event: "confirm", actors: { vecin: done.actors.vecin } });
   });
 });
 
@@ -54,9 +54,9 @@ describe("scorul de potrivire (determinist)", () => {
     const origin = { lat: 44.416, lng: 26.173 };
     const near = { urgency: 5, status: "deschis" as const, lat: 44.417, lng: 26.172 };
     const far = { ...near, lat: 44.5, lng: 25.9 };
-    expect(baselineScore(near, origin)).toBeGreaterThan(baselineScore(far, origin));
-    expect(baselineScore({ ...near, status: "acceptat" }, origin)).toBe(0);
-    expect(baselineScore(near, origin)).toBeLessThanOrEqual(100);
+    expect(baselineScore(vecini, near, origin)).toBeGreaterThan(baselineScore(vecini, far, origin));
+    expect(baselineScore(vecini, { ...near, status: "acceptat" }, origin)).toBe(0);
+    expect(baselineScore(vecini, near, origin)).toBeLessThanOrEqual(100);
   });
 });
 
@@ -79,6 +79,8 @@ describe("meniul și mascota din config", async () => {
   it("meniul principal folosește cuvintele scenariului și ascunde raportarea dacă e oprită", () => {
     expect(mainNav(vecini).map((n) => n.label)).toEqual(["Harta", "Profilul meu", "Clasament", "Raportează"]);
     expect(mainNav({ ...vecini, reports: { ...vecini.reports, enabled: false } }).map((n) => n.href)).not.toContain("/raport");
+    const office = mainNav({ ...vecini, features: { ...vecini.features, map: false, gamification: false } });
+    expect(office.map((n) => n.label)).toEqual(["Cereri", "Profilul meu", "Raportează"]);
   });
   it("rețetele vechi apar doar cu optionalModules", () => {
     expect(teamNav(vecini).map((n) => n.href)).toContain("/docs");

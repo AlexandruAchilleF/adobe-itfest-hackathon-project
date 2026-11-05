@@ -5,7 +5,7 @@ import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { useMascotPage } from "../modules/mascot/page";
 import { scenario } from "../scenario/config";
-import { requests } from "../scenario/model";
+import { requests, roleOf } from "../scenario/model";
 import { Avatar } from "../scenario/ui/parts";
 
 const S = scenario;
@@ -14,13 +14,13 @@ export function LeaderboardPage() {
   const { items } = useCollection(requests);
   const { me, people } = useMe();
   const all = items.map((r) => r.data);
-  const rows = leaderboard(people.filter((p) => p.role === "giver"), all, S);
-  const total = impact(all);
+  const rows = leaderboard(people.filter((p) => p.role === S.points.role), all, S);
+  const total = impact(all, S);
   useMascotPage({ title: "Clasament", context: () => rows.map((r) => `${r.place}. ${r.name} ${r.points}p`).join("\n") });
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Clasamentul: ${S.roles.giver.plural.toLowerCase()}`} description={`${total.units} ${S.app.impactLabel}, ${total.confirmed} livrări confirmate de ambele părți, ${total.helpers} oameni care au ajutat.`} />
+      <PageHeader title={`Clasamentul: ${roleOf(S.points.role).plural.toLowerCase()}`} description={`${total.units} ${S.app.impactLabel}, ${total.confirmed} livrări confirmate de ambele părți, ${total.helpers} oameni care au ajutat.`} />
       <Card>
         <ol className="space-y-2" data-testid="leaderboard">
           {rows.map((r) => (

@@ -1,7 +1,7 @@
 // Pagina principală a scenariului: cererile pe hartă și ciclul lor, din perspectiva rolului curent.
-//  - cine primește (receiver) scrie cererea cum ar spune-o → AI-ul o structurează → omul verifică → salvează
-//  - cine dă (giver) spune ce poate oferi → scor determinist (urgență + distanță) + explicație AI
-//  - fiecare pas din ciclu e un buton al omului care are voie să-l facă (src/lib/lifecycle.ts)
+//  - cine cere (flow.requester) scrie cererea cum ar spune-o → AI-ul o structurează → omul verifică → salvează
+//  - cine ajută spune ce poate oferi → scor determinist (urgență + distanță) + explicație AI
+//  - fiecare pas din flux e un buton al omului care are voie să-l facă (src/lib/flow.ts)
 // Tot textul de domeniu vine din src/scenario/config.ts.
 
 import { useEffect, useMemo, useState } from "react";
@@ -12,7 +12,7 @@ import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
 import { giverStats } from "../lib/gamification";
 import { useMe } from "../lib/identity";
-import { type Actor, availableEvents, createRequest, isExpired, type LifecycleEvent, type Request } from "../lib/lifecycle";
+import { type Actor, available, createRequest, isExpired, type Request, stateOf, toneOf, waitingOn } from "../lib/flow";
 import { ageLabel, ageMinutes, freshness, visibleReports } from "../lib/reports";
 import { type Rec, useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
@@ -22,7 +22,7 @@ import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
-import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests } from "../scenario/model";
+import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests, roleOf } from "../scenario/model";
 import { useSteps } from "../scenario/useSteps";
 import { StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
 
@@ -74,8 +74,9 @@ export function BoardPage() {
 
   const [notice, setNotice] = useState<string | null>(null);
   const all = items.map((r) => r.data);
-  const actor: Actor | null = me ? { handle: me.handle, role: me.role, suspended: me.role === "giver" && giverStats(me.handle, all, S).suspended } : null;
-  const mine = (r: Request) => r.receiver === me?.handle || r.giver === me?.handle;
+  const actor: Actor | null = me ? { handle: me.handle, role: me.role, suspended: S.features.gamification && me.role === S.points.role && giverStats(me.handle, all, S).suspended } : null;
+  const mine = (r: Request) => r.requester === me?.handle || Object.values(r.actors).includes(me?.handle ?? "");
+  const [note, setNote] = useState("");
   const visible = items.filter((r) => (filter === "toate" ? true : filter === "ale mele" ? mine(r.data) : r.data.category === filter));
   const reportPoints = (showReports ? recentReports : []).map((r) => ({
     id: `raport:${r.id}`,
@@ -93,7 +94,7 @@ export function BoardPage() {
         lat: r.data.lat,
         lng: r.data.lng,
         label: `${categoryOf(r.data.category).icon} ${r.data.title} · ${r.data.status}`,
-        color: r.data.status === "confirmat" ? "#475569" : categoryOf(r.data.category).color,
+        color: toneOf(S.flow, r.data) === "done" ? "#475569" : categoryOf(r.data.category).color,
         weight: r.data.urgency,
       })),
     [visible],
@@ -102,12 +103,13 @@ export function BoardPage() {
   const sel = items.find((r) => r.id === selected) ?? null;
   const fail = (err: unknown) => setError({ msg: (err as Error).message, hint: err instanceof AiError ? err.hint : undefined });
 
-  async function step(rec: Rec<Request>, event: LifecycleEvent) {
+  async function step(rec: Rec<Request>, event: string) {
     if (!actor) return;
     setBusy("step");
     setError(null);
     try {
-      const { notice: n } = await steps.step(rec, event, actor);
+      const { notice: n } = await steps.step(rec, event, actor, note);
+      setNote("");
       setSelected(rec.id);
       setNotice(n);
     } catch (err) {
@@ -138,7 +140,7 @@ export function BoardPage() {
 
   async function save() {
     if (!draft || !me) return;
-    const rec = await add(createRequest({ ...draft, receiver: me.handle }));
+    const rec = await add(createRequest(S.flow, draft, me.handle));
     setDraft(null);
     setRaw("");
     setSelected(rec.id);
@@ -154,8 +156,8 @@ export function BoardPage() {
       const geo = await geocode(`${where ?? text}, București`);
       setOrigin(geo);
       const ranked = items
-        .filter((r) => r.data.status === "deschis" && !isExpired(r.data))
-        .map((r) => ({ r, base: baselineScore(r.data, geo), km: geo ? distanceKm(geo, r.data) : null }))
+        .filter((r) => toneOf(S.flow, r.data) === "open" && !isExpired(S.flow, r.data))
+        .map((r) => ({ r, base: baselineScore(S, r.data, geo), km: geo ? distanceKm(geo, r.data) : null }))
         .sort((a, b) => b.base - a.base);
       const list = ranked.map(({ r, base, km }) => `id=${r.id} | ${r.data.title} | ${categoryOf(r.data.category).label} | ${r.data.quantity} ${r.data.unit} | urgență ${r.data.urgency} | ${km ?? "?"} km | scor de bază ${base}`).join("\n");
       const { data } = await ask({
@@ -184,7 +186,7 @@ export function BoardPage() {
     const w = input.toLowerCase();
     return items.find((r) => r.data.title.toLowerCase().split(/\s+/).some((t) => t.length > 3 && w.includes(t))) ?? sel ?? items[0];
   };
-  const EVENT_IDS = ["accept", "cancel", "deliver", "confirm", "dispute", "reopen"] as const;
+  const EVENT_IDS = S.flow.transitions.map((t) => t.id) as [string, ...string[]];
 
   useMascotPage({
     title: S.request.plural,
@@ -202,17 +204,18 @@ export function BoardPage() {
       defineAction({
         name: "request_step",
         kind: "write",
-        description: `Face următorul pas pentru o ${S.request.singular}: accept, cancel, deliver, confirm, dispute sau reopen`,
+        description: `Face un pas pentru o ${S.request.singular}: ${S.flow.transitions.map((t) => `${t.id} (${t.label})`).join(", ")}`,
         args: z.object({ id: z.string().describe("id-ul din context"), event: z.enum(EVENT_IDS) }),
         run: async ({ id, event }) => {
           const rec = items.find((r) => r.id === id);
           if (!rec) throw new Error(`nu există ${S.request.singular} cu id-ul ăsta`);
           await step(rec, event);
         },
-        examples: [`${S.request.actions.accept.toLowerCase()} de ${S.seed.requests[0]?.title.toLowerCase() ?? "cerere"}`, "am livrat", "am primit", "nu am primit"],
+        examples: S.flow.transitions.slice(0, 4).map((t) => `${t.label.toLowerCase()} ${S.seed.requests[0]?.title.toLowerCase() ?? ""}`.trim()),
         mockArgs: (input: string) => {
           const t = input.toLowerCase();
-          const event: LifecycleEvent = t.includes("nu am primit") ? "dispute" : t.includes("primit") ? "confirm" : t.includes("livr") || t.includes("lăsat") ? "deliver" : "accept";
+          // pasul al cărui text apare cel mai bine în cerere („nu am primit” bate „am primit”)
+          const event = [...S.flow.transitions].sort((a, b) => b.label.length - a.label.length).find((x) => t.includes(x.label.toLowerCase()))?.id ?? S.flow.transitions[0].id;
           return { id: byTitle(input)?.id ?? "", event };
         },
       }),
@@ -233,7 +236,7 @@ export function BoardPage() {
     tour: S.mascot.tour
       ? [
           { target: "board-map", text: `Fiecare punct e o ${S.request.singular} reală. Culoarea e categoria, mărimea e urgența.` },
-          { target: "board-detail", text: `Fiecare pas îl face omul care are voie: ${S.roles.giver.label.toLowerCase()} acceptă și livrează, ${S.roles.receiver.label.toLowerCase()} confirmă sau spune „nu am primit”.` },
+          { target: "board-detail", text: "Fiecare pas îl face doar omul care are voie. Cererea se încheie abia când confirmă cel care a cerut." },
           { target: "board-side", text: "Cererile se scriu cum le-ar spune omul. AI-ul le structurează, omul le verifică înainte de salvare." },
         ]
       : undefined,
@@ -242,7 +245,7 @@ export function BoardPage() {
   const filters = ["toate", "ale mele", ...CAT_IDS];
   return (
     <div>
-      <PageHeader title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} pe hartă`} description={S.app.tagline}>
+      <PageHeader title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)}${S.features.map ? " pe hartă" : ""}`} description={S.app.tagline}>
         <div className="flex gap-2">
           <Pill ok={null}>
             {items.length} {S.request.plural}
@@ -277,9 +280,11 @@ export function BoardPage() {
               </button>
             )}
           </div>
-          <div data-tour="board-map">
-            <MapView points={points} selectedId={selected} onSelect={(id) => !id.startsWith("raport:") && setSelected(id)} origin={origin} />
-          </div>
+          {S.features.map && (
+            <div data-tour="board-map">
+              <MapView points={points} selectedId={selected} onSelect={(id) => !id.startsWith("raport:") && setSelected(id)} origin={origin} />
+            </div>
+          )}
           {sel && (
             <Card
               tour="board-detail"
@@ -298,23 +303,26 @@ export function BoardPage() {
                 · {sel.data.address} · urgență {sel.data.urgency}/5
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                {S.roles.receiver.icon} {nameOf(sel.data.receiver)}
-                {sel.data.giver && (
-                  <>
+                {roleOf(S.flow.requester).icon} {nameOf(sel.data.requester)}
+                {Object.entries(sel.data.actors).map(([role, h]) => (
+                  <span key={role}>
                     {" "}
-                    · {S.roles.giver.icon} {nameOf(sel.data.giver)}
-                  </>
-                )}
-                {isExpired(sel.data) && <span className="text-rose-300"> · expirată</span>}
+                    · {roleOf(role).icon} {nameOf(h)}
+                  </span>
+                ))}
+                {isExpired(S.flow, sel.data) && <span className="text-rose-300"> · expirată</span>}
               </p>
               <div className="mt-3 flex flex-wrap gap-2" data-testid="steps">
+                {actor && available(S.flow, sel.data, actor).some((t) => t.note) && (
+                  <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Motiv (pentru pașii care îl cer)" aria-label="Motiv" className="w-full rounded-lg bg-slate-900 px-2 py-1 text-sm" />
+                )}
                 {actor &&
-                  availableEvents(sel.data, actor).map((e) => (
-                    <Button key={e} variant={e === "dispute" || e === "cancel" ? "danger" : "primary"} disabled={busy !== null} onClick={() => void step(sel, e)}>
-                      {S.request.actions[e]}
+                  available(S.flow, sel.data, actor).map((t) => (
+                    <Button key={t.id} variant={t.danger ? "danger" : "primary"} disabled={busy !== null || (t.note === "required" && !note.trim())} onClick={() => void step(sel, t.id)}>
+                      {t.label}
                     </Button>
                   ))}
-                {actor && availableEvents(sel.data, actor).length === 0 && <p className="text-xs text-slate-500">{waitingFor(sel.data, actor)}</p>}
+                {actor && available(S.flow, sel.data, actor).length === 0 && <p className="text-xs text-slate-500">{waitingFor(sel.data)}</p>}
               </div>
               <div className="mt-4">
                 <Timeline r={sel.data} nameOf={nameOf} />
@@ -328,7 +336,7 @@ export function BoardPage() {
                   <button onClick={() => setSelected(r.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${r.id === selected ? "bg-slate-700" : "bg-slate-800/50 hover:bg-slate-800"}`}>
                     <span>{categoryOf(r.data.category).icon}</span>
                     <span className="min-w-0 flex-1 truncate">
-                      <b>{r.data.title}</b> <span className="text-slate-400">· {nameOf(r.data.receiver)}</span>
+                      <b>{r.data.title}</b> <span className="text-slate-400">· {nameOf(r.data.requester)}</span>
                     </span>
                     <StatusPill status={r.data.status} />
                   </button>
@@ -338,7 +346,7 @@ export function BoardPage() {
           </Card>
         </div>
         <div className="space-y-4" data-tour="board-side">
-          {me?.role === "receiver" && (
+          {me?.role === S.flow.requester && (
             <Card title={S.request.addTitle}>
               <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" aria-label={S.request.addTitle} />
               <div className="mt-2 flex gap-2">
@@ -376,7 +384,7 @@ export function BoardPage() {
               )}
             </Card>
           )}
-          {me?.role === "giver" && S.features.matching && (
+          {me && me.role !== S.flow.requester && S.features.matching && (
             <Card title={S.request.offerTitle}>
               <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" aria-label={S.request.offerTitle} />
               <Button variant="primary" className="mt-2" onClick={() => void match()} disabled={busy !== null || !offer.trim()}>
@@ -439,19 +447,9 @@ export function BoardPage() {
 }
 
 /** Ce așteaptă cererea, când omul curent nu are niciun pas de făcut. */
-function waitingFor(r: Request, actor: Actor): string {
-  const { giver, receiver } = S.roles;
-  switch (r.status) {
-    case "deschis":
-      return actor.role === "receiver" ? `Așteaptă să o preia cineva (${giver.label.toLowerCase()}).` : "";
-    case "acceptat":
-      return `În drum. Așteaptă să fie marcată livrată (${giver.label.toLowerCase()}).`;
-    case "livrat":
-      return `Așteaptă confirmarea celui care a cerut (${receiver.label.toLowerCase()}).`;
-    case "confirmat":
-      return "Încheiată: au confirmat amândoi.";
-    case "contestat":
-      return `Contestată: ${receiver.label.toLowerCase()} spune că n-a primit.`;
-  }
+function waitingFor(r: Request): string {
+  const st = stateOf(S.flow, r.status);
+  if (st.tone === "done") return "Încheiată: au confirmat toți.";
+  const who = waitingOn(S.flow, r).map((role) => (role === S.flow.requester ? "cel care a cerut" : roleOf(role).label.toLowerCase()));
+  return who.length ? `Așteaptă: ${who.join(" sau ")}.` : `Starea: ${st.label}.`;
 }
-

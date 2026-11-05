@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { confirmationReward, giverStats, impact, isSuspended, leaderboard, pointsFor, rankFor } from "../src/lib/gamification";
-import { advanceTo, apply, createRequest, type Request } from "../src/lib/lifecycle";
+import { advance, apply, createRequest, type Request } from "../src/lib/flow";
+import { vecini } from "../src/scenario/scenarios/vecini";
 import type { Scenario } from "../src/scenario/types";
 
-const cfg: Pick<Scenario, "points" | "trust" | "ranks"> = {
-  points: { base: 10, perUnit: 1, maxUnits: 20, urgency: [1, 1.2, 1.5, 2, 2.5], disputePenalty: 15 },
+const cfg: Pick<Scenario, "points" | "trust" | "ranks" | "flow"> = {
+  flow: vecini.flow,
+  points: { role: "vecin", base: 10, perUnit: 1, maxUnits: 20, urgency: [1, 1.2, 1.5, 2, 2.5], disputePenalty: 15 },
   trust: { suspendAfterDisputes: 2 },
   ranks: [
     { name: "Novice", min: 0, frame: "#999" },
@@ -13,10 +15,13 @@ const cfg: Pick<Scenario, "points" | "trust" | "ranks"> = {
   ],
 };
 const t0 = new Date("2026-11-07T10:00:00Z");
-const req = (quantity: number, urgency: number, receiver = "adapost") =>
-  createRequest({ title: `x${quantity}`, category: "hrana", description: "", quantity, unit: "porții", urgency, address: "", lat: 0, lng: 0, receiver }, t0);
-const done = (r: Request, giver: string) => advanceTo(r, "confirmat", giver, t0);
-const disputed = (r: Request, giver: string) => advanceTo(r, "contestat", giver, t0);
+const req = (quantity: number, urgency: number) =>
+  createRequest(vecini.flow, { title: `x${quantity}`, category: "hrana", description: "", quantity, unit: "porții", urgency, address: "", lat: 0, lng: 0 }, "adapost", t0);
+const roleOf = (h: string) => (h === "adapost" ? "varstnic" : "vecin");
+const to = (r: Request, steps: string[], giver: string) => advance(vecini.flow, r, steps.map((s) => [s, s === "confirm" || s === "dispute" ? "adapost" : giver] as [string, string]), roleOf, t0);
+const done = (r: Request, giver: string) => to(r, ["accept", "deliver", "confirm"], giver);
+const disputed = (r: Request, giver: string) => to(r, ["accept", "deliver", "dispute"], giver);
+const advanceTo = (r: Request, stage: "livrat" | "acceptat", giver: string, _t: Date) => to(r, stage === "livrat" ? ["accept", "deliver"] : ["accept"], giver);
 
 describe("puncte", () => {
   it("formula: (base + perUnit × cantitate) × urgență", () => {
@@ -47,7 +52,7 @@ describe("statistici pe om", () => {
     expect(isSuspended(1, cfg.trust)).toBe(false);
   });
   it("o contestație redeschisă rămâne în istoric (nu se șterge prin reopen)", () => {
-    const reopened = apply(disputed(req(1, 1), "ana"), "reopen", { handle: "adapost", role: "receiver" }, t0);
+    const reopened = apply(vecini.flow, disputed(req(1, 1), "ana"), "reopen", { handle: "adapost", role: "varstnic" }, t0);
     expect(giverStats("ana", [reopened], cfg).disputes).toBe(1);
   });
   it("punctele nu scad sub 0", () => {
@@ -77,11 +82,11 @@ describe("clasament și impact", () => {
     ]);
   });
   it("cifrele de impact", () => {
-    expect(impact([...all, req(5, 3), advanceTo(req(2, 2), "livrat", "ion", t0)])).toEqual({ units: 27, confirmed: 3, open: 1, inProgress: 1, disputed: 0, helpers: 2 });
+    expect(impact([...all, req(5, 3), advanceTo(req(2, 2), "livrat", "ion", t0)], cfg)).toEqual({ units: 27, confirmed: 3, open: 1, inProgress: 1, disputed: 0, helpers: 2 });
   });
   it("recompensa la confirmare: puncte și rang nou", () => {
     const before = [advanceTo(req(20, 5), "livrat", "ana", t0)];
-    const after = [apply(before[0], "confirm", { handle: "adapost", role: "receiver" }, t0)];
+    const after = [apply(vecini.flow, before[0], "confirm", { handle: "adapost", role: "varstnic" }, t0)];
     expect(confirmationReward(before, after, "ana", cfg)).toMatchObject({ gained: 75, total: 75, rankUp: { name: "Generos" } });
   });
 });

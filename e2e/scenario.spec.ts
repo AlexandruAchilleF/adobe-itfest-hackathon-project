@@ -25,7 +25,7 @@ test("bucla: vecinul acceptă și livrează, vârstnicul confirmă", async ({ pa
   await steps.getByRole("button", { name: "Mă ocup eu" }).click();
   await expect(list.locator("li", { hasText: "Apă plată, 6 sticle" })).toContainText("acceptat");
   await steps.getByRole("button", { name: "Am lăsat la ușă" }).click();
-  await expect(steps).toContainText("Așteaptă confirmarea");
+  await expect(steps).toContainText("Așteaptă: cel care a cerut");
 
   // același laptop, celălalt rol
   await page.getByTestId("role-switcher").selectOption("doamna-vasilescu");
@@ -40,7 +40,7 @@ test("bucla: „nu am primit” contestă livrarea", async ({ page }) => {
   await list.getByRole("button", { name: /Apă pentru weekend/ }).click();
   await page.getByTestId("steps").getByRole("button", { name: "Nu am primit" }).click();
   await expect(list.locator("li", { hasText: "Apă pentru weekend" })).toContainText("contestat");
-  await expect(page.getByTestId("timeline")).toContainText("„nu am primit”");
+  await expect(page.getByTestId("timeline")).toContainText("spune: „nu am primit”");
 });
 
 test("cererea scrisă în grabă: AI-ul o structurează, omul verifică", async ({ page }) => {

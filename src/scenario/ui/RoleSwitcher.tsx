@@ -16,7 +16,7 @@ export function RoleSwitcher() {
         data-testid="role-switcher"
       >
         {!me && <option value="">alege…</option>}
-        {(["giver", "receiver"] as const).map((role) => (
+        {Object.keys(scenario.roles).map((role) => (
           <optgroup key={role} label={scenario.roles[role].plural}>
             {people
               .filter((p) => p.role === role)

@@ -13,7 +13,7 @@ export function currentHandle(): string {
   try {
     const fromUrl = new URLSearchParams(location.search).get("ca");
     if (fromUrl) localStorage.setItem(KEY, fromUrl);
-    return localStorage.getItem(KEY) ?? scenario.seed.people.find((p) => p.role === "giver")?.handle ?? "";
+    return localStorage.getItem(KEY) ?? scenario.seed.people.find((p) => p.role !== scenario.flow.requester)?.handle ?? scenario.seed.people[0]?.handle ?? "";
   } catch {
     return scenario.seed.people[0]?.handle ?? "";
   }
@@ -40,7 +40,7 @@ export function useMe() {
   const me = all.find((p) => p.handle === handle) ?? null;
   const nameOf = (h?: string) => (h ? (all.find((p) => p.handle === h)?.name ?? h) : "—");
 
-  async function join(name: string, role: Person["role"], phone = "", area = "") {
+  async function join(name: string, role: string, phone = "", area = "") {
     const slug = name.toLowerCase().normalize("NFD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "om";
     const person: Person = { handle: `${slug}-${Math.random().toString(36).slice(2, 6)}`, name, role, phone, area };
     await add(person);

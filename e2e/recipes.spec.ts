@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => offline(page));
 test("start: produsul pentru juriu, ghidul pentru echipă", async ({ page }) => {
   await page.goto("/?demo=1");
   await expect(page.getByRole("heading", { name: "Vecin la nevoie" })).toBeVisible();
-  await expect(page.getByTestId("impact")).toContainText("livrări confirmate de ambele părți");
+  await expect(page.getByTestId("impact")).toContainText("cereri încheiate și confirmate");
   await page.getByRole("button", { name: /Sunt vârstnic/ }).click();
   await expect(page).toHaveURL(/\/harta$/);
   await expect(page.getByLabel(/Ce îți lipsește/)).toBeVisible();

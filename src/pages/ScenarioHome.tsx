@@ -9,8 +9,7 @@ import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { useMascotPage } from "../modules/mascot/page";
 import { scenario } from "../scenario/config";
-import { requests } from "../scenario/model";
-import type { RoleId } from "../scenario/types";
+import { requests, roleOf } from "../scenario/model";
 import { Avatar } from "../scenario/ui/parts";
 
 const S = scenario;
@@ -29,11 +28,11 @@ export function ScenarioHome() {
   const { people, setMe } = useMe();
   const [, navigate] = useLocation();
   const all = items.map((r) => r.data);
-  const total = impact(all);
-  const top = leaderboard(people.filter((p) => p.role === "giver"), all, S).slice(0, 3);
+  const total = impact(all, S);
+  const top = S.features.gamification ? leaderboard(people.filter((p) => p.role === S.points.role), all, S).slice(0, 3) : [];
   useMascotPage({ title: "Start", context: () => `${total.open} ${S.request.plural} deschise` });
 
-  const enter = (role: RoleId) => {
+  const enter = (role: string) => {
     const first = people.find((p) => p.role === role);
     if (first) setMe(first.handle);
     navigate("/harta");
@@ -45,8 +44,8 @@ export function ScenarioHome() {
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{S.app.name}</h1>
         <p className="mt-2 max-w-3xl text-lg text-slate-300">{S.app.tagline}</p>
       </section>
-      <div className="grid gap-4 sm:grid-cols-2" data-testid="roles">
-        {(["receiver", "giver"] as const).map((role) => (
+      <div className={`grid gap-4 ${Object.keys(S.roles).length > 2 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`} data-testid="roles">
+        {[S.flow.requester, ...Object.keys(S.roles).filter((r) => r !== S.flow.requester)].map((role) => (
           <button key={role} onClick={() => enter(role)} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 text-left transition hover:border-accent/60">
             <span className="text-4xl">{S.roles[role].icon}</span>
             <p className="mt-2 text-xl font-semibold">Sunt {S.roles[role].label.toLowerCase()}</p>
@@ -56,11 +55,12 @@ export function ScenarioHome() {
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4" data-testid="impact">
         <Big value={total.units} label={S.app.impactLabel} />
-        <Big value={total.confirmed} label="livrări confirmate de ambele părți" />
+        <Big value={total.confirmed} label={`${S.request.plural} încheiate și confirmate`} />
         <Big value={total.open} label={`${S.request.plural} care așteaptă acum`} />
-        <Big value={total.helpers} label={`${S.roles.giver.plural.toLowerCase()} care au ajutat`} />
+        <Big value={total.helpers} label={`${roleOf(S.points.role).plural.toLowerCase()} care au ajutat`} />
       </div>
       <div className="grid gap-4 md:grid-cols-2">
+        {S.features.gamification && (
         <Card title="Cine a ajutat cel mai mult" actions={<Link href="/clasament" className="text-sm text-accent">clasament →</Link>}>
           <ol className="space-y-2">
             {top.map((r) => (
@@ -74,6 +74,7 @@ export function ScenarioHome() {
             ))}
           </ol>
         </Card>
+        )}
         {S.reports.enabled && (
           <Card title={S.reports.title}>
             <QrPanel url={`${location.origin}/raport`} size={140} label={S.reports.prompt} />

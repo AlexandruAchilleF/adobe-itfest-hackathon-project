@@ -3,6 +3,7 @@
 
 import { Link } from "wouter";
 import { Card, PageHeader } from "../components/ui";
+import { available, toneOf } from "../lib/flow";
 import { giverStats, pointsFor, rankFor } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
@@ -30,10 +31,12 @@ export function ProfilePage() {
   if (!me) return <p className="text-slate-400">Alege cine ești din antet.</p>;
 
   const role = S.roles[me.role];
-  const mine = items.filter((r) => (me.role === "giver" ? r.data.giver === me.handle || r.data.history.some((h) => h.giver === me.handle) : r.data.receiver === me.handle));
-  const stats = me.role === "giver" ? giverStats(me.handle, all, S) : null;
+  const credited = S.features.gamification && me.role === S.points.role;
+  const mine = items.filter((r) => r.data.requester === me.handle || r.data.history.some((h) => h.actors[me.role] === me.handle));
+  const stats = credited ? giverStats(me.handle, all, S) : null;
   const rank = stats ? rankFor(stats.points, S.ranks) : null;
-  const toConfirm = me.role === "receiver" ? mine.filter((r) => r.data.status === "livrat") : [];
+  // tot ce așteaptă un pas de la mine (cererile mele sau cele pe care le pot prelua)
+  const toConfirm = items.filter((r) => available(S.flow, r.data, { handle: me.handle, role: me.role }).length > 0 && (r.data.requester === me.handle || Object.values(r.data.actors).includes(me.handle) || me.role !== S.flow.requester));
 
   return (
     <div className="space-y-6">
@@ -73,11 +76,11 @@ export function ProfilePage() {
         </Card>
       )}
       {toConfirm.length > 0 && (
-        <Card title="Ai de confirmat">
+        <Card title="Ai de făcut">
           <ul className="space-y-2">
             {toConfirm.map((r) => (
               <li key={r.id}>
-                <Link href={`/c/${r.id}`} className="text-accent hover:underline">
+                <Link href={r.data.requester === me.handle ? `/c/${r.id}` : "/harta"} className="text-accent hover:underline">
                   {categoryOf(r.data.category).icon} {r.data.title} →
                 </Link>
               </li>
@@ -85,7 +88,7 @@ export function ProfilePage() {
           </ul>
         </Card>
       )}
-      <Card title={me.role === "giver" ? "Ce am adus" : `${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} mele`}>
+      <Card title={me.role === S.flow.requester ? `${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} mele` : "Ce am făcut"}>
         <ul className="space-y-1" data-testid="profile-requests">
           {mine.map((r) => (
             <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">
@@ -93,7 +96,7 @@ export function ProfilePage() {
               <span className="min-w-0 flex-1 truncate">
                 {r.data.title} · {r.data.quantity} {r.data.unit}
               </span>
-              {me.role === "giver" && r.data.status === "confirmat" && <span className="text-xs text-accent">+{pointsFor(r.data, S.points)}</span>}
+              {credited && toneOf(S.flow, r.data) === "done" && <span className="text-xs text-accent">+{pointsFor(r.data, S.points)}</span>}
               <StatusPill status={r.data.status} />
             </li>
           ))}

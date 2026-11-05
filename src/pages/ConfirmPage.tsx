@@ -1,9 +1,9 @@
-// Pagina din SMS (/c/:id): cel care a cerut confirmă că a primit sau spune „nu am primit”.
+// Pagina din SMS (/c/:id): cel care a cerut face pașii lui (ex: „Am primit” / „Nu am primit”).
 // Fără login: linkul e trimis doar lui. Într-un produs real linkul ar purta un token semnat.
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { availableEvents } from "../lib/lifecycle";
+import { available } from "../lib/flow";
 import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { scenario } from "../scenario/config";
@@ -28,15 +28,16 @@ export function ConfirmPage() {
   if (!rec) return <p className="p-6 text-center text-slate-400">Linkul nu mai e valid. <Link href="/" className="underline">Înapoi</Link></p>;
 
   // linkul din SMS acționează în numele celui care a cerut
-  const actor = { handle: rec.data.receiver, role: "receiver" as const };
-  const can = availableEvents(rec.data, actor);
+  const actor = { handle: rec.data.requester, role: S.flow.requester };
+  const can = available(S.flow, rec.data, actor);
+  const helpers = Object.values(rec.data.actors).map(nameOf).join(", ");
   const big = "w-full rounded-2xl py-5 text-lg font-semibold disabled:opacity-50";
 
-  async function act(event: "confirm" | "dispute") {
+  async function act(event: string, danger?: boolean) {
     setError(null);
     try {
       const { notice } = await step(rec!, event, actor, note.trim() || undefined);
-      setResult(event === "confirm" ? `Mulțumim! ${notice ?? ""}` : `Am notat. ${notice ?? ""}`);
+      setResult(danger ? `Am notat. ${notice ?? ""}` : `Mulțumim! ${notice ?? ""}`);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -49,11 +50,11 @@ export function ConfirmPage() {
         {categoryOf(rec.data.category).icon} {rec.data.title}
       </h1>
       <p className="text-slate-300">
-        {nameOf(rec.data.giver)} spune că a adus{" "}
+        {helpers || "Cererea ta"}:{" "}
         <b>
           {rec.data.quantity} {rec.data.unit}
-        </b>
-        . <StatusPill status={rec.data.status} />
+        </b>{" "}
+        <StatusPill status={rec.data.status} />
       </p>
       {result ? (
         <p role="status" className="rounded-xl bg-emerald-500/15 px-4 py-3 text-emerald-200" data-testid="confirm-result">
@@ -61,13 +62,21 @@ export function ConfirmPage() {
         </p>
       ) : can.length ? (
         <>
-          <button className={`${big} bg-emerald-500 text-slate-950`} onClick={() => void act("confirm")}>
-            ✓ {S.request.actions.confirm}
-          </button>
-          <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce s-a întâmplat? (opțional)" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3" aria-label="Ce s-a întâmplat" />
-          <button className={`${big} bg-rose-600 text-white`} onClick={() => void act("dispute")}>
-            ✗ {S.request.actions.dispute}
-          </button>
+          {can
+            .filter((t) => !t.danger)
+            .map((t) => (
+              <button key={t.id} className={`${big} bg-emerald-500 text-slate-950`} onClick={() => void act(t.id)} disabled={t.note === "required" && !note.trim()}>
+                ✓ {t.label}
+              </button>
+            ))}
+          {can.some((t) => t.note) && <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce s-a întâmplat?" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3" aria-label="Ce s-a întâmplat" />}
+          {can
+            .filter((t) => t.danger)
+            .map((t) => (
+              <button key={t.id} className={`${big} bg-rose-600 text-white`} onClick={() => void act(t.id, true)} disabled={t.note === "required" && !note.trim()}>
+                ✗ {t.label}
+              </button>
+            ))}
         </>
       ) : (
         <p className="text-slate-400">Nu mai e nimic de confirmat aici.</p>

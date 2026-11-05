@@ -19,9 +19,9 @@ export const TEAM_NAV: NavItem[] = [
 /** Meniul principal: un singur drum, cu cuvintele scenariului. */
 export function mainNav(s: Scenario): NavItem[] {
   return [
-    { href: "/harta", label: "Harta" },
+    { href: "/harta", label: s.features.map ? "Harta" : `${s.request.plural[0].toUpperCase()}${s.request.plural.slice(1)}` },
     { href: "/profil", label: "Profilul meu" },
-    { href: "/clasament", label: "Clasament" },
+    ...(s.features.gamification ? [{ href: "/clasament", label: "Clasament" }] : []),
     ...(s.reports.enabled ? [{ href: "/raport", label: "Raportează" }] : []),
   ];
 }
