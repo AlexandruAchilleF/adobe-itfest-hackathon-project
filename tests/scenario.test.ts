@@ -92,3 +92,28 @@ describe("meniul și mascota din config", async () => {
     expect(showMascot({ ...vecini, mascot: { ...vecini.mascot, enabled: false } }, "/harta")).toBe(false);
   });
 });
+
+describe("mock-ul pentru documente (modul demo)", async () => {
+  const { mockDocument } = await import("../src/scenario/mock");
+  const bon = `TAXI EXEMPLU SRL
+C.U.I. RO12345674
+Nr. bon 0042   Data 05.11.2026
+Cursă Piața Victoriei - Otopeni 70,00 lei
+Taxă bagaj 8,00 lei
+TOTAL 87,00`;
+  it("citește ce scrie pe bon, inclusiv totalul greșit (verificarea îl prinde, nu mock-ul)", () => {
+    expect(mockDocument(bon)).toEqual({
+      kind: "bon",
+      vendor: "TAXI EXEMPLU SRL",
+      cui: "12345674",
+      number: "0042",
+      date: "2026-11-05",
+      currency: "lei",
+      lines: [
+        { label: "Cursă Piața Victoriei - Otopeni", amount: 70 },
+        { label: "Taxă bagaj", amount: 8 },
+      ],
+      total: 87,
+    });
+  });
+});

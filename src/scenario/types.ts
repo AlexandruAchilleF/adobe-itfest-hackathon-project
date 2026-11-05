@@ -2,6 +2,7 @@
 // Paginile (cereri, profil, clasament, raport, confirmare) citesc doar de aici.
 // Un scenariu nou = un fișier nou în src/scenario/scenarios/ + o linie în src/scenario/config.ts.
 
+import type { DocRules } from "../lib/checks";
 import type { FlowDef, SeedStep } from "../lib/flow";
 import type { LatLng } from "../modules/map/geo";
 
@@ -107,6 +108,15 @@ export interface Scenario {
     aiContext: string;
   };
   categories: Category[];
+  /** cereri care pornesc de la un document (bon, factură): AI-ul îl citește, codul îl verifică (src/lib/checks.ts) */
+  documents?: {
+    enabled: boolean;
+    title: string;
+    /** reguli verificate de cod: vechime, plafoane pe categorie, CUI obligatoriu */
+    rules: DocRules;
+    /** textul unui document exemplu, pentru demo (butonul „Folosește exemplul”) */
+    sample: string;
+  };
   /** punctele le calculează codul (src/lib/gamification.ts), nu AI-ul */
   points: {
     /** rolul care primește puncte (cel care ajută) */

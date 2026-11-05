@@ -35,3 +35,32 @@ export function mockStructure(raw: string, s: Pick<Scenario, "categories">) {
     address: `${where?.trim() ?? "Centru"}, București`,
   };
 }
+
+/** Mock pentru citirea unui bon sau a unei facturi scrise ca text: ce scrie pe document, nimic inventat. */
+export function mockDocument(text: string, today: Date = new Date()) {
+  const rows = text.split(/\n/).map((l) => l.trim()).filter(Boolean);
+  const num = (s: string) => Number(s.replace(/\s/g, "").replace(",", "."));
+  const lines: Array<{ label: string; amount: number }> = [];
+  let total: number | null = null;
+  for (const row of rows) {
+    const t = row.match(/^total(?:\s+de\s+plat[ăa])?\s*[:=]?\s*([\d\s]+[.,]?\d*)/i);
+    if (t) {
+      total = num(t[1]);
+      continue;
+    }
+    if (/c\.?\s?u\.?\s?i|cif|cod fiscal|nr\.|data|tva/i.test(row)) continue;
+    const m = row.match(/^(.+?)\s+([\d]+[.,]\d{2}|\d+)\s*(lei|ron)?$/i);
+    if (m) lines.push({ label: m[1].replace(/[.:\-x×\s\d]+$/, "").trim(), amount: num(m[2]) });
+  }
+  const date = text.match(/(\d{2})[./-](\d{2})[./-](\d{4})/);
+  return {
+    kind: /factur/i.test(text) ? ("factura" as const) : ("bon" as const),
+    vendor: rows[0] ?? "",
+    cui: text.match(/(?:c\.?\s?u\.?\s?i\.?|cif|cod fiscal)\s*[:.]?\s*(?:ro)?\s*(\d{2,10})/i)?.[1] ?? "",
+    number: text.match(/nr\.?\s*(?:bon|factur[ăa])?\s*[:.]?\s*([\w-]+)/i)?.[1] ?? "",
+    date: date ? `${date[3]}-${date[2]}-${date[1]}` : today.toISOString().slice(0, 10),
+    currency: "lei",
+    lines,
+    total: total ?? lines.reduce((s, l) => s + l.amount, 0),
+  };
+}

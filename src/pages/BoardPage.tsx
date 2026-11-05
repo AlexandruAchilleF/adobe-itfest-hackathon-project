@@ -10,6 +10,7 @@ import { QrPanel } from "../components/QrPanel";
 import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
+import { checkDocument, Doc } from "../lib/checks";
 import { giverStats } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { type Actor, available, createRequest, isExpired, type Request, stateOf, toneOf, waitingOn } from "../lib/flow";
@@ -24,6 +25,7 @@ import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
 import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests, roleOf } from "../scenario/model";
 import { useSteps } from "../scenario/useSteps";
+import { ChecksList, DocTable, DocumentIntake } from "../scenario/ui/DocumentIntake";
 import { StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
 
 const S = scenario;
@@ -101,6 +103,26 @@ export function BoardPage() {
   );
   const points = [...requestPoints, ...reportPoints];
   const sel = items.find((r) => r.id === selected) ?? null;
+  // documentele atașate cererilor (bonuri, facturi), pentru verificarea de duplicate
+  const docOf = (r: Rec<Request>) => {
+    const parsed = Doc.safeParse(r.data.extra?.doc);
+    return parsed.success ? parsed.data : null;
+  };
+  const docs = items.flatMap((r) => (docOf(r) ? [{ id: r.id, doc: docOf(r)! }] : []));
+  const selDoc = sel ? docOf(sel) : null;
+
+  async function submitDocument(doc: Doc, category: string) {
+    if (!me) return;
+    const rec = await add(
+      createRequest(
+        S.flow,
+        { title: `${doc.vendor}: ${doc.lines[0]?.label ?? doc.kind}`, category, description: doc.lines.map((l) => l.label).join(", "), quantity: doc.total, unit: doc.currency, urgency: 3, address: "", lat: S.app.center.lat, lng: S.app.center.lng, extra: { doc } },
+        me.handle,
+      ),
+    );
+    setSelected(rec.id);
+    setNotice(`Trimis: ${doc.total.toFixed(2)} ${doc.currency}. Toate verificările obligatorii au trecut.`);
+  }
   const fail = (err: unknown) => setError({ msg: (err as Error).message, hint: err instanceof AiError ? err.hint : undefined });
 
   async function step(rec: Rec<Request>, event: string) {
@@ -312,6 +334,12 @@ export function BoardPage() {
                 ))}
                 {isExpired(S.flow, sel.data) && <span className="text-rose-300"> · expirată</span>}
               </p>
+              {selDoc && S.documents && (
+                <div className="mt-3 space-y-2 rounded-xl bg-slate-950/60 p-3">
+                  <DocTable doc={selDoc} />
+                  <ChecksList checks={checkDocument(selDoc, { rules: S.documents.rules, category: sel.data.category, existing: docs.filter((d) => d.id !== sel.id).map((d) => d.doc), now: new Date(sel.data.history[0].at) })} />
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2" data-testid="steps">
                 {actor && available(S.flow, sel.data, actor).some((t) => t.note) && (
                   <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Motiv (pentru pașii care îl cer)" aria-label="Motiv" className="w-full rounded-lg bg-slate-900 px-2 py-1 text-sm" />
@@ -346,7 +374,12 @@ export function BoardPage() {
           </Card>
         </div>
         <div className="space-y-4" data-tour="board-side">
-          {me?.role === S.flow.requester && (
+          {me?.role === S.flow.requester && S.documents?.enabled && (
+            <Card title={S.documents.title}>
+              <DocumentIntake existing={docs.map((d) => d.doc)} onSubmit={submitDocument} />
+            </Card>
+          )}
+          {me?.role === S.flow.requester && !S.documents?.enabled && (
             <Card title={S.request.addTitle}>
               <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" aria-label={S.request.addTitle} />
               <div className="mt-2 flex gap-2">
