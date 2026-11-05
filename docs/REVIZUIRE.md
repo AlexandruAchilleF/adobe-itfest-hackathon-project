@@ -34,11 +34,13 @@ Criteriile sunt cele din [`JURIU.md`](JURIU.md). Concluzia pe scurt: nucleul teh
 | # | Schimbare | Fișiere | Întrebarea mutată | Unde se vede în demo |
 |---|---|---|---|---|
 | 1 | Config de scenariu: domeniul, rolurile, textele, seed-ul, punctele, rangurile și tipurile de raport stau într-un fișier | `src/scenario/` | 7 Brief-ul (adaptare rapidă) | toate paginile vorbesc limba brief-ului |
-| 2 | Roluri fără login și ciclul cererii: creat → acceptat → livrat → confirmat, plus „nu am primit” și suspendare | `src/lib/lifecycle.ts`, `src/lib/identity.ts` | 5 Bucla | secunda 30–90: donatorul acceptă, adăpostul confirmă |
+| 2 | Roluri fără login și fluxul cererii, configurabil (oricâte roluri și pași, retur cu motiv, „n-a mers”, suspendare) | `src/lib/flow.ts`, `src/lib/identity.ts` | 5 Bucla | secunda 30–90: donatorul acceptă, adăpostul confirmă |
 | 3 | Gamificare calculată de cod: puncte, ranguri, ramă de profil, clasament, dashboard | `src/lib/gamification.ts` | 7 Brief-ul (2023 a cerut-o explicit) | după confirmare: punctele și rangul cresc |
 | 4 | Raport rapid la locația curentă, cu oră, live pe hartă | `src/lib/reports.ts`, `src/lib/live.ts`, `/raport` | 6 Demo-ul (juriul raportează de pe telefon) | QR pe hartă, punctul apare live |
 | 5 | Notificare SMS/email cu mock, link spre confirmare | `api/notify.ts`, `server/notify.ts` | 5 Bucla | „SMS trimis către adăpost”, link `/c/:id` |
 | 6 | Rețetele în „Module opționale”, mascota și turul din config | `src/App.tsx`, `src/scenario/` | 6 Demo-ul (un singur drum) | meniul are doar fluxul scenariului |
 | 7 | Kit de ambalare: „construit înainte / construit azi”, checklist pentru seed | `README.md`, `docs/AMBALARE.md` | semnalele bune din `JURIU.md` | README-ul pe care îl citește juriul |
+
+După discuția despre plătitor și procesele de birou s-au adăugat: verificarea deterministă a documentelor (`src/lib/checks.ts`), cronometrul procesului (`src/lib/metrics.ts`, `/cronometru`), fișa de tipărit (`/fisa/:id`), mascota legată de stările procesului și scenariul de birou `deconturi`, cu un plătitor clar.
 
 Repetiția pe brief-ul ResourceWise și ce a ieșit din ea: [`REPETITIE-2023.md`](REPETITIE-2023.md).
