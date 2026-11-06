@@ -6,6 +6,7 @@
 
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Accent, Ribbon } from "../components/ui";
+import { HawkMark } from "../pitch/HawkMark";
 import { buildDeck, isTodo, type Maybe, PITCH, type Slide, type Theme } from "../pitch/deck";
 import { qrDataUrl } from "../lib/share";
 import { scenario } from "../scenario/config";
@@ -138,13 +139,17 @@ function SlideBody({ s }: { s: Slide }) {
   switch (s.kind) {
     case "cover":
       return (
-        <div className={`${PAD} justify-center`}>
-          {s.notThis && <p className="text-[30px] text-muted line-through decoration-coral/70 decoration-2">{s.notThis}</p>}
-          <h1 className={`${H1} mt-6 max-w-[1300px] text-[96px]`}>
-            <Accent text={s.headline} />
-          </h1>
-          <p className={`${LEAD} mt-10 max-w-[1150px] text-[34px]`}>{s.tagline}</p>
-          <div className="mt-auto flex items-end justify-between gap-10 text-[24px] text-ink-2">
+        <div className={`${PAD} relative justify-center`}>
+          {/* uliul de pază, desenat ca graf: imaginea mare a copertei, în dreapta */}
+          {s.mark && <HawkMark width={590} className="pointer-events-none absolute top-[64px] right-[40px]" />}
+          <div className={s.mark ? "max-w-[860px]" : undefined}>
+            {s.notThis && <p className="text-[30px] text-muted line-through decoration-coral/70 decoration-2">{s.notThis}</p>}
+            <h1 className={`${H1} mt-6 max-w-[1300px] text-[96px]`}>
+              <Accent text={s.headline} />
+            </h1>
+            <p className={`${LEAD} mt-10 max-w-[1150px] text-[34px]`}>{s.tagline}</p>
+          </div>
+          <div className={`mt-auto flex gap-x-10 gap-y-2 text-[24px] text-ink-2 ${s.mark ? "max-w-[860px] flex-col" : "items-end justify-between"}`}>
             <Show v={s.team}>{(team) => <p>{team.join(" · ")}</p>}</Show>
             <p className="shrink-0 text-muted">{s.event}</p>
           </div>

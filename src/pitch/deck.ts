@@ -21,6 +21,8 @@ export interface PitchConfig {
   builtToday: string[];
   /** ce urmează după hackathon (intenția de a construi mai departe e un criteriu Adobe) */
   next: string[];
+  /** uliul de pază, desenat ca graf, pe copertă (src/pitch/HawkMark.tsx); false = copertă fără el */
+  coverMark: boolean;
 }
 
 // ——— de completat mâine (docs/AMBALARE.md) ———
@@ -32,6 +34,7 @@ export const PITCH: PitchConfig = {
   market: "",
   builtToday: [],
   next: [],
+  coverMark: true,
 };
 
 export type Theme = "sky" | "cream" | "paper" | "night";
@@ -45,7 +48,7 @@ export const isTodo = (v: unknown): v is Todo => typeof v === "object" && v !== 
 const orTodo = <T>(v: T | undefined | null | "", todo: string): Maybe<T> => (v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0) ? { todo } : v);
 
 export type Slide =
-  | { kind: "cover"; theme: Theme; name: string; headline: string; tagline: string; notThis?: string; team: Maybe<string[]>; event: string }
+  | { kind: "cover"; theme: Theme; name: string; headline: string; tagline: string; notThis?: string; team: Maybe<string[]>; event: string; mark: boolean }
   | { kind: "problem"; theme: Theme; ribbon: string; problem: string; evidence: Maybe<string> }
   | { kind: "people"; theme: Theme; ribbon: string; title: string; roles: Array<{ label: string; pitch: string }> }
   | { kind: "how"; theme: Theme; ribbon: string; title: string; steps: Array<{ role: string; label: string; done: boolean }>; failed?: { role: string; label: string } }
@@ -65,7 +68,7 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
   const team = orTodo(p.team, "numele echipei și rolul fiecăruia (PITCH.team)");
 
   return [
-    { kind: "cover", theme: "sky", name: s.app.name, headline: s.app.headline ?? s.app.name, tagline: s.app.tagline, notThis: s.app.notThis, team, event: p.event },
+    { kind: "cover", theme: "sky", name: s.app.name, headline: s.app.headline ?? s.app.name, tagline: s.app.tagline, notThis: s.app.notThis, team, event: p.event, mark: p.coverMark },
     {
       kind: "problem",
       theme: "cream",
