@@ -254,6 +254,23 @@ h1, h2, h3 {
   .reveal { opacity: 1; transform: none; }
 }
 
+/* ——— pitch deck (/pitch): slide 1600×900, scalat la ecran; la tipărire, o slide pe pagină ——— */
+.pitch-stage { transform-origin: top left; }
+.pitch-slide { position: relative; width: 1600px; height: 900px; overflow: hidden; }
+.pitch-slide .ribbon { font-size: 24px; padding: 8px 54px 10px; clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); background-size: 24px 100%, 24px 100%, auto; }
+.pitch-in { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@media (prefers-reduced-motion: reduce) { .pitch-in { animation: none; } }
+@media print {
+  /* pagină cu nume: bate `@page { margin: 15mm }` de la fișa tipăribilă */
+  @page pitch { size: 1600px 900px; margin: 0; }
+  body:has(.pitch-viewport) { background: none !important; }
+  .pitch-viewport { position: static !important; overflow: visible !important; background: none !important; }
+  .pitch-stage { position: static !important; transform: none !important; height: auto !important; }
+  .pitch-slide { display: block !important; break-after: page; break-inside: avoid; page: pitch; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .pitch-slide:last-child { break-after: auto; }
+  .pitch-in { animation: none; }
+}
+
 /* harta: fundalul OSM atenuat (punctele rămân în culori pline) */
 .leaflet-tile-pane { filter: saturate(0.4) brightness(1.04) contrast(0.95); }
 .leaflet-container { font-family: var(--font-sans); background: #eef0f4; }

@@ -25,6 +25,7 @@ UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`. La st
 - `src/lib/flow.ts`: fluxul cererii, configurabil (stări, pași, rolul care face fiecare pas, retur cu motiv, „n-a mers”), pur. Scenariul îl descrie în `flow`. `src/lib/identity.ts`: roluri fără login (`useMe`, `?ca=<handle>`). `src/lib/live.tsx`: sincronizare live peste `rooms`.
 - `src/lib/checks.ts`: verificări deterministe pentru documente (sumă, cod fiscal, dată, duplicate, plafoane). `src/lib/metrics.ts`: cronometrul procesului. `src/lib/notify.ts` + `api/notify.ts`: SMS/email cu mock.
 - Paginile scenariului: `BoardPage.tsx` (`/cereri`, alias `/harta`), `ProcessPage.tsx` (`/cronometru`), `RecordPage.tsx` (`/fisa/:id`, de tipărit), `ProfilePage.tsx`, `LeaderboardPage.tsx`, `ReportPage.tsx` și `ConfirmPage.tsx` (telefon). Rețetele opționale: `DocsPage.tsx`, `DesignPage.tsx`, `AssistantPage.tsx`. Validarea: `BusinessPage.tsx`, `SurveyPage.tsx`.
+- `src/pitch/deck.ts` + `src/pages/PitchPage.tsx` (`/pitch`): pitch deck-ul, construit din scenariu în stilul primei pagini; ce nu e în scenariu se completează în `PITCH`.
 
 ## Reguli
 - Fiecare `ask()` primește un `mock` realist, construit din inputul utilizatorului dacă se poate. Fiecare `defineAction` are `examples` și `mockArgs`.

@@ -113,6 +113,18 @@ test("tipărire: fără meniu și fără antetul paginii", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Documente → răspunsuri verificate/ })).toBeHidden();
 });
 
+test("pitch deck: slide-urile din scenariu, cu săgețile; la tipărire, toate", async ({ page }) => {
+  await page.goto("/pitch");
+  await expect(page.getByTestId("slide-1")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Profilul meu" })).toBeHidden();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByTestId("slide-2")).toBeVisible();
+  await expect(page.getByTestId("slide-1")).toBeHidden();
+  await expect(page).toHaveURL(/#2$/);
+  await page.emulateMedia({ media: "print" });
+  await expect(page.getByTestId("slide-9")).toBeVisible();
+});
+
 test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }) => {
   await page.goto("/docs?demo=1");
   // pagina se încarcă leneș: mascota primește acțiunile paginii abia după ce apare

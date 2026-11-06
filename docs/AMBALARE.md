@@ -31,7 +31,19 @@ Fișierul de lucru e `src/scenario/scenarios/<nume>.ts`. Activarea: `src/scenari
 - [ ] Nicio pagină din meniu nu spune „template”, „rețetă”, „demo” sau „exemplu”.
 - [ ] Bifa „Mod demo” din panoul echipei e oprită dacă aveți cheie AI.
 
-## 3. README pentru juriu (ultima oră)
+## 3. Slide-urile (`/pitch`, înainte de ora 10:30)
+
+Deck-ul se construiește singur din scenariu (`docs/DESIGN.md`, „Pitch deck-ul”). Completați doar ce nu e acolo, în `PITCH` din `src/pitch/deck.ts`:
+
+- [ ] `team`: numele și rolul fiecăruia.
+- [ ] `brief`: fiecare cerință din `docs/BRIEF.md` și momentul din demo în care se vede. Puneți aici și ce folosiți de la Adobe.
+- [ ] `market`: câte organizații au problema și cât plătesc azi, numărat de jos în sus.
+- [ ] `builtToday` și `next`: aceleași ca în `README.md`.
+- [ ] `demoUrl`: adresa de pe Vercel (QR-ul de pe slide-ul de demo).
+- [ ] Nicio casetă „De completat” rămasă: treceți prin `/pitch` cu săgețile.
+- [ ] PDF-ul (`P` pe deck) pe stick și pe telefon, ca rezervă.
+
+## 4. README pentru juriu (ultima oră)
 
 Înlocuiți secțiunea de sus a `README.md` cu:
 
@@ -42,6 +54,6 @@ Fișierul de lucru e `src/scenario/scenarios/<nume>.ts`. Activarea: `src/scenari
 5. **Construit înainte / construit azi**: completați tabelul din `README.md`. Fiecare commit din ziua hackathonului apare în `git log --since="2026-11-07"`.
 6. Cum se rulează (`npm install`, `npm run dev`).
 
-## 4. Ce spuneți dacă juriul întreabă de codul scris înainte
+## 5. Ce spuneți dacă juriul întreabă de codul scris înainte
 
 „Am venit cu un schelet pe care îl folosim la hackathoane: hartă, roluri, ciclul unei cereri, puncte, notificări cu mock. Azi am scris scenariul vostru (lista din README), am vorbit cu N oameni și am adaptat textele la ce ne-au spus. Commit-urile de azi sunt în git log.” Spuneți asta înainte să fiți întrebați, la slide-ul cu tehnologia.

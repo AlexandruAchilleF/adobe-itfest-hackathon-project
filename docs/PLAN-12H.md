@@ -57,7 +57,7 @@ La 2–3 oameni, rolurile 3 și 4 se împart între ceilalți.
 | 2:20–2:45 | Cine plătește, cât, primul segment de piață, numărat de jos în sus. |
 | 2:45–3:00 | Ce urmează: un plan pe 30 de zile (de exemplu publicarea în marketplace-ul Express). |
 
-Aveți pregătite și o variantă de 30 de secunde și una de 5 minute.
+Slide-urile sunt în aplicație, la `/pitch`, pe aceleași teme (checklist: `docs/AMBALARE.md`, secțiunea 3). Aveți pregătite și o variantă de 30 de secunde și una de 5 minute.
 
 ## Plan de avarie
 
