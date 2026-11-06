@@ -2,6 +2,7 @@
 
 La ITFest, Adobe dă un **scenariu** (cine sunt oamenii, ce fac unii pentru alții) și o listă de funcționalități opționale. Template-ul e scheletul pentru formatul ăsta: se scrie scenariul într-un fișier de config, iar paginile, fluxul, verificările și notificările îl urmează.
 
+> Mâine, la start: promptul pentru asistent e în [`docs/PROMPT-START.md`](docs/PROMPT-START.md).
 > Citiți întâi: [`docs/JURIU.md`](docs/JURIU.md) (lentila juriului), [`docs/BRIEF.md`](docs/BRIEF.md) (ce faceți în prima oră), [`docs/PLAN-12H.md`](docs/PLAN-12H.md) (programul zilei) și [`docs/AMBALARE.md`](docs/AMBALARE.md) (ce vede juriul în afară de demo).
 > De ce arată așa: [`docs/REVIZUIRE.md`](docs/REVIZUIRE.md). Repetiția cronometrată pe brief-ul din 2023: [`docs/REPETITIE-2023.md`](docs/REPETITIE-2023.md).
 
