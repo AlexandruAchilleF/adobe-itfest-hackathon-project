@@ -20,12 +20,12 @@ export function LeaderboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`Clasamentul: ${roleOf(S.points.role).plural.toLowerCase()}`} description={`${total.units} ${S.app.impactLabel}, ${total.confirmed} livrări confirmate de ambele părți, ${total.helpers} oameni care au ajutat.`} />
+      <PageHeader eyebrow="Clasament" title={`${roleOf(S.points.role).plural} care *țin promisiunea.*`} description={`${total.units} ${S.app.impactLabel}, ${total.confirmed} livrări confirmate de ambele părți, ${total.helpers} oameni care au ajutat.`} />
       <Card>
         <ol className="space-y-2" data-testid="leaderboard">
           {rows.map((r) => (
             <li key={r.handle} className={`flex items-center gap-3 rounded-xl px-3 py-2 ${r.handle === me?.handle ? "bg-accent/15 ring-1 ring-accent/50" : "bg-slate-800/50"}`}>
-              <span className="w-6 text-right font-mono text-slate-400">{r.place}</span>
+              <span className="w-6 text-right tabular-nums text-muted">{r.place}</span>
               <Avatar name={r.name} rank={r.rank} />
               <span className="min-w-0 flex-1">
                 <b>{r.name}</b>

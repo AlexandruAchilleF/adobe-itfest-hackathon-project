@@ -8,6 +8,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { navigate } from "wouter/use-browser-location";
 import { z } from "zod";
 import { ConfirmActions } from "../../components/ConfirmActions";
+import { MicIcon } from "../../components/ui";
 import { type AgentAction, defineAction } from "../../lib/agent";
 import { useVoiceAgent } from "../../lib/useVoiceAgent";
 import { scenario } from "../../scenario/config";
@@ -121,16 +122,16 @@ export function MascotDock({ routes }: { routes: Route[] }) {
       <div className="mb-14 flex w-[300px] max-w-full flex-col gap-2 [&>*]:pointer-events-auto">
         {/* turul ghidat */}
         {step && tour && (
-          <div className="rounded-2xl rounded-br-sm bg-white p-3 text-sm text-slate-900 shadow-xl" role="dialog" aria-label="Tur ghidat" data-testid="mascot-tour">
+          <div className="rounded-[22px] rounded-br-md bg-card text-sm text-ink shadow-[0_0_0_5px_rgb(255_255_255/0.6),0_18px_40px_-20px_rgb(28_26_94/0.35)] ring-1 ring-line p-4" role="dialog" aria-label="Tur ghidat" data-testid="mascot-tour">
             <b className="block text-xs text-slate-500">
               {MASCOT_NAME} · pasul {tour.index + 1} din {tour.steps.length}
             </b>
             <p className="mt-1">{step.text}</p>
             <div className="mt-2 flex gap-2">
-              <button className="rounded-lg bg-slate-200 px-2 py-1 text-xs" onClick={() => dispatch({ type: "prev" })} disabled={tour.index === 0}>
+              <button className="btn btn-ghost !px-2.5 !py-1 text-xs" onClick={() => dispatch({ type: "prev" })} disabled={tour.index === 0}>
                 Înapoi
               </button>
-              <button className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-semibold" onClick={() => dispatch({ type: "next" })}>
+              <button className="btn btn-primary !px-3 !py-1 text-xs" onClick={() => dispatch({ type: "next" })}>
                 {tour.index === tour.steps.length - 1 ? "Gata" : "Mai departe"}
               </button>
               <button className="ml-auto text-xs text-slate-500 underline" onClick={() => dispatch({ type: "stop" })}>
@@ -142,7 +143,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
 
         {/* mesajul curent */}
         {!step && state.message && !open && (
-          <div className="self-end rounded-2xl rounded-br-sm bg-white px-3 py-2 text-sm text-slate-900 shadow-xl" role="status" aria-live="polite">
+          <div className="self-end rounded-[22px] rounded-br-md bg-card text-sm text-ink shadow-[0_0_0_5px_rgb(255_255_255/0.6),0_18px_40px_-20px_rgb(28_26_94/0.35)] ring-1 ring-line px-4 py-3" role="status" aria-live="polite">
             <b className="block text-xs text-slate-500">{MASCOT_NAME}</b>
             {state.message}
           </div>
@@ -150,7 +151,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
 
         {/* panoul de conversație */}
         {open && !step && (
-          <div className="rounded-2xl rounded-br-sm bg-white p-3 text-sm text-slate-900 shadow-xl" role="dialog" aria-label={`Vorbește cu ${MASCOT_NAME}`}>
+          <div className="rounded-[22px] rounded-br-md bg-card text-sm text-ink shadow-[0_0_0_5px_rgb(255_255_255/0.6),0_18px_40px_-20px_rgb(28_26_94/0.35)] ring-1 ring-line p-4" role="dialog" aria-label={`Vorbește cu ${MASCOT_NAME}`}>
             <div className="flex items-center justify-between">
               <b className="text-xs text-slate-500">{MASCOT_NAME}</b>
               <button className="text-xs text-slate-400" onClick={() => setHidden(true)} title="Ascunde mascota">
@@ -180,16 +181,16 @@ export function MascotDock({ routes }: { routes: Route[] }) {
                 className="min-w-0 flex-1 rounded-lg border border-slate-300 px-2 py-1"
                 aria-label={`Mesaj pentru ${MASCOT_NAME}`}
               />
-              <button type="button" onClick={agent.listening ? agent.stopListening : agent.listen} disabled={!agent.supported} className="rounded-lg bg-slate-200 px-2" title="Vorbește">
-                {agent.listening ? "■" : "🎤"}
+              <button type="button" onClick={agent.listening ? agent.stopListening : agent.listen} disabled={!agent.supported} className="grid w-9 place-items-center rounded-xl bg-paper-2 text-ink ring-1 ring-line" title="Vorbește">
+                <MicIcon on={agent.listening} />
               </button>
-              <button type="submit" disabled={!text.trim() || agent.thinking} className="rounded-lg bg-amber-400 px-2 font-semibold">
+              <button type="submit" disabled={!text.trim() || agent.thinking} className="grid w-9 place-items-center rounded-xl bg-coral font-semibold text-white">
                 ↵
               </button>
             </form>
             <div className="mt-2 flex flex-wrap gap-1">
               {pageTour?.length ? (
-                <button className="rounded-full bg-amber-100 px-2 py-0.5 text-xs" onClick={() => dispatch({ type: "start", steps: pageTour })}>
+                <button className="rounded-full bg-coral-tint px-2.5 py-1 text-xs text-coral-deep" onClick={() => dispatch({ type: "start", steps: pageTour })}>
                   ▶ Arată-mi cum merge
                 </button>
               ) : null}

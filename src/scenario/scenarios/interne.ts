@@ -9,6 +9,8 @@ export const interne = defineScenario({
   app: {
     name: "Gata de lucru",
     tagline: "Ajutăm firmele mici să-și pună oamenii noi pe treabă din prima zi, fără cereri pierdute pe chat între manager și IT.",
+    headline: "Omul nou, *gata de lucru* din prima zi.",
+    notThis: "Nu încă un thread de cereri pe chat",
     impactLabel: "cereri rezolvate și confirmate",
     center: { lat: 44.4268, lng: 26.1025 },
   },

@@ -35,12 +35,12 @@ export function DocTable({ doc }: { doc: Doc }) {
         {doc.lines.map((l, i) => (
           <li key={i} className="flex justify-between border-b border-slate-800 py-0.5">
             <span>{l.label}</span>
-            <span className="font-mono">{l.amount.toFixed(2)}</span>
+            <span className="tabular-nums">{l.amount.toFixed(2)}</span>
           </li>
         ))}
         <li className="flex justify-between py-0.5 font-semibold">
           <span>Total</span>
-          <span className="font-mono">
+          <span className="tabular-nums">
             {doc.total.toFixed(2)} {doc.currency}
           </span>
         </li>
@@ -95,7 +95,7 @@ export function DocumentIntake({ existing, onSubmit }: Props) {
 
   return (
     <div className="space-y-3" data-testid="doc-intake">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Lipește textul de pe bon sau factură, sau atașează o poză / un PDF" className="h-28 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 font-mono text-xs" aria-label="Textul documentului" />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Lipește textul de pe bon sau factură, sau atașează o poză / un PDF" className="prompt-box h-28 w-full p-4 font-mono text-[0.8rem] leading-relaxed" aria-label="Textul documentului" />
       <div className="flex flex-wrap items-center gap-2">
         <label className="cursor-pointer rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-300">
           📎 {file ? file.name : "Poză sau PDF"}
@@ -128,7 +128,7 @@ export function DocumentIntake({ existing, onSubmit }: Props) {
             <select value={category} onChange={(e) => setCategory(e.target.value)} className={input} aria-label="Categorie">
               {S.categories.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.icon} {c.label}
+                  {c.label}
                 </option>
               ))}
             </select>

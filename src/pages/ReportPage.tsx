@@ -42,29 +42,30 @@ export function ReportPage() {
     } else {
       await add(report);
     }
-    setSent(`${reportTypeOf(type).icon} ${reportTypeOf(type).label}, trimis la ${timeOf(at)}`);
+    setSent(`${reportTypeOf(type).label}, trimis la ${timeOf(at)}`);
     setNote("");
     navigator.vibrate?.(30);
   }
 
   const recent = visibleReports(items, S.reports).slice(0, 6);
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-5 py-6">
+    <div className="sky min-h-dvh">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-5 px-5 py-8">
       <header>
-        <p className="text-xs uppercase tracking-wider text-slate-500">{S.app.name}</p>
-        <h1 className="text-2xl font-bold">{S.reports.prompt}</h1>
-        <p className="mt-1 text-sm text-slate-400" data-testid="report-location">
-          {pos === undefined ? "Caut locația…" : pos ? `📍 Locația ta, precizie ±${pos.accuracy} m` : "📍 Fără GPS: pun raportul în centrul orașului"}
+        <p className="label-caps">{S.app.name}</p>
+        <h1 className="mt-2 text-[2.1rem] font-semibold leading-[1.02] text-ink">{S.reports.prompt}</h1>
+        <p className="mt-2 text-sm text-ink-2" data-testid="report-location">
+          {pos === undefined ? "Caut locația…" : pos ? `Locația ta, precizie ±${pos.accuracy} m` : "Fără GPS: pun raportul în centrul orașului"}
         </p>
       </header>
       <div className="grid gap-3">
         {S.reports.types.map((t) => (
-          <button key={t.id} onClick={() => void report(t.id)} disabled={pos === undefined} className="flex items-center gap-4 rounded-2xl border-2 bg-slate-900 px-5 py-5 text-left text-lg font-semibold active:scale-[0.98] disabled:opacity-50" style={{ borderColor: t.color }}>
-            <span className="text-3xl">{t.icon}</span> {t.label}
+          <button key={t.id} onClick={() => void report(t.id)} disabled={pos === undefined} className="card flex items-center gap-4 px-5 py-5 text-left text-lg font-semibold text-ink transition active:translate-y-0.5 disabled:opacity-50">
+            <span className="h-9 w-9 shrink-0 rounded-full" style={{ background: t.color, boxShadow: `0 0 0 6px ${t.color}22` }} aria-hidden /> {t.label}
           </button>
         ))}
       </div>
-      <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Un detaliu (opțional)" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3" aria-label="Detaliu" />
+      <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Un detaliu (opțional)" className="prompt-box px-4 py-3" aria-label="Detaliu" />
       {sent && (
         <p role="status" className="rounded-xl bg-emerald-500/15 px-4 py-3 text-emerald-200">
           ✓ {sent}. Apare acum pe hartă.
@@ -80,7 +81,7 @@ export function ReportPage() {
         <ul className="space-y-1 text-sm" data-testid="recent-reports">
           {recent.map((r) => (
             <li key={r.id} className="flex gap-2 rounded-lg bg-slate-900 px-3 py-2">
-              <span>{reportTypeOf(r.data.type).icon}</span>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: reportTypeOf(r.data.type).color }} aria-hidden />
               <span className="min-w-0 flex-1 truncate">{r.data.note || reportTypeOf(r.data.type).label}</span>
               <span className="text-slate-500">{ageLabel(ageMinutes(r.data))}</span>
             </li>
@@ -91,5 +92,6 @@ export function ReportPage() {
         Vezi harta
       </Link>
     </main>
+    </div>
   );
 }

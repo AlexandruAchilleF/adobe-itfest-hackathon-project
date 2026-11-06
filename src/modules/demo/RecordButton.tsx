@@ -37,9 +37,10 @@ export function RecordButton() {
     <button
       onClick={toggle}
       title="Înregistrează ecranul (video de rezervă pentru pitch)"
-      className={`rounded-lg px-2.5 py-1 text-xs font-medium ${state === "recording" ? "animate-pulse bg-rose-600 text-white" : "bg-slate-800 text-slate-300 hover:text-white"}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ${state === "recording" ? "bg-coral text-white ring-coral" : "bg-paper-2 text-ink-2 ring-line hover:text-coral-deep"}`}
     >
-      {state === "recording" ? `■ ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` : "⏺ Rec"}
+      <span className={`h-2 w-2 rounded-full ${state === "recording" ? "animate-pulse bg-white" : "bg-coral"}`} aria-hidden />
+      {state === "recording" ? `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}` : "Rec"}
     </button>
   );
 }

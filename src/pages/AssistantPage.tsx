@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { ConfirmActions } from "../components/ConfirmActions";
-import { Button, Card, Code, ErrorNote, PageHeader, Spinner } from "../components/ui";
+import { Button, Card, Code, ErrorNote, MicIcon, PageHeader, Spinner } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { useMe } from "../lib/identity";
 import { apply, createRequest, type Request } from "../lib/flow";
@@ -165,7 +165,7 @@ export function AssistantPage() {
           <Card title="Spune sau scrie" tour="assist-input">
             <div className="flex gap-2">
               <Button variant={agent.listening ? "danger" : "primary"} onClick={agent.listening ? agent.stopListening : agent.listen} disabled={!agent.supported}>
-                {agent.listening ? "■ Ascult…" : "🎤 Vorbește"}
+                <MicIcon on={agent.listening} /> {agent.listening ? "Ascult…" : "Vorbește"}
               </Button>
               {agent.thinking && <Spinner />}
             </div>
@@ -222,7 +222,7 @@ export function AssistantPage() {
           <ul className="space-y-2" data-testid="assistant-list">
             {list.map((r) => (
               <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">
-                <span className="shrink-0">{categoryOf(r.data.category).icon}</span>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryOf(r.data.category).color }} aria-hidden />
                 <span className="min-w-0 flex-1">
                   <b>{r.data.title}</b> <span className="text-slate-400">· {r.data.address}</span>
                 </span>

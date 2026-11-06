@@ -78,7 +78,7 @@ export function ProcessPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Unde se blochează" description={`Cât stă fiecare ${S.request.singular} la fiecare pas, calculat din istoric. Nicio cifră de aici nu vine de la AI.`} />
+      <PageHeader eyebrow="Cronometrul" title="Unde se *blochează.*" description={`Cât stă fiecare ${S.request.singular} la fiecare pas, calculat din istoric. Nicio cifră de aici nu vine de la AI.`} />
       <div className="grid gap-3 sm:grid-cols-3" data-testid="process-summary">
         <div className="rounded-2xl bg-slate-900/70 p-4">
           <p className="text-3xl font-bold text-accent">{st.avgCycleMinutes !== null ? formatDuration(st.avgCycleMinutes) : "—"}</p>
@@ -107,7 +107,7 @@ export function ProcessPage() {
                 </span>
               </div>
               <div className="mt-1 h-2 rounded-full bg-slate-800">
-                <div className={`h-full rounded-full ${s.state === st.bottleneck?.state ? "bg-rose-400" : "bg-accent"}`} style={{ width: `${Math.max(2, (s.avgMinutes / max) * 100)}%` }} />
+                <div className={`h-full rounded-full ${s.state === st.bottleneck?.state ? "bg-coral" : "bg-[#c9c2e8]"}`} style={{ width: `${Math.max(2, (s.avgMinutes / max) * 100)}%` }} />
               </div>
             </li>
           ))}

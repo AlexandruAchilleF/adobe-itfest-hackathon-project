@@ -9,6 +9,8 @@ export const resurse = defineScenario({
   app: {
     name: "Masa de diseară",
     tagline: "Ajutăm adăposturile și cantinele sociale să primească mâncarea rămasă la restaurante în aceeași seară, fără zece telefoane și fără porții care nu mai ajung.",
+    headline: "Mâncarea de azi, *la masa de diseară.*",
+    notThis: "Nu încă o hartă cu donatori pe care nu-i sună nimeni",
     impactLabel: "porții salvate",
     center: { lat: 44.4355, lng: 26.1025 },
   },

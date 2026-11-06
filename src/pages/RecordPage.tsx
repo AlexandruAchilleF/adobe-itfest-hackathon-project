@@ -74,7 +74,7 @@ export function RecordPage() {
   });
 
   return (
-    <article className="mx-auto max-w-2xl space-y-5 rounded-2xl bg-white p-8 text-slate-900 print:p-0" data-testid="record">
+    <article className="mx-auto max-w-2xl space-y-5 card p-8 text-ink print:p-0 print:shadow-none print:border-0" data-testid="record">
       <header className="flex items-start justify-between gap-4 border-b border-slate-300 pb-3">
         <div>
           <p className="text-xs uppercase tracking-wider text-slate-500">{S.app.name}</p>
@@ -93,7 +93,7 @@ export function RecordPage() {
         {cycle !== null && <li>Durata: {formatDuration(cycle)}</li>}
       </ul>
       {doc?.success && S.documents && (
-        <section className="space-y-2 [&_*]:!text-slate-800">
+        <section className="space-y-2 [&_*]:!text-ink">
           <h2 className="font-semibold">Documentul justificativ</h2>
           <DocTable doc={doc.data} />
           <ChecksList checks={checkDocument(doc.data, { rules: S.documents.rules, category: rec.data.category, existing: others, now: new Date(rec.data.history[0].at) })} />
@@ -111,7 +111,7 @@ export function RecordPage() {
         <ol className="mt-1 space-y-0.5 text-sm">
           {rec.data.history.map((h, i) => (
             <li key={i}>
-              <span className="font-mono text-slate-500">
+              <span className="tabular-nums text-muted">
                 {new Date(h.at).toLocaleDateString("ro-RO")} {timeOf(h.at)}
               </span>{" "}
               {describeEntry(S.flow, h, nameOf)}
@@ -122,7 +122,7 @@ export function RecordPage() {
       </section>
       <footer className="grid grid-cols-2 gap-8 pt-8 text-sm">
         {[S.flow.requester, ...Object.keys(rec.data.actors)].map((role) => (
-          <p key={role} className="border-t border-slate-400 pt-1 text-slate-600">
+          <p key={role} className="border-t border-ink/30 pt-1 text-muted">
             {roleOf(role).label}: {nameOf(role === S.flow.requester ? rec.data.requester : rec.data.actors[role])}
           </p>
         ))}
@@ -131,7 +131,7 @@ export function RecordPage() {
         <Button variant="primary" onClick={() => window.print()}>
           Tipărește / salvează PDF
         </Button>
-        <Button variant="ghost" className="!text-slate-700" onClick={() => void propose()} disabled={busy}>
+        <Button variant="ghost" onClick={() => void propose()} disabled={busy}>
           Propune alt rezumat
         </Button>
       </div>

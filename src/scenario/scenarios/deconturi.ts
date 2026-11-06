@@ -15,6 +15,8 @@ export const deconturi = defineScenario({
   app: {
     name: "Decontul",
     tagline: "Ajutăm angajații unei firme mici să-și primească banii pe bonuri în zile, nu în săptămâni, fără ca contabilul să verifice fiecare bon de mână.",
+    headline: "Banii pe bonuri, *în zile.*",
+    notThis: "Nu încă un folder cu bonuri scanate",
     impactLabel: "lei rambursați",
     center: { lat: 44.4268, lng: 26.1025 },
   },
@@ -85,7 +87,7 @@ TOTAL 87,00`,
   mascot: {
     enabled: true,
     name: "Bonița",
-    color: "#0ea5e9",
+    color: "#d35f52",
     persona: "o colegă de birou calmă și precisă, care verifică bonurile și spune exact ce nu iese, fără glume",
     tour: true,
     hiddenOn: ["/business", "/survey", "/start"],

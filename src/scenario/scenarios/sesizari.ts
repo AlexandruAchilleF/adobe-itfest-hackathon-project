@@ -9,6 +9,8 @@ export const sesizari = defineScenario({
   app: {
     name: "Rezolvat?",
     tagline: "Ajutăm primăria de sector să rezolve gropile, becurile arse și gunoiul raportate de oameni și să afle de la ei, nu din tabel, dacă s-au rezolvat cu adevărat.",
+    headline: "Gropi raportate, *gropi astupate.*",
+    notThis: "Nu încă un formular de sesizări fără răspuns",
     impactLabel: "sesizări rezolvate și confirmate",
     center: { lat: 44.4355, lng: 26.13 },
   },

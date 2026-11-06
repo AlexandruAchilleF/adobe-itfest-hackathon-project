@@ -40,7 +40,7 @@ export function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={me.name} description={`${role.icon} ${role.label} · ${me.area}`} />
+      <PageHeader eyebrow={role.label} title={me.name} description={me.area} />
       {stats && rank && (
         <Card>
           <div className="flex flex-wrap items-center gap-5" data-testid="profile-rank">
@@ -81,7 +81,7 @@ export function ProfilePage() {
             {toConfirm.map((r) => (
               <li key={r.id}>
                 <Link href={r.data.requester === me.handle ? `/c/${r.id}` : "/cereri"} className="text-accent hover:underline">
-                  {categoryOf(r.data.category).icon} {r.data.title} →
+                  {r.data.title} →
                 </Link>
               </li>
             ))}
@@ -92,7 +92,7 @@ export function ProfilePage() {
         <ul className="space-y-1" data-testid="profile-requests">
           {mine.map((r) => (
             <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">
-              <span>{categoryOf(r.data.category).icon}</span>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryOf(r.data.category).color }} aria-hidden />
               <span className="min-w-0 flex-1 truncate">
                 {r.data.title} · {r.data.quantity} {r.data.unit}
               </span>

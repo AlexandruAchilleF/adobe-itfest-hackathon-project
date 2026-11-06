@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 
 test("modul de pitch: fără unelte de echipă în fața juriului", async ({ page }) => {
   await page.goto("/?demo=1");
-  await expect(page.getByRole("heading", { name: "Masa de diseară" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Mâncarea de azi, la masa de diseară/ })).toBeVisible();
   await expect(page.getByText("Mod demo")).toHaveCount(0);
   await expect(page.getByText("Pentru echipă")).toHaveCount(0);
   await page.getByRole("button", { name: /Sunt adăpost/ }).click();

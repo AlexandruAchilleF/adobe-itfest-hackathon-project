@@ -86,6 +86,10 @@ export interface Scenario {
     name: string;
     /** fraza „Ajutăm X să Y fără Z”, spusă pe prima pagină */
     tagline: string;
+    /** titlul mare de pe prima pagină; textul dintre *steluțe* apare în serif coral. Implicit: numele. */
+    headline?: string;
+    /** ce NU e produsul, afișat tăiat deasupra titlului (ex: „Nu încă un folder cu bonuri scanate”) */
+    notThis?: string;
     /** cifrele de impact: cum se numesc unitățile încheiate cu bine (ex: „porții salvate”, „lei rambursați”) */
     impactLabel: string;
     center: LatLng;

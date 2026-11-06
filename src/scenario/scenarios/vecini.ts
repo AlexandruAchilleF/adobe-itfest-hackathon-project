@@ -9,6 +9,8 @@ export const vecini = defineScenario({
   app: {
     name: "Vecin la nevoie",
     tagline: "Ajutăm vârstnicii singuri din bloc să primească apă și cumpărături în caniculă, fără să sune la zece uși.",
+    headline: "Vecinii aduc, *bunicii confirmă.*",
+    notThis: "Nu încă un grup de WhatsApp al blocului",
     impactLabel: "produse duse acasă",
     center: { lat: 44.4268, lng: 26.1025 },
   },

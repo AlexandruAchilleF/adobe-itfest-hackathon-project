@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "wouter";
 import { z } from "zod";
 import { QrPanel } from "../components/QrPanel";
-import { Button, Card, ErrorNote, PageHeader, Pill, Spinner } from "../components/ui";
+import { ArrowButton, Button, Card, ErrorNote, MicIcon, PageHeader, Pill } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
 import { checkDocument, Doc } from "../lib/checks";
@@ -29,7 +29,7 @@ import { pitchMode } from "../scenario/nav";
 import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests, roleOf } from "../scenario/model";
 import { useSteps } from "../scenario/useSteps";
 import { ChecksList, DocTable, DocumentIntake } from "../scenario/ui/DocumentIntake";
-import { StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
+import { StatusDot, StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
 
 const S = scenario;
 const CAT_IDS = S.categories.map((c) => c.id) as [string, ...string[]];
@@ -88,7 +88,7 @@ export function BoardPage() {
     id: `raport:${r.id}`,
     lat: r.data.lat,
     lng: r.data.lng,
-    label: `${reportTypeOf(r.data.type).icon} ${reportTypeOf(r.data.type).label}${r.data.note ? `: ${r.data.note}` : ""} · ${ageLabel(ageMinutes(r.data))}`,
+    label: `${reportTypeOf(r.data.type).label}${r.data.note ? `: ${r.data.note}` : ""} · ${ageLabel(ageMinutes(r.data))}`,
     color: reportTypeOf(r.data.type).color,
     opacity: freshness(r.data, S.reports),
     kind: "report" as const,
@@ -99,7 +99,7 @@ export function BoardPage() {
         id: r.id,
         lat: r.data.lat,
         lng: r.data.lng,
-        label: `${categoryOf(r.data.category).icon} ${r.data.title} · ${r.data.status}`,
+        label: `${r.data.title} · ${r.data.status}`,
         color: toneOf(S.flow, r.data) === "done" ? "#475569" : categoryOf(r.data.category).color,
         weight: r.data.urgency,
       })),
@@ -293,7 +293,7 @@ export function BoardPage() {
   const filters = ["toate", "ale mele", ...CAT_IDS];
   return (
     <div>
-      <PageHeader title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)}${S.features.map ? " pe hartă" : ""}`} description={S.app.tagline}>
+      <PageHeader eyebrow={me ? `Ești ${roleOf(me.role).label.toLowerCase()}` : undefined} title={`${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} *${S.features.map ? "pe hartă" : "în lucru"}*`} description={S.app.tagline}>
         <div className="flex gap-2">
           <Pill ok={null}>
             {items.length} {S.request.plural}
@@ -320,13 +320,18 @@ export function BoardPage() {
         <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap gap-1">
             {filters.map((f) => (
-              <button key={f} onClick={() => setFilter(f)} className={`rounded-full px-3 py-1 text-xs ${filter === f ? "bg-slate-200 text-slate-900" : "bg-slate-800 text-slate-300"}`}>
-                {f === "toate" || f === "ale mele" ? f : `${categoryOf(f).icon} ${categoryOf(f).label}`}
+              <button key={f} onClick={() => setFilter(f)} className={`rounded-full px-3 py-1.5 text-[0.8rem] ring-1 transition ${filter === f ? "bg-ink text-white ring-ink" : "bg-card text-ink-2 ring-line hover:ring-coral/40"}`}>
+                {f === "toate" || f === "ale mele" ? f : (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full" style={{ background: categoryOf(f).color }} aria-hidden />
+                    {categoryOf(f).label}
+                  </span>
+                )}
               </button>
             ))}
             {S.reports.enabled && !S.reports.toRequest && (
-              <button onClick={() => setShowReports((v) => !v)} className={`ml-auto rounded-full px-3 py-1 text-xs ${showReports ? "bg-sky-300 text-slate-900" : "bg-slate-800 text-slate-300"}`} aria-pressed={showReports}>
-                📍 rapoarte live ({recentReports.length})
+              <button onClick={() => setShowReports((v) => !v)} className={`ml-auto rounded-full px-3 py-1.5 text-[0.8rem] ring-1 ${showReports ? "bg-lilac text-lilac-ink ring-[#d6d0f6]" : "bg-card text-ink-2 ring-line"}`} aria-pressed={showReports}>
+                rapoarte live ({recentReports.length})
               </button>
             )}
           </div>
@@ -340,7 +345,7 @@ export function BoardPage() {
               tour="board-detail"
               title={
                 <span>
-                  {categoryOf(sel.data.category).icon} {sel.data.title}
+                  {sel.data.title}
                 </span>
               }
               actions={<StatusPill status={sel.data.status} />}
@@ -350,14 +355,14 @@ export function BoardPage() {
                 <b>
                   {sel.data.quantity} {sel.data.unit}
                 </b>{" "}
-                · {sel.data.address} · urgență {sel.data.urgency}/5
+                {sel.data.address ? ` · ${sel.data.address}` : ""} · urgență {sel.data.urgency}/5
               </p>
               <p className="mt-1 text-sm text-slate-400">
-                {roleOf(S.flow.requester).icon} {nameOf(sel.data.requester)}
+                <span className="text-muted">{roleOf(S.flow.requester).label}:</span> {nameOf(sel.data.requester)}
                 {Object.entries(sel.data.actors).map(([role, h]) => (
                   <span key={role}>
                     {" "}
-                    · {roleOf(role).icon} {nameOf(h)}
+                    · <span className="text-muted">{roleOf(role).label}:</span> {nameOf(h)}
                   </span>
                 ))}
                 {isExpired(S.flow, sel.data) && <span className="text-rose-300"> · expirată</span>}
@@ -392,12 +397,13 @@ export function BoardPage() {
             <ul className="space-y-1" data-testid="request-list">
               {visible.map((r) => (
                 <li key={r.id}>
-                  <button onClick={() => setSelected(r.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm ${r.id === selected ? "bg-slate-700" : "bg-slate-800/50 hover:bg-slate-800"}`}>
-                    <span>{categoryOf(r.data.category).icon}</span>
+                  <button onClick={() => setSelected(r.id)} className={`flex w-full items-center gap-3 rounded-2xl bg-card px-4 py-3 text-left text-sm ring-1 transition ${r.id === selected ? "ring-coral/60 shadow-[0_0_0_4px_var(--color-coral-tint)]" : "ring-line hover:ring-coral/30"}`}>
+                    <StatusDot status={r.data.status} />
                     <span className="min-w-0 flex-1 truncate">
-                      <b>{r.data.title}</b> <span className="text-slate-400">· {nameOf(r.data.requester)}</span>
+                      <b className="font-semibold text-ink">{r.data.title}</b> <span className="text-muted">· {nameOf(r.data.requester)}</span>
                     </span>
                     <StatusPill status={r.data.status} />
+                    <span className="hidden w-20 shrink-0 text-right text-xs text-muted sm:block">{ageLabel(ageMinutes({ at: r.data.history.at(-1)!.at }))}</span>
                   </button>
                 </li>
               ))}
@@ -411,15 +417,15 @@ export function BoardPage() {
             </Card>
           )}
           {me?.role === S.flow.requester && !S.documents?.enabled && (
-            <Card title={S.request.addTitle}>
-              <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" aria-label={S.request.addTitle} />
-              <div className="mt-2 flex gap-2">
-                <Button onClick={speech.listening ? speech.stop : speech.start} disabled={!speech.supported} title="Spune cu vocea">
-                  {speech.listening ? "■" : "🎤"}
-                </Button>
-                <Button variant="primary" onClick={() => void structure()} disabled={busy !== null || !raw.trim()}>
-                  {busy === "structure" && <Spinner />} Pregătește cererea
-                </Button>
+            <Card label="Cum ai spune-o" title={S.request.addTitle}>
+              <div className="prompt-box p-4">
+                <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full resize-none text-[1.02rem] leading-snug" aria-label={S.request.addTitle} />
+                <div className="mt-1 flex items-center justify-between">
+                  <button className="grid h-10 w-10 place-items-center rounded-full text-ink-2 hover:bg-white/70 disabled:opacity-40" onClick={speech.listening ? speech.stop : speech.start} disabled={!speech.supported} title="Spune cu vocea" aria-label="Spune cu vocea">
+                    <MicIcon on={speech.listening} />
+                  </button>
+                  <ArrowButton label="Pregătește cererea" busy={busy === "structure"} onClick={() => void structure()} disabled={busy !== null || !raw.trim()} />
+                </div>
               </div>
               {draft && (
                 <div className="mt-3 space-y-2 rounded-xl border border-accent/40 p-3 text-sm">
@@ -429,7 +435,7 @@ export function BoardPage() {
                     <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="rounded-lg bg-slate-900 px-2 py-1" aria-label="Categorie">
                       {S.categories.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.icon} {c.label}
+                          {c.label}
                         </option>
                       ))}
                     </select>
@@ -450,10 +456,10 @@ export function BoardPage() {
           )}
           {me && me.role !== S.flow.requester && S.features.matching && (
             <Card title={S.request.offerTitle}>
-              <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full rounded-xl border border-slate-700 bg-slate-950 p-3 text-sm" aria-label={S.request.offerTitle} />
-              <Button variant="primary" className="mt-2" onClick={() => void match()} disabled={busy !== null || !offer.trim()}>
-                {busy === "match" && <Spinner />} Găsește potriviri
-              </Button>
+              <div className="prompt-box flex items-end gap-2 p-4">
+                <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full resize-none text-[1.02rem] leading-snug" aria-label={S.request.offerTitle} />
+                <ArrowButton label="Găsește potriviri" busy={busy === "match"} onClick={() => void match()} disabled={busy !== null || !offer.trim()} />
+              </div>
               <ol className="mt-3 space-y-2">
                 {matches.map((m, i) => {
                   const r = items.find((x) => x.id === m.id);
@@ -496,7 +502,7 @@ export function BoardPage() {
               <ul className="mt-4 space-y-1 text-sm" data-testid="live-reports">
                 {recentReports.slice(0, 5).map((r) => (
                   <li key={r.id} className="flex gap-2 rounded-lg bg-slate-800/50 px-3 py-1.5" style={{ opacity: Math.max(0.5, freshness(r.data, S.reports)) }}>
-                    <span>{reportTypeOf(r.data.type).icon}</span>
+                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: reportTypeOf(r.data.type).color }} aria-hidden />
                     <span className="min-w-0 flex-1 truncate">{r.data.note || reportTypeOf(r.data.type).label}</span>
                     <span className="shrink-0 text-xs text-slate-400">{ageLabel(ageMinutes(r.data))}</span>
                   </li>

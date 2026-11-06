@@ -7,7 +7,7 @@ import { available, waitingOn } from "../lib/flow";
 import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { scenario } from "../scenario/config";
-import { categoryOf, requests, roleOf } from "../scenario/model";
+import { requests, roleOf } from "../scenario/model";
 import { StatusPill, Timeline } from "../scenario/ui/parts";
 import { useSteps } from "../scenario/useSteps";
 
@@ -31,7 +31,7 @@ export function ConfirmPage() {
   const actor = { handle: rec.data.requester, role: S.flow.requester };
   const can = available(S.flow, rec.data, actor);
   const helpers = Object.values(rec.data.actors).map(nameOf).join(", ");
-  const big = "w-full rounded-2xl py-5 text-lg font-semibold disabled:opacity-50";
+  const big = "btn w-full !py-4 text-lg";
 
   async function act(event: string, danger?: boolean) {
     setError(null);
@@ -44,10 +44,11 @@ export function ConfirmPage() {
   }
 
   return (
+    <div className="sky min-h-dvh">
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-6 py-8">
-      <p className="text-xs uppercase tracking-wider text-slate-500">{S.app.name}</p>
-      <h1 className="text-2xl font-bold">
-        {categoryOf(rec.data.category).icon} {rec.data.title}
+      <p className="label-caps">{S.app.name}</p>
+      <h1 className="text-[2rem] font-semibold leading-[1.05] text-ink">
+        {rec.data.title}
       </h1>
       <p className="text-slate-300">
         {helpers || `${S.request.singular[0].toUpperCase()}${S.request.singular.slice(1)} ta`}
@@ -71,7 +72,7 @@ export function ConfirmPage() {
           {can
             .filter((t) => !t.danger)
             .map((t) => (
-              <button key={t.id} className={`${big} bg-emerald-500 text-slate-950`} onClick={() => void act(t.id)} disabled={t.note === "required" && !note.trim()}>
+              <button key={t.id} className={`${big} btn-primary`} onClick={() => void act(t.id)} disabled={t.note === "required" && !note.trim()}>
                 ✓ {t.label}
               </button>
             ))}
@@ -79,7 +80,7 @@ export function ConfirmPage() {
           {can
             .filter((t) => t.danger)
             .map((t) => (
-              <button key={t.id} className={`${big} bg-rose-600 text-white`} onClick={() => void act(t.id, true)} disabled={t.note === "required" && !note.trim()}>
+              <button key={t.id} className={`${big} btn-danger`} onClick={() => void act(t.id, true)} disabled={t.note === "required" && !note.trim()}>
                 ✗ {t.label}
               </button>
             ))}
@@ -94,5 +95,6 @@ export function ConfirmPage() {
       <Timeline r={rec.data} nameOf={nameOf} />
       {error && <p role="alert" className="text-rose-300">{error}</p>}
     </main>
+    </div>
   );
 }

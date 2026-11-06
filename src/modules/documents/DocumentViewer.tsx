@@ -40,8 +40,8 @@ const PdfJsViewer = forwardRef<DocumentViewerHandle, { file: File; className?: s
   useImperativeHandle(ref, () => ({ gotoPage: (p) => setPage(Math.min(Math.max(1, p), pdf?.numPages ?? p)) }), [pdf]);
 
   return (
-    <div ref={box} className={`flex flex-col overflow-auto rounded-2xl bg-slate-200 p-2 ${className}`}>
-      <div className="sticky top-0 mb-2 flex items-center justify-center gap-2 text-sm text-slate-900">
+    <div ref={box} className={`flex flex-col overflow-auto rounded-2xl bg-paper-2 p-2 ring-1 ring-line ${className}`}>
+      <div className="sticky top-0 mb-2 flex items-center justify-center gap-2 text-sm text-ink">
         <Button onClick={() => setPage((p) => Math.max(1, p - 1))}>‹</Button>
         <span data-testid="pdf-page">
           Pagina {page} / {pdf?.numPages ?? "…"}

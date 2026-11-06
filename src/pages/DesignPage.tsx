@@ -6,7 +6,7 @@
 // Adobe Express (brief → design editabil) + Accessify (verificare de accesibilitate).
 
 import { useRef, useState } from "react";
-import { Button, Card, ErrorNote, PageHeader, Spinner } from "../components/ui";
+import { Button, Card, ErrorNote, PageHeader, Spinner, MicIcon } from "../components/ui";
 import { QrPanel } from "../components/QrPanel";
 import { auditDesign, autoFixDesign } from "../lib/accessibility";
 import { AiError, ask } from "../lib/ai";
@@ -146,7 +146,7 @@ export function DesignPage() {
             {speech.interim && <p className="mt-1 text-sm italic text-slate-400">{speech.interim}…</p>}
             <div className="mt-2 flex flex-wrap gap-2">
               <Button onClick={speech.listening ? speech.stop : speech.start} disabled={!speech.supported}>
-                {speech.listening ? "■ Stop" : "🎤 Dictează"}
+                <MicIcon on={speech.listening} /> {speech.listening ? "Stop" : "Dictează"}
               </Button>
               <label className="inline-flex cursor-pointer items-center rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-sm">
                 🖼️ Poză

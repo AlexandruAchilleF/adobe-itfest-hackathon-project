@@ -23,7 +23,7 @@ export function SurveyRespondPage() {
     setStep((s) => s + 1);
   }
 
-  const big = "rounded-2xl bg-slate-800 py-5 text-lg font-semibold active:bg-accent active:text-slate-950";
+  const big = "rounded-2xl bg-card py-5 text-lg font-semibold ring-1 ring-line shadow-[inset_0_-4px_0_var(--color-line)] active:bg-coral active:text-white";
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-6 py-8">
       {q ? (
@@ -68,7 +68,7 @@ export function SurveyRespondPage() {
               }}
             >
               <textarea value={text} onChange={(e) => setText(e.target.value)} className="h-32 w-full rounded-2xl border border-slate-700 bg-slate-900 p-4 text-lg" />
-              <button className="mt-3 w-full rounded-2xl bg-accent py-4 text-lg font-bold text-slate-950">Trimite</button>
+              <button className="btn btn-primary mt-3 w-full !py-4 text-lg">Trimite</button>
             </form>
           )}
           <button className="text-sm text-slate-500 underline" onClick={() => setStep((s) => s + 1)}>

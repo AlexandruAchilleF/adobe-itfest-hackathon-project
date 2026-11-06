@@ -77,6 +77,7 @@ function Shell() {
   const [location] = useLocation();
   const [demo, setDemo] = useState(isDemoMode);
   const [ai, setAi] = useState<HealthResponse | null>(null);
+  const [menu, setMenu] = useState(false);
   useEffect(() => {
     void aiHealth().then(setAi);
   }, []);
@@ -91,54 +92,75 @@ function Shell() {
     );
   }
   const status: AppStatus = { ai, supabase: Boolean(supabase), adobePdf: Boolean(adobeClientId), demo };
-
-  return (
-    <div className="min-h-dvh">
-      <header className="sticky top-0 z-[1100] border-b print:hidden border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
-          <Link href="/" className="font-bold tracking-tight">
-            {import.meta.env.VITE_APP_NAME || S.app.name}
-          </Link>
-          <nav className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-            {MAIN_NAV.map((n) => (
-              <Link key={n.href} href={n.href} className={`rounded-lg px-2 py-1 ${location === n.href ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`}>
+  const linkClass = (href: string) => `rounded-full px-3 py-1.5 transition-colors ${location === href ? "bg-paper-2 text-ink" : "text-ink-2 hover:text-coral-deep"}`;
+  const navLinks = (
+    <>
+      {MAIN_NAV.map((n) => (
+        <Link key={n.href} href={n.href} className={linkClass(n.href)}>
+          {n.label}
+        </Link>
+      ))}
+      {TEAM_NAV.length > 0 && (
+        <details className="relative">
+          <summary className="cursor-pointer list-none rounded-full px-3 py-1.5 text-sm text-muted hover:text-coral-deep">Pentru echipă ▾</summary>
+          <div className="card absolute left-0 z-[1300] mt-2 flex w-52 flex-col p-1.5">
+            {TEAM_NAV.map((n) => (
+              <Link key={n.href} href={n.href} className={linkClass(n.href)}>
                 {n.label}
               </Link>
             ))}
-            {TEAM_NAV.length > 0 && (
-              <details className="relative">
-                <summary className="cursor-pointer list-none rounded-lg px-2 py-1 text-xs text-slate-500 hover:text-white">Pentru echipă ▾</summary>
-                <div className="absolute left-0 z-[1300] mt-1 flex w-48 flex-col rounded-xl border border-slate-800 bg-slate-950 p-1 shadow-xl">
-                  {TEAM_NAV.map((n) => (
-                    <Link key={n.href} href={n.href} className={`rounded-lg px-3 py-1.5 ${location === n.href ? "bg-slate-800 text-white" : "text-slate-400 hover:text-white"}`}>
-                      {n.label}
-                    </Link>
-                  ))}
-                </div>
-              </details>
-            )}
-          </nav>
-          <div className="ml-auto flex flex-wrap items-center gap-3">
-            <RoleSwitcher />
-            {!pitchMode(S) && <RecordButton />}
-            {!pitchMode(S) && (
-            <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-400" title="AI simulat — merge fără internet și fără chei">
-              <input
-                type="checkbox"
-                checked={demo}
-                onChange={(e) => {
-                  setDemoMode(e.target.checked);
-                  setDemo(e.target.checked);
-                }}
-              />
-              Mod demo
-              {ai && <Pill ok={demo ? null : ai.active !== "mock"}>AI: {demo ? "mock" : ai.active}</Pill>}
-            </label>
-            )}
           </div>
+        </details>
+      )}
+    </>
+  );
+  const teamTools = pitchMode(S) ? null : (
+    <>
+      <RecordButton />
+      <label className="flex cursor-pointer items-center gap-2 text-xs text-muted" title="AI simulat — merge fără internet și fără chei">
+        <input
+          type="checkbox"
+          className="accent-coral"
+          checked={demo}
+          onChange={(e) => {
+            setDemoMode(e.target.checked);
+            setDemo(e.target.checked);
+          }}
+        />
+        Mod demo
+        {ai && <Pill ok={demo ? null : ai.active !== "mock"}>AI: {demo ? "mock" : ai.active}</Pill>}
+      </label>
+    </>
+  );
+
+  return (
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-[1100] px-3 pt-3 print:hidden">
+        <div className="mx-auto max-w-6xl rounded-[26px] bg-card/95 px-3 py-2 shadow-[0_0_0_6px_rgb(255_255_255/0.55),0_16px_36px_-22px_rgb(28_26_94/0.35)] ring-1 ring-line backdrop-blur sm:px-4">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="shrink-0 px-2 text-[1.15rem] font-semibold tracking-[-0.04em] text-ink">
+              {import.meta.env.VITE_APP_NAME || S.app.name}
+            </Link>
+            <nav className="hidden items-center gap-1 text-[0.92rem] lg:flex">{navLinks}</nav>
+            <div className="ml-auto flex items-center gap-2">
+              <RoleSwitcher />
+              <div className="hidden items-center gap-2 lg:flex">{teamTools}</div>
+              <button className="grid h-10 w-10 place-items-center rounded-xl text-ink hover:bg-paper-2 lg:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
+                <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden>
+                  <path d={menu ? "M3 1l14 12M17 1L3 13" : "M1 1h18M1 7h18M1 13h18"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {menu && (
+            <div className="mt-2 flex flex-col gap-1 border-t border-line pt-2 pb-1 lg:hidden" onClick={() => setMenu(false)}>
+              {navLinks}
+              <div className="mt-1 flex flex-wrap items-center gap-2 px-1">{teamTools}</div>
+            </div>
+          )}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 print:max-w-none print:p-0">
+      <main className="mx-auto max-w-6xl px-4 pt-10 pb-16 print:max-w-none print:p-0">
         <Suspense fallback={<Loading />}>
         <Switch>
           <Route path="/" component={ScenarioHome} />
