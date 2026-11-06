@@ -12,7 +12,7 @@ import { MicIcon } from "../../components/ui";
 import { type AgentAction, defineAction } from "../../lib/agent";
 import { useVoiceAgent } from "../../lib/useVoiceAgent";
 import { scenario } from "../../scenario/config";
-import { MASCOT_NAME, MascotFigure } from "./Mascot";
+import { MASCOT_NAME, MascotFigure } from "./MascotFigure";
 import { mascot, type MascotState } from "./mascot";
 import { type MascotPage, mascotPage, matchRoute, type Route, tourReducer } from "./page";
 

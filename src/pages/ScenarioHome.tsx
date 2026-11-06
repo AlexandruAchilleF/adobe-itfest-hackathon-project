@@ -17,7 +17,7 @@ import { impact, leaderboard } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { useInView, useTypewriter } from "../lib/motion";
 import { useCollection } from "../lib/store";
-import { MascotFigure } from "../modules/mascot/Mascot";
+import { MascotFigure } from "../modules/mascot/MascotFigure";
 import { useMascotPage } from "../modules/mascot/page";
 import { scenario } from "../scenario/config";
 import { requests, roleOf } from "../scenario/model";

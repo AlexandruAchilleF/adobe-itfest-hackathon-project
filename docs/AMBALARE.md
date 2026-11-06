@@ -19,7 +19,7 @@ Fișierul de lucru e `src/scenario/scenarios/<nume>.ts`. Activarea: `src/scenari
 - [ ] `seed.reports`: 3 rapoarte la 4–45 de minute în urmă.
 - [ ] `points` și `ranks`: numele rangurilor din brief sau din lumea omului. Verificați pe `/clasament` că primul loc nu e la egalitate.
 - [ ] `notify` pe pași: mesajele SMS citite cu voce tare. Au sub 160 de caractere?
-- [ ] `mascot`: rămâne (decizia echipei), dar pe temă: alt `name`, altă `color`, altă `persona`, iar omul cu design schimbă desenul din `Mascot.tsx` dacă are timp. Vorbește doar despre stări reale (verificări, așteptări, confirmări) și stă cel mult 10–15 secunde în demo.
+- [ ] `mascot`: rămâne (decizia echipei), dar pe temă: alt `name`, altă `color`, altă `persona`, iar omul cu design schimbă desenul din `MascotFigure.tsx` dacă are timp. Vorbește doar despre stări reale (verificări, așteptări, confirmări) și stă cel mult 10–15 secunde în demo.
 - [ ] `npm test` trece. `validateScenario` și `validateFlow` prind roluri greșite, categorii inexistente, stări fără ieșire și pași imposibili în seed. `tests/urme.test.ts` prinde numele din scenariul vechi rămase în cod.
 - [ ] Pe `/start` scrie „✓ Config-ul trece verificările”.
 
