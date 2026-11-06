@@ -6,6 +6,13 @@ export interface LatLng {
 
 export const BUCHAREST: LatLng = { lat: 44.4268, lng: 26.1025 };
 
+/** Cheia unei mulțimi de puncte (ordinea nu contează): harta se recentrează doar când se schimbă. */
+export const boundsKey = (points: LatLng[]) =>
+  points
+    .map((p) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`)
+    .sort()
+    .join("|");
+
 /** Distanța în km între două puncte (formula haversine). */
 export function distanceKm(a: LatLng, b: LatLng): number {
   const R = 6371;

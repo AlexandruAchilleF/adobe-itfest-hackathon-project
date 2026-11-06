@@ -102,7 +102,7 @@ export function BoardPage() {
         lat: r.data.lat,
         lng: r.data.lng,
         label: `${r.data.title} · ${r.data.status}`,
-        color: toneOf(S.flow, r.data) === "done" ? "#475569" : categoryOf(r.data.category).color,
+        color: toneOf(S.flow, r.data) === "done" ? "#b9b3c9" : categoryOf(r.data.category).color,
         weight: r.data.urgency,
       })),
     [visible],

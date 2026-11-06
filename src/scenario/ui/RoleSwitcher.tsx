@@ -11,7 +11,7 @@ export function RoleSwitcher() {
       <select
         value={me?.handle ?? ""}
         onChange={(e) => setMe(e.target.value)}
-        className="max-w-[46vw] rounded-full bg-paper-2 py-1.5 pr-8 pl-3 text-sm font-medium text-ink ring-1 ring-line sm:max-w-[230px]"
+        className="max-w-[36vw] rounded-full bg-paper-2 py-1.5 pr-8 pl-3 text-sm font-medium text-ink ring-1 ring-line sm:max-w-[230px]"
         aria-label="Cine sunt"
         data-testid="role-switcher"
       >

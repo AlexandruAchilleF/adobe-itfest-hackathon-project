@@ -176,6 +176,10 @@ h1, h2, h3 {
 .prompt-box textarea, .prompt-box input { background: transparent; color: var(--color-ink); }
 .prompt-box textarea:focus, .prompt-box input:focus { outline: none; }
 
+/* harta: fundalul OSM, cu culorile atenuate spre hârtie (punctele rămân în culori pline) */
+.leaflet-tile-pane { filter: saturate(0.45) sepia(0.12) brightness(1.04) contrast(0.95); }
+.leaflet-container { font-family: var(--font-sans); background: #eef0f4; }
+
 /* câmpurile de formular: albe, cu linie caldă, ca să se vadă și pe carduri albe */
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="color"]), select, textarea {
   color: var(--color-ink);

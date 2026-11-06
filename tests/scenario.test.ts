@@ -146,3 +146,12 @@ describe("raportul de pe telefon devine sesizare (reports.toRequest)", async () 
     expect(validateScenario(broken).join("\n")).toContain("categoria gunoi nu există");
   });
 });
+
+describe("harta se recentrează doar când se schimbă punctele", async () => {
+  const { boundsKey } = await import("../src/modules/map/geo");
+  it("aceeași mulțime de puncte, în altă ordine, are aceeași cheie", () => {
+    const a = [{ lat: 44.1, lng: 26.1 }, { lat: 44.2, lng: 26.2 }];
+    expect(boundsKey(a)).toBe(boundsKey([...a].reverse()));
+    expect(boundsKey(a)).not.toBe(boundsKey([...a, { lat: 44.3, lng: 26.3 }]));
+  });
+});
