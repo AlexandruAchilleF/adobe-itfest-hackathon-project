@@ -1,0 +1,50 @@
+import { describe, expect, it } from "vitest";
+import { buildDeck, isTodo, missing, PITCH, type PitchConfig } from "../src/pitch/deck";
+import type { Scenario } from "../src/scenario/types";
+
+const modules = import.meta.glob<Record<string, Scenario>>("../src/scenario/scenarios/*.ts", { eager: true });
+const all = Object.values(modules)
+  .flatMap((m) => Object.values(m))
+  .filter((s): s is Scenario => !!s && typeof s === "object" && "id" in s && "flow" in s);
+
+const FILLED: PitchConfig = {
+  ...PITCH,
+  team: ["Ana · produs"],
+  demoUrl: "https://exemplu.vercel.app",
+  brief: [{ need: "hartă", where: "minutul 1" }],
+  market: "o cifră",
+  builtToday: ["scenariul"],
+  next: ["pilot"],
+};
+
+describe("pitch deck", () => {
+  for (const s of all) {
+    it(`„${s.id}”: 9 slide-uri, cu textele scenariului`, () => {
+      const deck = buildDeck(s, PITCH, "http://localhost:5173");
+      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "people", "how", "difference", "demo", "payer", "brief", "close"]);
+      const cover = deck[0];
+      expect(cover.kind === "cover" && cover.tagline).toBe(s.app.tagline);
+      const how = deck.find((x) => x.kind === "how");
+      expect(how?.kind === "how" && how.steps.length).toBeGreaterThan(0);
+      const demo = deck.find((x) => x.kind === "demo");
+      expect(demo?.kind === "demo" && demo.url).toBe("http://localhost:5173");
+    });
+  }
+
+  it("arată ce lipsește, ca să nu scape la pitch", () => {
+    const s = all[0];
+    const deck = buildDeck({ ...s, business: { ...s.business, evidence: [] } }, PITCH);
+    const todo = missing(deck);
+    expect(todo.some((t) => t.includes("business.evidence"))).toBe(true);
+    expect(todo.some((t) => t.includes("PITCH.team"))).toBe(true);
+    expect(isTodo(deck[1].kind === "problem" && deck[1].evidence)).toBe(true);
+  });
+
+  it("completat, nu mai cere nimic; linkul din PITCH bate adresa locală", () => {
+    const s = all[0];
+    const deck = buildDeck({ ...s, business: { ...s.business, evidence: ["„Pierd 2 zile pe lună.” (contabila)"] } }, FILLED, "http://localhost:5173");
+    expect(missing(deck)).toEqual([]);
+    const demo = deck.find((x) => x.kind === "demo");
+    expect(demo?.kind === "demo" && demo.url).toBe("https://exemplu.vercel.app");
+  });
+});

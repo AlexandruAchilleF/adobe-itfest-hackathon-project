@@ -34,6 +34,7 @@ const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "Surve
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
 const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
 const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
+const PitchPage = page(() => import("./pages/PitchPage"), "PitchPage");
 const Loading = () => <p className="p-6 text-sm text-muted">Se încarcă…</p>;
 
 const S = scenario;
@@ -44,12 +45,13 @@ const MAIN_NAV = mainNav(S);
 const TEAM_NAV = teamNav(S);
 export const NAV_GROUPS = [{ label: "", items: MAIN_NAV }, ...(TEAM_NAV.length ? [{ label: "Pentru echipă", items: TEAM_NAV }] : [])];
 
-/** Paginile deschise pe telefon din QR: fără meniu. */
+/** Paginile deschise pe telefon din QR și deck-ul de pitch: fără meniu. */
 const BARE: Array<[string, ComponentType]> = [
   ["/view", ViewPage],
   ["/s", SurveyRespondPage],
   ["/raport", ReportPage],
   ["/c", ConfirmPage],
+  ["/pitch", PitchPage],
 ];
 
 export interface AppStatus {

@@ -82,10 +82,10 @@ export const resurse = defineScenario({
   features: { map: true, gamification: true, matching: true, optionalModules: false },
   mascot: {
     enabled: true,
-    // desenul din template e un arici: numele și persona trebuie să se potrivească cu el (sau schimbați desenul)
+    // desenul din template e un uliu: numele și persona trebuie să se potrivească cu el (sau schimbați desenul)
     name: "Ghiță",
-    color: "#b45309",
-    persona: "un arici de cartier care anunță scurt cine aduce mâncare și când a ajuns",
+    color: "#d9583f",
+    persona: "un uliu care vede orașul de sus și anunță scurt cine aduce mâncare și când a ajuns",
     tour: true,
     hiddenOn: ["/business", "/survey", "/start"],
   },

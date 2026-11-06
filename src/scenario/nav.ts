@@ -13,6 +13,7 @@ export const TEAM_NAV: NavItem[] = [
   { href: "/design", label: "Design editabil" },
   { href: "/assistant", label: "Asistent" },
   { href: "/ai", label: "AI (unealtă)" },
+  { href: "/pitch", label: "Pitch deck" },
   { href: "/start", label: "Ghidul template-ului" },
 ];
 
