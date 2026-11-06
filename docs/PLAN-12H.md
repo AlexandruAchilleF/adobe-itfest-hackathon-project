@@ -36,6 +36,8 @@ La 2–3 oameni, rolurile 3 și 4 se împart între ceilalți.
 
 ## Programul zilei
 
+La ITFest × Adobe 2026 se lucrează de la **08:00 la 20:00**, iar jurizarea începe la 20:00. Deci 0:00 = 08:00, oprirea funcționalităților (6:00) = 14:00, înghețul de cod (10:30) = 18:30. Fiți gata de prezentare la 19:45.
+
 | Ora | Ce faceți |
 |---|---|
 | 0:00–0:30 | Brief-ul → `/brief` → alegeți ideea și rețeta din tabelul de mai sus → o frază: „Ajutăm [cine] să [ce] fără [durere]”. |
