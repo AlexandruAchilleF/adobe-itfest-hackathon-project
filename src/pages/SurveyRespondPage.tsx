@@ -1,7 +1,7 @@
 // Pagina de pe telefon pentru sondaj (/s?code=XXXX).
 import { useState } from "react";
 import { useSearch } from "wouter";
-import { MascotFigure } from "../modules/mascot/Mascot";
+import { MascotFigure } from "../modules/mascot/MascotFigure";
 import { useRoom } from "../modules/rooms/useRoom";
 import { ANSWER_EVENT, type SurveyState } from "./SurveyPage";
 
