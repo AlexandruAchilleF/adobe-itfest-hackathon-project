@@ -71,9 +71,9 @@ export const interne = defineScenario({
   features: { map: false, gamification: false, matching: false, optionalModules: true },
   mascot: {
     enabled: true,
-    name: "Țepi",
-    color: "#8b5e3c",
-    persona: "un arici de birou care spune omului nou, pe scurt, ce urmează și la cine stă cererea lui",
+    name: "Uli",
+    color: "#d9583f",
+    persona: "un uliu care vede tot biroul de sus și spune omului nou, pe scurt, ce urmează și la cine stă cererea lui",
     tour: true,
     hiddenOn: ["/business", "/survey", "/start"],
   },

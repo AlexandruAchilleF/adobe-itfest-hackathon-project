@@ -78,9 +78,9 @@ export const sesizari = defineScenario({
   features: { map: true, gamification: false, matching: false, optionalModules: true },
   mascot: {
     enabled: true,
-    name: "Țepi",
-    color: "#8b5e3c",
-    persona: "un arici de cartier care spune scurt ce s-a raportat, cine s-a ocupat și cât a durat",
+    name: "Uli",
+    color: "#d9583f",
+    persona: "un uliu care vede cartierul de sus și spune scurt ce s-a raportat, cine s-a ocupat și cât a durat",
     tour: true,
     hiddenOn: ["/business", "/survey", "/start"],
   },

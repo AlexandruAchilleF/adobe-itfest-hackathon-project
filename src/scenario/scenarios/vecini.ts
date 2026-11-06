@@ -83,9 +83,9 @@ export const vecini = defineScenario({
   mascot: {
     enabled: true,
     character: true,
-    name: "Țepi",
-    color: "#8b5e3c",
-    persona: "un arici prietenos care vorbește rar și clar, pentru oameni în vârstă",
+    name: "Uli",
+    color: "#d9583f",
+    persona: "un uliu prietenos care vede tot cartierul de sus și vorbește rar și clar, pentru oameni în vârstă",
     tour: true,
     hiddenOn: ["/business", "/survey", "/start"],
   },

@@ -151,8 +151,9 @@ export function ScenarioHome() {
               </>
             )}
             {S.mascot.enabled && S.mascot.character && (
-              <div className="pointer-events-none absolute -bottom-6 -left-6 hidden md:block" aria-hidden>
-                <MascotFigure mood="happy" size={130} />
+              // mascota zboară pe cer, deasupra produsului, venind spre cel care citește
+              <div className="pointer-events-none absolute -top-28 -left-16 hidden md:block lg:-top-32" aria-hidden>
+                <MascotFigure mood="happy" size={190} />
               </div>
             )}
           </div>

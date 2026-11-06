@@ -1,8 +1,8 @@
-// Țepi în colțul ecranului: îi vorbești sau îi scrii și face lucruri în aplicație pentru tine
+// Uli (uliul) în colțul ecranului: îi vorbești sau îi scrii și face lucruri în aplicație pentru tine
 // (folosind acțiunile declarate de pagina curentă cu useMascotPage), cere aprobarea înainte de
 // modificări și prezintă aplicația printr-un tur ghidat. Generic: merge pe orice pagină nouă.
 //
-// La pitch: deschideți pagina cu ?tour=1 și Țepi pornește singur turul.
+// La pitch: deschideți pagina cu ?tour=1 și Uli pornește singur turul.
 
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { navigate } from "wouter/use-browser-location";
@@ -138,7 +138,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
 
   return (
     <div className="pointer-events-none fixed bottom-3 right-3 z-[1200] flex max-w-[calc(100vw-24px)] items-end gap-1 print:hidden" data-testid="mascot" data-mood={state.mood}>
-      {/* doar bulele și ariciul primesc click-uri; restul zonei lasă click-ul să treacă la pagină */}
+      {/* doar bulele și uliul primesc click-uri; restul zonei lasă click-ul să treacă la pagină */}
       <div className={`${CHARACTER ? "mb-14" : "mb-16"} flex w-[300px] max-w-full flex-col gap-2 [&>*]:pointer-events-auto`}>
         {/* turul ghidat */}
         {step && tour && (

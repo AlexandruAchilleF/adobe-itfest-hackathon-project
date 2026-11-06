@@ -71,7 +71,16 @@ Deck-ul e o pagină a aplicației, în același sistem: cer pentru deschidere, �
 
 ## Asistentul
 
-Implicit e un buton rotund bleumarin în colț (conversație, acțiuni, tur ghidat). Personajul desenat (Țepi, un arici, `src/modules/mascot/MascotFigure.tsx`) apare doar cu `mascot.character: true`, pentru teme cu copii, vârstnici sau gamificare. Un personaj nou se desenează în același fișier și se potrivește cu paleta de mai sus (bleumarin, coral, cerul).
+Implicit e un buton rotund bleumarin în colț (conversație, acțiuni, tur ghidat). Personajul desenat (Uli, `src/modules/mascot/MascotFigure.tsx`) apare doar cu `mascot.character: true`, pentru teme cu copii, vârstnici sau gamificare.
+
+Uli e un uliu care zboară spre privitor, întors puțin spre dreapta. Ce îl face recognoscibil, de păstrat la orice retușare:
+
+- **silueta**: aripile larg deschise, brațul urcă spre încheietură, mâna coboară; cinci pene primare desfăcute, cu goluri doar la vârf;
+- **fața**: creștet turtit, sprâncene osoase care coboară spre cioc, ochi aurii spre lateral (stângul mai mare, e mai aproape), ciocul încovoiat pe gușa crem;
+- **coada** roșcată în evantai, din care se văd doar festele de sub corp; culoarea ei e `mascot.color` din scenariu;
+- **stil**: doar forme pline în paleta de mai sus (bleumarin în trei tonuri pentru volum, crem, auriu); fără gradienți, fără `feGaussianBlur` sau alte filtre, fără texturi. Lumina vine de sus-stânga: muchia aripii apropiate și creștetul au o fâșie mai deschisă (`rim`).
+
+Stările se văd din postură, nu doar din față: bucuria ridică aripile, îngrijorarea le lasă în jos și ridică sprâncenele, ascultarea înclină capul.
 
 ## Uneltele echipei
 

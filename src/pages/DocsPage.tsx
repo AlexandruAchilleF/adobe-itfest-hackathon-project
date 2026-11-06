@@ -79,7 +79,7 @@ export function DocsPage() {
     );
   }
 
-  // Țepi poate face aceleași lucruri, la cerere, și prezintă pagina
+  // Uli poate face aceleași lucruri, la cerere, și prezintă pagina
   useMascotPage({
     title: "Documente",
     context: () =>

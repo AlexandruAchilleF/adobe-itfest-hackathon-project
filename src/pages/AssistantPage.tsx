@@ -125,7 +125,7 @@ export function AssistantPage() {
     context: () => itemsRef.current.map((r) => `id=${r.id} | ${r.data.title} | ${r.data.category} | ${r.data.status} | urgență ${r.data.urgency} | ${r.data.address}`).join("\n"),
   });
 
-  // ariciul ascultă cât e pornit microfonul și cere aprobarea când asistentul vrea să modifice ceva
+  // uliul ascultă cât e pornit microfonul și cere aprobarea când asistentul vrea să modifice ceva
   useEffect(() => {
     if (agent.listening) mascot.set("listening");
     else if (mascot.get().mood === "listening") mascot.set("idle");
