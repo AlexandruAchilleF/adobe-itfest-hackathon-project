@@ -25,7 +25,11 @@ Citește întâi `AGENTS.md`, `docs/PLAN-12H.md`, `docs/JURIU.md`, `docs/BRIEF.m
 
 ## 4. Ce vreau de la tine, în ordinea asta
 1. Completează `docs/BRIEF.md`: brief-ul exact, tabelul de cerințe (fiecare propoziție care cere ceva și fiecare „you can include…” pe un rând) și piesa din template care acoperă fiecare cerință (tabelul din `docs/PLAN-12H.md`). Ce nu acoperă nicio piesă, listează separat: acolo e munca zilei.
-2. Spune-mi forma brief-ului: „flux de cereri între oameni” (pornim dintr-un scenariu: `resurse`, `sesizari`, `deconturi`, `interne`, `vecini`) sau „input haotic → rezultat editabil” (pornim din `/design` sau `/docs`).
+2. Evaluează sincer cât de bine se potrivește template-ul cu brief-ul și dă-mi UNUL din trei verdicte, cu argumente din brief:
+   - **A. Scenariu:** brief-ul e un flux între oameni (cine cere, cine ajută, cine confirmă). Spune din ce scenariu pornim (`resurse`, `sesizari`, `deconturi`, `interne`, `vecini`) și de ce.
+   - **B. Rețetă:** brief-ul e „input haotic → rezultat editabil” (poză, schiță, voce, PDF → ceva ce omul corectează). Spune din ce pornim (`/design`, `/docs`, `DocumentIntake`) și ce lipsește.
+   - **C. Doar baza:** brief-ul cere altceva (joc, cameră sau gesturi în timp real, altă platformă). Păstrăm doar stratul de bază (`ask()`, designul din `docs/DESIGN.md`, componentele din `src/components/ui.tsx`, deck-ul `/pitch`, deploy-ul) și scriem nucleul nou.
+   Pentru verdictul ales, spune și ce scoatem din meniu și din demo (pagini, module, mascotă) ca să rămână un singur flux. Dacă ești între două verdicte, spune-o și ce ar decide. Nu forța template-ul pe o temă care nu i se potrivește: un verdict C sincer e mai bun decât un A forțat.
 3. Propune 3 idei, fiecare trecută prin cele 7 întrebări din `docs/JURIU.md` (notă 1–5 la fiecare) și prin cele 3 filtre din `docs/BRIEF.md`. Recomandă una. NU scrie cod până nu aleg eu ideea.
 4. După ce aleg: copiază scenariul cel mai apropiat în `src/scenario/scenarios/<nume>.ts`, fă-l activ în `src/scenario/config.ts` și schimbă tot după `docs/AMBALARE.md`, secțiunea 1 (id, app, business, roles, flow, categories, documents, features, mascot, seed cu locuri reale din București). Folosește cuvintele din brief pentru roluri și pași. Cifrele din `business.evidence` le las goale: le aducem noi de la interviuri, nu le inventa.
 5. `npm run check` trebuie să treacă, iar pe `/start` să scrie „✓ Config-ul trece verificările”. `tests/urme.test.ts` nu are voie să găsească nimic din scenariul vechi.
