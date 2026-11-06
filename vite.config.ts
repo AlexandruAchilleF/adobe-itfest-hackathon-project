@@ -14,6 +14,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss(), apiRoutes()],
     server: { host: true, port: 5173 },
+    // doar aplicația: add-on-ul Express (express-addon/, adobe-express-addon/) are build-ul lui
+    optimizeDeps: { entries: ["index.html"] },
     build: { chunkSizeWarningLimit: 1500 },
     test: {
       include: ["tests/**/*.test.ts"],
