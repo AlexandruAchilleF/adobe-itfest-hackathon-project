@@ -115,6 +115,8 @@ test("tipărire: fără meniu și fără antetul paginii", async ({ page }) => {
 
 test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }) => {
   await page.goto("/docs?demo=1");
+  // pagina se încarcă leneș: mascota primește acțiunile paginii abia după ce apare
+  await expect(page.getByRole("button", { name: "Folosește exemplul" })).toBeVisible();
   await page.getByTestId("mascot").getByRole("button", { name: /Vorbește cu/ }).click();
   const box = page.getByRole("dialog", { name: /Vorbește cu/ });
   await box.getByLabel(/Mesaj pentru/).fill("deschide exemplul");

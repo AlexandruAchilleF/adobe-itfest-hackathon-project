@@ -47,7 +47,7 @@ test("cererea scrisă în grabă: AI-ul o structurează, omul verifică", async 
   await fresh(page, "doamna-vasilescu");
   await page.getByLabel(/Ce îți lipsește/).fill("Sunt la etajul 4 pe Calea Moșilor, nu mai am apă, îmi trebuie 6 sticle până diseară");
   await page.getByRole("button", { name: "Pregătește cererea" }).click();
-  await expect(page.getByText("Verifică înainte să salvezi:")).toBeVisible();
+  await expect(page.getByText("Verifică înainte să salvezi")).toBeVisible();
   await expect(page.getByLabel("Cantitate")).toHaveValue("6");
   await expect(page.getByLabel("Categorie")).toHaveValue("apa");
   await page.getByRole("button", { name: "Salvează pe hartă" }).click();

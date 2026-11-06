@@ -102,7 +102,7 @@ export function ErrorNote({ error, hint }: { error: string | null | undefined; h
 /**
  * Antetul unei pagini: panglică opțională, titlu în două voci (*accent*), descriere.
  */
-export function PageHeader({ title, description, children, eyebrow }: { title: string; description: ReactNode; children?: ReactNode; eyebrow?: string }) {
+export function PageHeader({ title, description, children, eyebrow }: { title: string; description?: ReactNode; children?: ReactNode; eyebrow?: string }) {
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4 print:hidden">
       <div className="max-w-2xl">
@@ -114,7 +114,7 @@ export function PageHeader({ title, description, children, eyebrow }: { title: s
         <h1 className="text-[2rem] font-semibold leading-[1.05] text-ink sm:text-[2.4rem]">
           <Accent text={title} />
         </h1>
-        <p className="mt-2 text-[0.98rem] leading-relaxed text-ink-2">{description}</p>
+        {description && <p className="mt-2 text-[0.98rem] leading-relaxed text-ink-2">{description}</p>}
       </div>
       {children}
     </header>

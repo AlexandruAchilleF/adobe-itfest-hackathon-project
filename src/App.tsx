@@ -188,7 +188,8 @@ function Shell() {
         </Switch>
         </Suspense>
       </main>
-      {showMascot(S, location) && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
+      {/* pe prima pagină mascota e deja în cer, mare; nu o dublăm în colț */}
+      {showMascot(S, location) && location !== "/" && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
     </div>
   );
 }

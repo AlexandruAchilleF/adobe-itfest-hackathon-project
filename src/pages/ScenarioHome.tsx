@@ -3,7 +3,7 @@
 
 import { Link, useLocation } from "wouter";
 import { QrPanel } from "../components/QrPanel";
-import { Accent, Button, Card, Ribbon, Tag } from "../components/ui";
+import { Accent, Button, Card, Ribbon } from "../components/ui";
 import { impact, leaderboard } from "../lib/gamification";
 import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
@@ -43,7 +43,7 @@ export function ScenarioHome() {
   };
 
   return (
-    <div className="space-y-20">
+    <div className="space-y-16">
       {/* cerul: secțiunea de deschidere, pe toată lățimea */}
       <section className="sky relative left-1/2 -mt-28 w-screen -translate-x-1/2 overflow-hidden px-4 pt-36 pb-20 text-center">
         {S.app.notThis && <p className="mx-auto inline-block rounded-lg bg-[#fbefe2]/90 px-3 py-1 text-[0.95rem] text-coral-deep/80 line-through decoration-coral-deep/60">{S.app.notThis}</p>}
@@ -80,32 +80,14 @@ export function ScenarioHome() {
 
       <section className="text-center">
         <Ribbon>Până acum</Ribbon>
-        <h2 className="mx-auto mt-5 max-w-3xl text-[2rem] font-semibold leading-[1.05] text-ink sm:text-[2.8rem]">
-          <Accent text={`Calculat din ${S.request.plural}, *nu ghicit.*`} />
-        </h2>
-        <div className="mt-10 grid grid-cols-2 gap-5 text-left sm:grid-cols-4" data-testid="impact">
+        <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-5 text-left sm:grid-cols-3" data-testid="impact">
           <Stat value={total.units} label={S.app.impactLabel} />
           <Stat value={total.confirmed} label={`${S.request.plural} încheiate și confirmate`} />
           <Stat value={total.open} label={`${S.request.plural} care așteaptă acum`} />
-          <Stat value={total.helpers} label={`${roleOf(S.points.role).plural.toLowerCase()} care au ajutat`} />
         </div>
       </section>
 
-      {/* rolurile: câte un rând pe rol, cu eticheta lui colorată */}
-      <section className="space-y-12">
-        {ROLES.map((role, i) => (
-          <div key={role} className="grid items-center gap-4 sm:grid-cols-[1fr_auto]">
-            <div>
-              <Tag tone={i}>{roleOf(role).label}</Tag>
-              <h3 className="mt-3 max-w-2xl text-[1.6rem] font-semibold leading-tight text-ink sm:text-[2rem]">{roleOf(role).pitch}</h3>
-            </div>
-            <Button variant="secondary" onClick={() => enter(role)}>
-              Intră ca {roleOf(role).label.toLowerCase()} →
-            </Button>
-          </div>
-        ))}
-      </section>
-
+      {(S.features.gamification || S.reports.enabled) && (
       <div className="grid gap-6 md:grid-cols-2">
         {S.features.gamification && (
           <Card label="Clasament" title="Cine a ajutat cel mai mult" actions={<Link href="/clasament" className="text-sm text-coral-deep hover:underline">tot clasamentul →</Link>}>
@@ -128,6 +110,7 @@ export function ScenarioHome() {
           </Card>
         )}
       </div>
+      )}
     </div>
   );
 }
