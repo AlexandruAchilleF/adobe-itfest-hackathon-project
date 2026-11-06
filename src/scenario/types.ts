@@ -88,6 +88,9 @@ export interface Scenario {
     tagline: string;
     /** titlul mare de pe prima pagină; textul dintre *steluțe* apare în serif coral. Implicit: numele. */
     headline?: string;
+    /** ilustrația din cerul primei pagini (ex: „/hero.png”, generată cu Adobe Firefly; promptul de stil e în docs/DESIGN.md).
+     *  Fără ea, eroul e produsul: documentul și cardul primei cereri din seed. */
+    heroImage?: string;
     /** ce NU e produsul, afișat tăiat deasupra titlului (ex: „Nu încă un folder cu bonuri scanate”) */
     notThis?: string;
     /** cifrele de impact: cum se numesc unitățile încheiate cu bine (ex: „porții salvate”, „lei rambursați”) */
@@ -170,7 +173,11 @@ export interface Scenario {
     optionalModules: boolean;
   };
   mascot: {
+    /** asistentul din colț (conversație, acțiuni, tur); fără el paginile merg la fel */
     enabled: boolean;
+    /** true = asistentul apare ca personaj desenat (copii, vârstnici, gamificare).
+     *  Implicit e un buton sobru: la teme B2B, juridice sau financiare personajul nu ajută (docs/JURIU.md). */
+    character?: boolean;
     name: string;
     color: string;
     /** cine e mascota, pentru AI (o propoziție) */

@@ -11,7 +11,7 @@ import { mockDocument } from "../mock";
 
 const S = scenario;
 const ICON: Record<DocCheck["level"], string> = { ok: "✓", warning: "⚠", error: "✗" };
-const TONE: Record<DocCheck["level"], string> = { ok: "text-emerald-300", warning: "text-amber-200", error: "text-rose-300" };
+const TONE: Record<DocCheck["level"], string> = { ok: "text-ok", warning: "text-warn", error: "text-bad" };
 
 export function ChecksList({ checks }: { checks: DocCheck[] }) {
   return (
@@ -28,12 +28,12 @@ export function ChecksList({ checks }: { checks: DocCheck[] }) {
 export function DocTable({ doc }: { doc: Doc }) {
   return (
     <div className="text-sm">
-      <p className="text-slate-400">
+      <p className="text-muted">
         {doc.vendor} · CUI {doc.cui || "—"} · nr. {doc.number || "—"} · {doc.date}
       </p>
       <ul className="mt-1">
         {doc.lines.map((l, i) => (
-          <li key={i} className="flex justify-between border-b border-slate-800 py-0.5">
+          <li key={i} className="flex justify-between border-b border-line py-1">
             <span>{l.label}</span>
             <span className="tabular-nums">{l.amount.toFixed(2)}</span>
           </li>
@@ -91,14 +91,14 @@ export function DocumentIntake({ existing, onSubmit }: Props) {
 
   const set = (patch: Partial<Doc>) => doc && setDoc({ ...doc, ...patch });
   const setLine = (i: number, patch: Partial<Doc["lines"][number]>) => doc && setDoc({ ...doc, lines: doc.lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
-  const input = "rounded-lg bg-slate-900 px-2 py-1";
+  const input = "rounded-lg bg-white px-2.5 py-1.5";
 
   return (
     <div className="space-y-3" data-testid="doc-intake">
-      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Lipește textul de pe bon sau factură, sau atașează o poză / un PDF" className="prompt-box h-28 w-full p-4 font-mono text-[0.8rem] leading-relaxed" aria-label="Textul documentului" />
+      <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Lipește textul de pe bon sau factură, sau atașează o poză / un PDF" className="prompt-box h-28 w-full p-3.5 text-sm leading-relaxed" aria-label="Textul documentului" />
       <div className="flex flex-wrap items-center gap-2">
-        <label className="cursor-pointer rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-300">
-          📎 {file ? file.name : "Poză sau PDF"}
+        <label className="btn btn-secondary cursor-pointer">
+          {file ? file.name : "Poză sau PDF"}
           <input type="file" accept="image/*,application/pdf" capture="environment" className="hidden" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         </label>
         <Button variant="ghost" onClick={() => setText(cfg.sample)}>
@@ -108,10 +108,10 @@ export function DocumentIntake({ existing, onSubmit }: Props) {
           {busy && <Spinner />} Citește documentul
         </Button>
       </div>
-      {error && <p className="text-sm text-rose-300">{error}</p>}
+      {error && <p className="text-sm text-bad">{error}</p>}
       {doc && (
-        <div className="space-y-2 rounded-xl border border-accent/40 p-3 text-sm">
-          <p className="text-xs text-accent">AI-ul a citit. Codul a verificat. Corectează ce e marcat cu ✗:</p>
+        <div className="space-y-2 rounded-xl bg-paper p-3.5 text-sm ring-1 ring-line">
+          <p className="text-xs font-medium text-ink-2">AI-ul a citit. Codul a verificat. Corectează ce e marcat cu ✗:</p>
           <input value={doc.vendor} onChange={(e) => set({ vendor: e.target.value })} className={`${input} w-full`} aria-label="Firma" />
           <div className="flex gap-2">
             <input value={doc.cui} onChange={(e) => set({ cui: e.target.value })} className={`${input} w-28`} aria-label="Cod fiscal" />
@@ -132,7 +132,7 @@ export function DocumentIntake({ existing, onSubmit }: Props) {
                 </option>
               ))}
             </select>
-            <span className="ml-auto text-xs text-slate-400">Total</span>
+            <span className="ml-auto text-xs text-muted">Total</span>
             <input type="number" step="0.01" value={doc.total} onChange={(e) => set({ total: Number(e.target.value) })} className={`${input} w-24 text-right`} aria-label="Total" />
           </div>
           <ChecksList checks={checks} />

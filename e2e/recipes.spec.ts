@@ -62,7 +62,7 @@ test("design: generează, auditul găsește probleme, repararea le rezolvă, QR"
 });
 
 test("asistent: citește direct, modificarea cere aprobare", async ({ page }) => {
-  await page.goto("/harta?demo=1&ca=andrei");
+  await page.goto("/harta?demo=1&dev=1&ca=andrei");
   await page.getByRole("button", { name: "Resetează datele demo" }).click();
   await expect(page.getByText("8 cereri")).toBeVisible();
   await page.goto("/assistant?demo=1");

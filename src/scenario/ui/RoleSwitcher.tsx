@@ -1,17 +1,26 @@
-// „Cine sunt”: roluri fără login, schimbate dintr-un clic (pentru demo cu un singur laptop)
+// Meniul de cont: cine sunt acum (roluri fără login). Arată ca într-un produs real (inițiale, nume,
+// rol), dar dedesubt e un <select> nativ: se schimbă dintr-un clic la demo cu un singur laptop,
 // sau pe telefon cu ?ca=<handle>. Persoanele vin din seed-ul scenariului.
 import { useMe } from "../../lib/identity";
 import { scenario } from "../config";
+import { Avatar } from "./parts";
 
 export function RoleSwitcher() {
   const { me, people, setMe } = useMe();
   return (
-    <label className="flex items-center gap-2 text-xs text-muted">
-      <span className="hidden sm:inline">Sunt</span>
+    <label className="relative flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-paper-2" title="Schimbă persoana (pentru demo)">
+      <Avatar name={me?.name ?? "?"} size={30} />
+      <span className="hidden min-w-0 text-left leading-tight sm:block">
+        <span className="block max-w-[160px] truncate text-sm font-medium text-ink">{me?.name ?? "Alege cine ești"}</span>
+        {me && <span className="block text-xs text-muted">{scenario.roles[me.role]?.label}</span>}
+      </span>
+      <svg width="10" height="10" viewBox="0 0 10 10" className="text-muted" aria-hidden>
+        <path d="M2 3.5 5 6.5l3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
       <select
         value={me?.handle ?? ""}
         onChange={(e) => setMe(e.target.value)}
-        className="max-w-[36vw] rounded-full bg-paper-2 py-1.5 pr-8 pl-3 text-sm font-medium text-ink ring-1 ring-line sm:max-w-[230px]"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
         aria-label="Cine sunt"
         data-testid="role-switcher"
       >

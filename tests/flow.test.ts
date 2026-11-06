@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { type Actor, advance, apply, available, can, createRequest, describeEntry, type FlowDef, isExpired, type Request, validateFlow, waitingOn } from "../src/lib/flow";
+import { type Actor, advance, apply, available, can, createRequest, describeEntry, type FlowDef, happyPath, isExpired, type Request, validateFlow, waitingOn } from "../src/lib/flow";
+import { deconturi } from "../src/scenario/scenarios/deconturi";
 import { vecini } from "../src/scenario/scenarios/vecini";
 
 const now = new Date("2026-11-07T10:00:00Z");
@@ -133,5 +134,19 @@ describe("flux cu 3 roluri (proces de birou)", () => {
     expect(p).toContain("starea nicaieri");
     expect(p).toContain("aprobat nu are niciun pas de ieșire");
     expect(p).toContain("reușită");
+  });
+});
+
+describe("drumul fericit (povestea de pe prima pagină)", () => {
+  it("urmează pașii buni până la reușită, fără „trimite înapoi” și „n-a mers”", () => {
+    expect(happyPath(deconturi.flow).map((t) => t.id)).toEqual(["aproba", "plateste", "incaseaza"]);
+    expect(happyPath(F).at(-1)?.outcome).toBe("done");
+  });
+  it("se oprește la o buclă în loc să se învârtă", () => {
+    const loop: FlowDef = { requester: "a", initial: "x", states: [], transitions: [
+      { id: "1", label: "", done: "", from: ["x"], to: "y", role: "a" },
+      { id: "2", label: "", done: "", from: ["y"], to: "x", role: "a" },
+    ] };
+    expect(happyPath(loop).map((t) => t.id)).toEqual(["1", "2"]);
   });
 });

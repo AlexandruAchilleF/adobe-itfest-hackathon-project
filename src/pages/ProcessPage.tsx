@@ -80,17 +80,17 @@ export function ProcessPage() {
     <div className="space-y-6">
       <PageHeader eyebrow="Cronometrul" title="Unde se *blochează.*" description={`Cât stă fiecare ${S.request.singular} la fiecare pas, calculat din istoric. Nicio cifră de aici nu vine de la AI.`} />
       <div className="grid gap-3 sm:grid-cols-3" data-testid="process-summary">
-        <div className="rounded-2xl bg-slate-900/70 p-4">
-          <p className="text-3xl font-bold text-accent">{st.avgCycleMinutes !== null ? formatDuration(st.avgCycleMinutes) : "—"}</p>
-          <p className="text-xs text-slate-400">în medie de la cerere la încheiere ({st.closed} încheiate)</p>
+        <div className="card p-5">
+          <p className="text-[1.9rem] leading-tight font-semibold tracking-[-0.02em] text-ink tabular-nums">{st.avgCycleMinutes !== null ? formatDuration(st.avgCycleMinutes) : "—"}</p>
+          <p className="mt-1 text-sm text-muted">în medie de la cerere la încheiere ({st.closed} încheiate)</p>
         </div>
-        <div className="rounded-2xl bg-slate-900/70 p-4">
-          <p className="text-3xl font-bold text-accent">{st.bottleneck ? st.bottleneck.label : "—"}</p>
-          <p className="text-xs text-slate-400">pasul unde se pierde cel mai mult timp{st.bottleneck ? ` (așteaptă: ${st.bottleneck.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(", ")})` : ""}</p>
+        <div className="card p-5">
+          <p className="text-[1.9rem] leading-tight font-semibold tracking-[-0.02em] text-ink tabular-nums">{st.bottleneck ? st.bottleneck.label : "—"}</p>
+          <p className="mt-1 text-sm text-muted">pasul unde se pierde cel mai mult timp{st.bottleneck ? ` (așteaptă: ${st.bottleneck.waitingOn.map((r) => roleOf(r).label.toLowerCase()).join(", ")})` : ""}</p>
         </div>
-        <div className="rounded-2xl bg-slate-900/70 p-4">
-          <p className="text-3xl font-bold text-accent">{st.returned}</p>
-          <p className="text-xs text-slate-400">{S.request.plural} întoarse măcar o dată</p>
+        <div className="card p-5">
+          <p className="text-[1.9rem] leading-tight font-semibold tracking-[-0.02em] text-ink tabular-nums">{st.returned}</p>
+          <p className="mt-1 text-sm text-muted">{S.request.plural} întoarse măcar o dată</p>
         </div>
       </div>
 
@@ -106,8 +106,8 @@ export function ProcessPage() {
                   {formatDuration(s.avgMinutes)} · {s.visits}×
                 </span>
               </div>
-              <div className="mt-1 h-2 rounded-full bg-slate-800">
-                <div className={`h-full rounded-full ${s.state === st.bottleneck?.state ? "bg-coral" : "bg-[#c9c2e8]"}`} style={{ width: `${Math.max(2, (s.avgMinutes / max) * 100)}%` }} />
+              <div className="mt-1.5 h-2 rounded-full bg-paper-2">
+                <div className={`h-full rounded-full ${s.state === st.bottleneck?.state ? "bg-bad" : "bg-ink/25"}`} style={{ width: `${Math.max(2, (s.avgMinutes / max) * 100)}%` }} />
               </div>
             </li>
           ))}
@@ -117,7 +117,7 @@ export function ProcessPage() {
       <Card title="Acum așteaptă">
         <ul className="space-y-2 text-sm" data-testid="process-waiting">
           {st.waiting.slice(0, 8).map((w) => (
-            <li key={w.id} className="flex flex-wrap items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2">
+            <li key={w.id} className="flex flex-wrap items-center gap-3 rounded-lg bg-paper px-3 py-2.5">
               <span className="min-w-0 flex-1">
                 <b>{w.title}</b> <StatusPill status={w.state} />
                 <span className="block text-xs text-slate-400">
@@ -138,15 +138,15 @@ export function ProcessPage() {
         <div className="flex flex-wrap gap-3 text-sm">
           <label className="flex flex-col gap-1">
             {S.request.plural} pe lună
-            <input type="number" value={perMonth} onChange={(e) => setPerMonth(e.target.value)} className="w-28 rounded-lg bg-slate-900 px-2 py-1" />
+            <input type="number" value={perMonth} onChange={(e) => setPerMonth(e.target.value)} className="w-28 px-2.5 py-1.5" />
           </label>
           <label className="flex flex-col gap-1">
             minute de lucru manual / {S.request.singular}
-            <input type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="w-28 rounded-lg bg-slate-900 px-2 py-1" />
+            <input type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} className="w-28 px-2.5 py-1.5" />
           </label>
           <label className="flex flex-col gap-1">
             cost orar (lei)
-            <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} className="w-28 rounded-lg bg-slate-900 px-2 py-1" />
+            <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} className="w-28 px-2.5 py-1.5" />
           </label>
         </div>
         <p className="mt-3 text-sm" data-testid="process-cost">

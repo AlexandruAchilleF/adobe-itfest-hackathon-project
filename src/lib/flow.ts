@@ -182,6 +182,25 @@ export function advance(flow: FlowDef, r: Request, steps: SeedStep[], roleOf: (h
 }
 
 /** Textul unui rând din istoric, pentru cronologia din UI. */
+/**
+ * Drumul fericit al unei cereri: de la starea inițială, primul pas care nu e „n-a mers” sau
+ * „trimite înapoi”, până la reușită (outcome: done). Prima pagină îl spune ca poveste.
+ */
+export function happyPath(flow: FlowDef): TransitionDef[] {
+  const path: TransitionDef[] = [];
+  const seen = new Set([flow.initial]);
+  let state = flow.initial;
+  for (let i = 0; i < flow.transitions.length; i++) {
+    const t = flow.transitions.find((x) => x.from.includes(state) && !x.danger && !x.release && !x.reset && x.outcome !== "failed");
+    if (!t) break;
+    path.push(t);
+    if (t.outcome === "done" || seen.has(t.to)) break;
+    seen.add(t.to);
+    state = t.to;
+  }
+  return path;
+}
+
 export function describeEntry(flow: FlowDef, e: HistoryEntry, name: (handle: string) => string): string {
   if (e.event === "create") return `${name(e.by)} a cerut`;
   return `${name(e.by)} ${transitionOf(flow, e.event)?.done ?? e.event}`;

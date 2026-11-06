@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 async function fresh(page: Page, as: string) {
-  await page.goto(`/harta?demo=1&ca=${as}`);
+  await page.goto(`/harta?demo=1&dev=1&ca=${as}`);
   await page.getByRole("button", { name: "Resetează datele demo" }).click();
   await expect(page.getByText("8 deconturi")).toBeVisible();
 }

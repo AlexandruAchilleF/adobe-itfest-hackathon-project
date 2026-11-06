@@ -1,67 +1,84 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter-tight";
+@import "@fontsource-variable/geist";
 @import "@fontsource-variable/fraunces/full.css";
 
 /*
-  Sistemul vizual (inspirat din deskfirst.com, vezi docs/DESIGN.md):
-  hârtie caldă, cerneală bleumarin, un singur accent coral; titluri în două voci
-  (sans strâns + un cuvânt în serif coral), butoane cu treaptă, panglici gravate.
+  Sistemul vizual (docs/DESIGN.md). Două registre, aceleași culori:
+   - ecranele de lucru: alb pe gri cald, bleumarin pentru text, coral DOAR pe acțiunea principală,
+     carduri simple, un singur font (Geist). Un lucru de făcut pe ecran.
+   - prima pagină (povestea pentru juriu): cer pictat, titlu cu un cuvânt în serif coral (Fraunces),
+     panglică, secțiune întunecată. Clasele lor au prefixul `story-` sau sunt marcate mai jos.
 
-  Tokenurile semantice sunt mai jos (paper, ink, line, coral…). Ca paginile vechi să
-  treacă pe tema nouă fără rescriere, scala `slate-*` e remapată: 950 = hârtia,
-  900 = cardul, 800/700 = liniile, 400 = textul secundar, 100 = cerneala.
-  Cod nou: folosiți tokenurile semantice, nu `slate-*`.
+  Tokenurile semantice sunt mai jos (paper, ink, line, coral…). Ca paginile vechi să meargă fără
+  rescriere, scala `slate-*` e remapată: 950 = fundalul, 900 = cardul, 800/700 = liniile,
+  400 = textul secundar, 100 = textul. Cod nou: tokenurile semantice, nu `slate-*`.
 */
 @theme {
-  --font-sans: "Inter Tight Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
 
-  --color-paper: #fbf7f1;
-  --color-paper-2: #f6eee3;
+  /* suprafețe */
+  --color-paper: #f6f5f2;
+  --color-paper-2: #efede8;
+  --color-cream: #fbf7f1;
   --color-card: #ffffff;
-  --color-line: #ece4d8;
-  --color-line-2: #e4e1f4;
-  --color-ink: #1c1a5e;
-  --color-ink-2: #34316f;
-  --color-muted: #6c6884;
-  --color-coral: #d35f52;
-  --color-coral-deep: #ad4337;
-  --color-coral-tint: #fbe9e4;
-  --color-mustard: #b8821c;
+  --color-line: #e5e3de;
+  --color-line-2: #efeee9;
+  /* text */
+  --color-ink: #1b2350;
+  --color-ink-2: #3d4366;
+  --color-muted: #646985;
+  /* accentul: coral doar pe acțiunea principală (contrast AA cu text alb) */
+  --color-coral: #c84a37;
+  --color-coral-deep: #a3392a;
+  --color-coral-bright: #e0614a;
+  --color-coral-tint: #fbebe6;
+  /* culori cu sens (stări), folosite ca punct + text */
+  --color-ok: #2f7d4f;
+  --color-ok-tint: #e7f2ea;
+  --color-warn: #9a6a12;
+  --color-warn-dot: #d9a03a;
+  --color-warn-tint: #faf1de;
+  --color-bad: #b4372a;
+  /* prima pagină: cerul */
   --color-sky: #c9d2f1;
-  --color-lilac: #e9e5f8;
-  --color-lilac-ink: #5747c9;
-  --color-sage: #e5f0e1;
-  --color-sage-ink: #2f6a35;
+  --color-night: #18204a;
 
-  --color-accent: var(--color-coral);
-  --color-accent-2: var(--color-lilac-ink);
+  /* nume vechi, păstrate ca paginile scrise înainte să meargă */
+  --color-mustard: #9a6a12;
+  --color-lilac: #ecebf6;
+  --color-lilac-ink: #4b4f9e;
+  --color-sage: #e7f2ea;
+  --color-sage-ink: #2f7d4f;
+  /* `text-accent` din paginile vechi = evidențiere în bleumarin (coralul rămâne pentru acțiunea principală) */
+  --color-accent: var(--color-ink);
+  --color-accent-2: var(--color-ink-2);
 
-  /* scala veche, remapată pe paleta caldă (vezi comentariul de sus) */
-  --color-slate-50: #15134f;
-  --color-slate-100: #1c1a5e;
-  --color-slate-200: #2a2767;
-  --color-slate-300: #3a3770;
-  --color-slate-400: #5d5979;
-  --color-slate-500: #7a7690;
-  --color-slate-600: #a19cb2;
-  --color-slate-700: #e2d8c9;
-  --color-slate-800: #efe7dc;
+  --color-slate-50: #121839;
+  --color-slate-100: #1b2350;
+  --color-slate-200: #262e5c;
+  --color-slate-300: #3d4366;
+  --color-slate-400: #5a5f7c;
+  --color-slate-500: #6e728b;
+  --color-slate-600: #a3a6b8;
+  --color-slate-700: #dcdad4;
+  --color-slate-800: #e9e7e2;
   --color-slate-900: #ffffff;
-  --color-slate-950: #fbf7f1;
+  --color-slate-950: #f6f5f2;
 
-  /* nuanțele deschise ale culorilor de stare, făcute lizibile pe hârtie */
-  --color-emerald-200: #2f6a35;
-  --color-emerald-300: #3a7a40;
-  --color-rose-200: #a23b30;
-  --color-rose-300: #b8473c;
-  --color-amber-100: #f8ecd2;
-  --color-amber-200: #8a5a0a;
-  --color-amber-300: #94660f;
+  --color-emerald-200: #2f7d4f;
+  --color-emerald-300: #2f7d4f;
+  --color-rose-200: #a3392a;
+  --color-rose-300: #b4372a;
+  --color-amber-100: #faf1de;
+  --color-amber-200: #8a5d0c;
+  --color-amber-300: #9a6a12;
   --color-sky-200: #24548f;
   --color-sky-300: #2c62a3;
-  --color-violet-200: #4b3db8;
+  --color-violet-200: #4b4f9e;
   --color-orange-200: #9a4a12;
+
+  --animate-rise: rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 :root {
@@ -70,11 +87,11 @@
 
 body {
   @apply bg-paper font-sans text-ink antialiased;
-  font-feature-settings: "ss01", "cv11";
+  font-size: 15px;
 }
 
 h1, h2, h3 {
-  letter-spacing: -0.035em;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -83,59 +100,116 @@ h1, h2, h3 {
   color: var(--color-coral-deep);
 }
 
-/* cuvântul-cheie dintr-un titlu: serif coral, puțin mai mare ca să țină linia cu sans-ul */
-.accent-serif {
-  font-family: var(--font-serif);
-  font-weight: 420;
-  font-variation-settings: "opsz" 72, "SOFT" 100, "WONK" 0;
-  letter-spacing: -0.025em;
-  color: var(--color-coral);
-  font-size: 1.04em;
-}
+/* ——— ecranele de lucru ——— */
 
-/* cerul: fundalul secțiunilor-cheie (gradienți suprapuși, fără imagini) */
-.sky {
-  background:
-    radial-gradient(120% 70% at 15% 10%, rgb(255 255 255 / 0.75), transparent 60%),
-    radial-gradient(90% 60% at 85% 30%, rgb(255 255 255 / 0.6), transparent 65%),
-    radial-gradient(140% 90% at 50% 120%, var(--color-paper), transparent 70%),
-    linear-gradient(180deg, #cdd5f2 0%, #dfdcf4 45%, #f3ecef 80%, var(--color-paper) 100%);
-}
-
-/* butoanele cu treaptă: marginea închisă de dedesubt se „apasă” la clic */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 14px;
-  padding: 0.6rem 1.15rem 0.7rem;
+  min-height: 2.5rem;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
   font-weight: 500;
   font-size: 0.95rem;
-  letter-spacing: -0.01em;
-  transition: transform 80ms ease, box-shadow 80ms ease, background-color 120ms ease;
+  line-height: 1.2;
+  transition: transform 80ms ease, background-color 120ms ease, box-shadow 120ms ease;
 }
-.btn:active:not(:disabled) { transform: translateY(2px); }
-.btn:disabled { cursor: not-allowed; opacity: 0.5; }
-.btn-primary { background: var(--color-coral); color: #fff; box-shadow: inset 0 -4px 0 var(--color-coral-deep); }
-.btn-primary:hover:not(:disabled) { background: #d96a5d; }
-.btn-primary:active:not(:disabled) { box-shadow: inset 0 -2px 0 var(--color-coral-deep); }
-.btn-secondary { background: var(--color-paper-2); color: var(--color-coral-deep); box-shadow: inset 0 0 0 1px #eadccb, inset 0 -4px 0 #e3d5c3; }
-.btn-secondary:active:not(:disabled) { box-shadow: inset 0 0 0 1px #eadccb, inset 0 -2px 0 #e3d5c3; }
-.btn-ghost { color: var(--color-ink-2); padding-bottom: 0.6rem; }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { cursor: not-allowed; opacity: 0.45; }
+.btn-primary { background: var(--color-coral); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--color-coral-deep); }
+.btn-secondary { background: #fff; color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-line); }
+.btn-secondary:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #cfccc4; }
+.btn-ghost { color: var(--color-ink-2); }
 .btn-ghost:hover:not(:disabled) { background: var(--color-paper-2); }
-.btn-danger { background: #fff; color: var(--color-coral-deep); box-shadow: inset 0 0 0 1.5px #efc3bc, inset 0 -4px 0 #efc3bc; }
-.btn-danger:active:not(:disabled) { box-shadow: inset 0 0 0 1.5px #efc3bc, inset 0 -2px 0 #efc3bc; }
+.btn-danger { background: #fff; color: var(--color-bad); box-shadow: inset 0 0 0 1px var(--color-line); }
+.btn-danger:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #e3b3ab; }
 
-/* cardul: alb, rotunjit mare, cu un inel pal în jur (ca un passe-partout) */
 .card {
   background: var(--color-card);
-  border-radius: 26px;
+  border-radius: 14px;
   border: 1px solid var(--color-line);
-  box-shadow: 0 0 0 6px rgb(255 255 255 / 0.55), 0 18px 40px -28px rgb(28 26 94 / 0.25);
+  box-shadow: 0 1px 2px rgb(27 35 80 / 0.04);
 }
 
-/* panglica gravată de deasupra secțiunilor („The Challenge”) */
+/* eticheta mică de deasupra unui titlu de card: text secundar, fără majuscule */
+.label-caps {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+/* caseta în care omul scrie pentru AI */
+.prompt-box {
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.prompt-box:focus-within { border-color: var(--color-ink-2); box-shadow: 0 0 0 3px rgb(27 35 80 / 0.08); }
+.prompt-box textarea, .prompt-box input { background: transparent; color: var(--color-ink); }
+.prompt-box textarea:focus, .prompt-box input:focus { outline: none; }
+
+/* bonul ca obiect: hârtie termică, marginea de jos tăiată în zimți */
+.paper {
+  background: #fffdf8;
+  color: #2b2b33;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 14px 28px -16px rgb(27 35 80 / 0.35);
+  --zig: radial-gradient(circle at 6px 8px, transparent 5px, #000 5.5px) bottom / 12px 8px repeat-x;
+  -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat, var(--zig);
+  mask: linear-gradient(#000 0 0) top / 100% calc(100% - 8px) no-repeat, var(--zig);
+}
+/* ștampila care apare pe bon după un pas făcut de om */
+@keyframes stamp-in {
+  0% { opacity: 0; transform: rotate(-14deg) scale(1.6); }
+  60% { opacity: 1; transform: rotate(-9deg) scale(0.96); }
+  100% { opacity: 1; transform: rotate(-10deg) scale(1); }
+}
+.stamp {
+  display: inline-block;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  padding: 0.25rem 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgb(255 255 255 / 0.75);
+  animation: stamp-in 0.45s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+}
+
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* ——— prima pagină (povestea) ——— */
+
+/* cerul: gradienți suprapuși, ca niște nori pictați (fără imagini) */
+.sky {
+  background:
+    radial-gradient(40% 30% at 18% 22%, rgb(255 255 255 / 0.9), transparent 70%),
+    radial-gradient(35% 25% at 78% 18%, rgb(255 255 255 / 0.75), transparent 70%),
+    radial-gradient(45% 30% at 62% 62%, rgb(255 255 255 / 0.7), transparent 70%),
+    radial-gradient(30% 22% at 10% 75%, rgb(246 226 236 / 0.8), transparent 70%),
+    radial-gradient(160% 90% at 50% 120%, var(--color-cream), transparent 60%),
+    linear-gradient(180deg, #c7d1f2 0%, #d9dbf5 40%, #efe7f0 78%, var(--color-cream) 100%);
+}
+/* cerul de noapte: capitolul întunecat */
+.sky-night {
+  background:
+    radial-gradient(50% 35% at 20% 15%, rgb(120 138 200 / 0.35), transparent 70%),
+    radial-gradient(45% 30% at 85% 40%, rgb(150 160 215 / 0.25), transparent 70%),
+    radial-gradient(60% 40% at 50% 100%, rgb(90 104 170 / 0.35), transparent 70%),
+    linear-gradient(180deg, #1a2252 0%, #26326e 55%, #3a4a8c 100%);
+}
+/* cuvântul-cheie dintr-un titlu de pe prima pagină: serif coral */
+.accent-serif {
+  font-family: var(--font-serif);
+  font-weight: 420;
+  font-variation-settings: "opsz" 72, "SOFT" 100, "WONK" 0;
+  letter-spacing: -0.025em;
+  color: var(--color-coral-bright);
+  font-size: 1.04em;
+}
+/* panglica de deasupra unei secțiuni din poveste */
 .ribbon {
   position: relative;
   display: inline-flex;
@@ -145,42 +219,46 @@ h1, h2, h3 {
   font-variation-settings: "opsz" 36, "SOFT" 50;
   font-weight: 500;
   font-size: 0.98rem;
-  letter-spacing: -0.01em;
   color: var(--color-coral-deep);
   background:
-    repeating-linear-gradient(0deg, rgb(173 67 55 / 0.16) 0 1px, transparent 1px 3px) left / 0.95rem 100% no-repeat,
-    repeating-linear-gradient(0deg, rgb(173 67 55 / 0.16) 0 1px, transparent 1px 3px) right / 0.95rem 100% no-repeat,
+    repeating-linear-gradient(0deg, rgb(163 57 42 / 0.16) 0 1px, transparent 1px 3px) left / 0.95rem 100% no-repeat,
+    repeating-linear-gradient(0deg, rgb(163 57 42 / 0.16) 0 1px, transparent 1px 3px) right / 0.95rem 100% no-repeat,
     linear-gradient(180deg, #fdf4ea, #f8e9dc);
   clip-path: polygon(0 0, 100% 0, calc(100% - 0.7rem) 50%, 100% 100%, 0 100%, 0.7rem 50%);
   border-top: 1px solid #efcfc6;
   border-bottom: 1px solid #efcfc6;
 }
-
-/* eticheta mică în majuscule, serif muștar („YOUR PROMPT”) */
-.label-caps {
-  font-family: var(--font-serif);
-  font-variation-settings: "opsz" 12;
-  font-weight: 600;
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--color-mustard);
-}
-
-/* caseta în care omul scrie pentru AI: crem, bordură coral */
-.prompt-box {
-  background: #fbefe4;
+/* caseta de prompt din cer: crem, bordură coral, textul se scrie singur */
+.story-prompt {
+  background: rgb(253 246 238 / 0.94);
   border: 1.5px solid #f0c9bd;
-  border-radius: 22px;
+  border-radius: 18px;
+  box-shadow: 0 18px 40px -24px rgb(27 35 80 / 0.4);
 }
-.prompt-box textarea, .prompt-box input { background: transparent; color: var(--color-ink); }
-.prompt-box textarea:focus, .prompt-box input:focus { outline: none; }
+@keyframes caret { 50% { opacity: 0; } }
+.caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 1px; vertical-align: -0.15em; background: var(--color-coral); animation: caret 1s steps(1) infinite; }
+/* butoanele mari din poveste: cu „treaptă” dedesubt */
+.btn-story { border-radius: 14px; padding: 0.75rem 1.4rem 0.85rem; font-size: 1.02rem; }
+.btn-story.btn-primary { box-shadow: inset 0 -4px 0 var(--color-coral-deep); }
+.btn-story.btn-secondary { background: #fdf6ee; color: var(--color-coral-deep); box-shadow: inset 0 0 0 1px #eadccb, inset 0 -4px 0 #e3d5c3; }
+/* mișcarea din poveste: apare la derulare și schimbarea machetei fixe (estompare cu blur) */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.reveal.in { opacity: 1; transform: none; }
+.morph { transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease; }
+.morph[data-on="false"] { opacity: 0; filter: blur(8px); transform: scale(0.97); pointer-events: none; }
+@keyframes float { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-8px) rotate(var(--r, 0deg)); } }
+.float { animation: float 6s ease-in-out infinite; }
 
-/* harta: fundalul OSM, cu culorile atenuate spre hârtie (punctele rămân în culori pline) */
-.leaflet-tile-pane { filter: saturate(0.45) sepia(0.12) brightness(1.04) contrast(0.95); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal, .morph, .stamp, .float, .caret { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+
+/* harta: fundalul OSM atenuat (punctele rămân în culori pline) */
+.leaflet-tile-pane { filter: saturate(0.4) brightness(1.04) contrast(0.95); }
 .leaflet-container { font-family: var(--font-sans); background: #eef0f4; }
 
-/* câmpurile de formular: albe, cu linie caldă, ca să se vadă și pe carduri albe */
+/* câmpurile de formular: albe, cu linie, ca să se vadă și pe carduri albe */
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="color"]), select, textarea {
   color: var(--color-ink);
   background-color: #fff;
@@ -188,19 +266,18 @@ input:not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="c
   border-radius: 10px;
 }
 .prompt-box textarea, .prompt-box input, .prompt-box select { box-shadow: none; background-color: transparent; }
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px var(--color-coral); }
-input::placeholder, textarea::placeholder { color: #9a95ac; }
-:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: inset 0 0 0 1.5px var(--color-ink-2), 0 0 0 3px rgb(27 35 80 / 0.08); }
+input::placeholder, textarea::placeholder { color: #8d90a6; }
+:focus-visible { outline: 2px solid var(--color-ink-2); outline-offset: 2px; }
 
-/* Tipărire / „Salvează ca PDF": doar conținutul marcat contează. Meniul, butoanele și
-   panourile au clasa print:hidden; fundalul devine alb. */
+/* Tipărire / „Salvează ca PDF": doar conținutul marcat contează. */
 @media print {
   @page { margin: 15mm; }
   body { background: #fff !important; color: #000; }
   textarea { height: auto !important; }
 }
 
-/* Animațiile mascotei (vezi src/modules/mascot/Mascot.tsx) */
+/* Animațiile mascotei (src/modules/mascot/Mascot.tsx), doar când scenariul cere personajul */
 @keyframes mascot-bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
 @keyframes mascot-jump { 0%, 100% { transform: translateY(0) } 30% { transform: translateY(-12px) } 60% { transform: translateY(0) } 75% { transform: translateY(-4px) } }
 @keyframes mascot-shake { 0%, 100% { transform: rotate(0) } 25% { transform: rotate(-4deg) } 75% { transform: rotate(4deg) } }
@@ -217,7 +294,7 @@ input::placeholder, textarea::placeholder { color: #9a95ac; }
   .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path { animation: none; }
 }
 
-/* elementul arătat de mascotă în turul ghidat */
-@keyframes mascot-ring { 0%, 100% { box-shadow: 0 0 0 3px var(--color-coral) } 50% { box-shadow: 0 0 0 8px rgb(211 95 82 / 0.3) } }
+/* elementul arătat de asistent în turul ghidat */
+@keyframes mascot-ring { 0%, 100% { box-shadow: 0 0 0 3px var(--color-ink-2) } 50% { box-shadow: 0 0 0 7px rgb(27 35 80 / 0.18) } }
 .mascot-highlight { position: relative; z-index: 30; border-radius: 14px; animation: mascot-ring 1.4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .mascot-highlight { animation: none; box-shadow: 0 0 0 4px var(--color-coral); } }
+@media (prefers-reduced-motion: reduce) { .mascot-highlight { animation: none; box-shadow: 0 0 0 4px var(--color-ink-2); } }

@@ -1,17 +1,16 @@
 import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
 import { Link, Redirect, Route, Switch, useLocation } from "wouter";
 import type { HealthResponse } from "../shared/ai-contract";
-import { Pill } from "./components/ui";
+import { DevPanel, isDevMode } from "./components/DevPanel";
 import { aiHealth } from "./lib/ai";
-import { isDemoMode, setDemoMode } from "./lib/demoMode";
+import { isDemoMode } from "./lib/demoMode";
 import { supabase } from "./lib/supabase";
 import { adobeClientId } from "./modules/adobe/AdobePdfViewer";
-import { RecordButton } from "./modules/demo/RecordButton";
 import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
 import { ScenarioHome } from "./pages/ScenarioHome";
 import { scenario } from "./scenario/config";
-import { mainNav, pitchMode, showMascot, teamNav } from "./scenario/nav";
+import { mainNav, showMascot, teamNav } from "./scenario/nav";
 import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
 import { LiveProvider } from "./lib/live";
 import { outbox, people, reports, requests } from "./scenario/model";
@@ -35,12 +34,12 @@ const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "Surve
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
 const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
 const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
-const Loading = () => <p className="p-6 text-sm text-slate-500">Se încarcă…</p>;
+const Loading = () => <p className="p-6 text-sm text-muted">Se încarcă…</p>;
 
 const S = scenario;
 
 // Meniul vine din scenariu (src/scenario/nav.ts): un singur drum pentru juriu. Restul (validare,
-// rețetele vechi, ghidul template-ului) stă la „Pentru echipă” și dispare cu features.optionalModules = false.
+// rețetele, ghidul template-ului) stă în panoul echipei, deschis cu ?dev=1 (src/components/DevPanel.tsx).
 const MAIN_NAV = mainNav(S);
 const TEAM_NAV = teamNav(S);
 export const NAV_GROUPS = [{ label: "", items: MAIN_NAV }, ...(TEAM_NAV.length ? [{ label: "Pentru echipă", items: TEAM_NAV }] : [])];
@@ -73,14 +72,24 @@ export function App() {
   );
 }
 
+/** Semnul aplicației: un pătrat bleumarin cu un punct coral (înlocuiți-l cu logo-ul vostru). */
+function Mark() {
+  return (
+    <span className="grid h-6 w-6 place-items-center rounded-md bg-ink" aria-hidden>
+      <span className="h-2.5 w-2.5 rounded-[3px] bg-coral-bright" />
+    </span>
+  );
+}
+
 function Shell() {
   const [location] = useLocation();
-  const [demo, setDemo] = useState(isDemoMode);
+  const [dev] = useState(isDevMode);
   const [ai, setAi] = useState<HealthResponse | null>(null);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
     void aiHealth().then(setAi);
   }, []);
+  useEffect(() => setMenu(false), [location]);
 
   const bare = BARE.find(([path]) => location === path || location.startsWith(`${path}/`));
   if (bare) {
@@ -91,76 +100,41 @@ function Shell() {
       </Suspense>
     );
   }
-  const status: AppStatus = { ai, supabase: Boolean(supabase), adobePdf: Boolean(adobeClientId), demo };
-  const linkClass = (href: string) => `rounded-full px-3 py-1.5 transition-colors ${location === href ? "bg-paper-2 text-ink" : "text-ink-2 hover:text-coral-deep"}`;
-  const navLinks = (
-    <>
-      {MAIN_NAV.map((n) => (
-        <Link key={n.href} href={n.href} className={linkClass(n.href)}>
-          {n.label}
-        </Link>
-      ))}
-      {TEAM_NAV.length > 0 && (
-        <details className="relative">
-          <summary className="cursor-pointer list-none rounded-full px-3 py-1.5 text-sm text-muted hover:text-coral-deep">Pentru echipă ▾</summary>
-          <div className="card absolute left-0 z-[1300] mt-2 flex w-52 flex-col p-1.5">
-            {TEAM_NAV.map((n) => (
-              <Link key={n.href} href={n.href} className={linkClass(n.href)}>
-                {n.label}
-              </Link>
-            ))}
-          </div>
-        </details>
-      )}
-    </>
-  );
-  const teamTools = pitchMode(S) ? null : (
-    <>
-      <RecordButton />
-      <label className="flex cursor-pointer items-center gap-2 text-xs text-muted" title="AI simulat — merge fără internet și fără chei">
-        <input
-          type="checkbox"
-          className="accent-coral"
-          checked={demo}
-          onChange={(e) => {
-            setDemoMode(e.target.checked);
-            setDemo(e.target.checked);
-          }}
-        />
-        Mod demo
-        {ai && <Pill ok={demo ? null : ai.active !== "mock"}>AI: {demo ? "mock" : ai.active}</Pill>}
-      </label>
-    </>
-  );
+  const status: AppStatus = { ai, supabase: Boolean(supabase), adobePdf: Boolean(adobeClientId), demo: isDemoMode() };
+  const home = location === "/";
+  const active = (href: string) => location === href || (href === "/cereri" && location === "/harta");
+  const navLinks = MAIN_NAV.map((n) => (
+    <Link
+      key={n.href}
+      href={n.href}
+      aria-current={active(n.href) ? "page" : undefined}
+      className={`flex items-center px-1 text-[0.95rem] transition-colors lg:h-full ${active(n.href) ? "font-medium text-ink lg:shadow-[inset_0_-2px_0_var(--color-ink)]" : "text-muted hover:text-ink"} max-lg:rounded-lg max-lg:px-3 max-lg:py-2.5`}
+    >
+      {n.label}
+    </Link>
+  ));
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-[1100] px-3 pt-3 print:hidden">
-        <div className="mx-auto max-w-6xl rounded-[26px] bg-card/95 px-3 py-2 shadow-[0_0_0_6px_rgb(255_255_255/0.55),0_16px_36px_-22px_rgb(28_26_94/0.35)] ring-1 ring-line backdrop-blur sm:px-4">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="shrink-0 px-2 text-[1.15rem] font-semibold tracking-[-0.04em] text-ink">
-              {import.meta.env.VITE_APP_NAME || S.app.name}
-            </Link>
-            <nav className="hidden items-center gap-1 text-[0.92rem] lg:flex">{navLinks}</nav>
-            <div className="ml-auto flex items-center gap-2">
-              <RoleSwitcher />
-              <div className="hidden items-center gap-2 lg:flex">{teamTools}</div>
-              <button className="grid h-10 w-10 place-items-center rounded-xl text-ink hover:bg-paper-2 lg:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
-                <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden>
-                  <path d={menu ? "M3 1l14 12M17 1L3 13" : "M1 1h18M1 7h18M1 13h18"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
+      <header className={`sticky top-0 z-[1100] print:hidden bg-white border-b border-line`}>
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-4">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 text-[1.05rem] font-semibold text-ink">
+            <Mark />
+            {import.meta.env.VITE_APP_NAME || S.app.name}
+          </Link>
+          <nav className="hidden h-full items-stretch gap-6 lg:flex">{navLinks}</nav>
+          <div className="ml-auto flex items-center gap-1">
+            <RoleSwitcher />
+            <button className="grid h-10 w-10 place-items-center rounded-lg text-ink hover:bg-paper-2 lg:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
+              <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden>
+                <path d={menu ? "M3 1l14 12M17 1L3 13" : "M1 1h18M1 7h18M1 13h18"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </button>
           </div>
-          {menu && (
-            <div className="mt-2 flex flex-col gap-1 border-t border-line pt-2 pb-1 lg:hidden" onClick={() => setMenu(false)}>
-              {navLinks}
-              <div className="mt-1 flex flex-wrap items-center gap-2 px-1">{teamTools}</div>
-            </div>
-          )}
         </div>
+        {menu && <nav className="mx-auto flex max-w-6xl flex-col gap-0.5 border-t border-line px-2 py-2 lg:hidden">{navLinks}</nav>}
       </header>
-      <main className="mx-auto max-w-6xl px-4 pt-10 pb-16 print:max-w-none print:p-0">
+      <main className={home ? "print:p-0" : "mx-auto max-w-6xl px-4 pt-8 pb-24 print:max-w-none print:p-0"}>
         <Suspense fallback={<Loading />}>
         <Switch>
           <Route path="/" component={ScenarioHome} />
@@ -183,13 +157,14 @@ function Shell() {
           <Route path="/survey" component={SurveyPage} />
           <Route path="/ai" component={AiPage} />
           <Route>
-            <p className="text-slate-400">Pagina nu există.</p>
+            <p className="text-muted">Pagina nu există.</p>
           </Route>
         </Switch>
         </Suspense>
       </main>
-      {/* pe prima pagină mascota e deja în cer, mare; nu o dublăm în colț */}
-      {showMascot(S, location) && location !== "/" && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
+      {/* pe prima pagină asistentul nu apare: acolo vorbește povestea */}
+      {showMascot(S, location) && !home && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
+      {dev && <DevPanel />}
     </div>
   );
 }

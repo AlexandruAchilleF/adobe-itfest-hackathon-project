@@ -1,4 +1,5 @@
-// Pagina principală a scenariului: cererile pe hartă și ciclul lor, din perspectiva rolului curent.
+// Pagina principală a scenariului: un lucru de făcut odată. Sus e cererea care te așteaptă (cu documentul
+// ei, suma, verificările și butoanele pasului), dedesubt restul, pe câte un rând. După pas apare ștampila.
 //  - cine cere (flow.requester) scrie cererea cum ar spune-o → AI-ul o structurează → omul verifică → salvează
 //  - cine ajută spune ce poate oferi → scor determinist (urgență + distanță) + explicație AI
 //  - fiecare pas din flux e un buton al omului care are voie să-l facă (src/lib/flow.ts)
@@ -8,14 +9,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { z } from "zod";
 import { QrPanel } from "../components/QrPanel";
-import { ArrowButton, Button, Card, ErrorNote, MicIcon, PageHeader } from "../components/ui";
+import { ArrowButton, Button, Card, ErrorNote, MicIcon } from "../components/ui";
 import { defineAction } from "../lib/agent";
 import { AiError, ask } from "../lib/ai";
 import { checkDocument, Doc } from "../lib/checks";
 import { giverStats } from "../lib/gamification";
 import { formatDuration, segments } from "../lib/metrics";
 import { useMe } from "../lib/identity";
-import { type Actor, available, createRequest, isExpired, type Request, stateOf, toneOf, waitingOn } from "../lib/flow";
+import { type Actor, available, createRequest, isExpired, type Request, stateOf, toneOf, transitionOf, waitingOn } from "../lib/flow";
 import { ageLabel, ageMinutes, freshness, visibleReports } from "../lib/reports";
 import { type Rec, useCollection } from "../lib/store";
 import { distanceKm, geocode, type LatLng } from "../modules/map/geo";
@@ -25,11 +26,11 @@ import { useMascotPage } from "../modules/mascot/page";
 import { useSpeechRecognition } from "../modules/voice/speech";
 import { scenario } from "../scenario/config";
 import { mockStructure } from "../scenario/mock";
-import { pitchMode } from "../scenario/nav";
 import { baselineScore, categoryOf, outbox, reports, reportTypeOf, requests, roleOf } from "../scenario/model";
 import { useSteps } from "../scenario/useSteps";
 import { ChecksList, DocTable, DocumentIntake } from "../scenario/ui/DocumentIntake";
-import { StatusDot, StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
+import { DocPaper } from "../scenario/ui/DocPaper";
+import { formatQty, StatusPill, Timeline, timeOf } from "../scenario/ui/parts";
 
 const S = scenario;
 const CAT_IDS = S.categories.map((c) => c.id) as [string, ...string[]];
@@ -50,7 +51,7 @@ const Match = z.object({
 });
 
 export function BoardPage() {
-  const { items, add, error: dbError, reset } = useCollection(requests);
+  const { items, add, error: dbError } = useCollection(requests);
   const steps = useSteps();
   const sent = useCollection(outbox);
   const { me, nameOf } = useMe();
@@ -108,11 +109,18 @@ export function BoardPage() {
     [visible],
   );
   const points = [...requestPoints, ...reportPoints];
-  const sel = items.find((r) => r.id === selected) ?? null;
+  // în focus: cererea aleasă din listă, altfel prima care te așteaptă
+  const firstTurn = actor ? items.find((r) => available(S.flow, r.data, actor).length > 0) : undefined;
+  const sel = items.find((r) => r.id === selected) ?? firstTurn ?? null;
+  // ștampila de pe document după pasul făcut de om (dispare când treci la alta)
+  const [stamp, setStamp] = useState<{ id: string; label: string; good: boolean } | null>(null);
 
   useEffect(() => {
     if (selected && window.innerWidth < 1024) sideRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [selected]);
+  useEffect(() => {
+    if (stamp && sel?.id !== stamp.id) setStamp(null);
+  }, [sel?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // mascota spune când cererea deschisă stă de mult la cineva (stare reală, calculată din istoric)
   useEffect(() => {
@@ -156,6 +164,8 @@ export function BoardPage() {
       setNote("");
       setSelected(rec.id);
       setNotice(n);
+      const t = transitionOf(S.flow, event);
+      if (t) setStamp({ id: rec.id, label: stateOf(S.flow, t.to).label, good: !t.danger && t.outcome !== "failed" });
     } catch (err) {
       fail(err);
     } finally {
@@ -302,235 +312,287 @@ export function BoardPage() {
   const selDocChecks = selDoc && S.documents && sel ? checkDocument(selDoc, { rules: S.documents.rules, category: sel.data.category, existing: docs.filter((d) => d.id !== sel.id).map((d) => d.doc), now: new Date(sel.data.history[0].at) }) : [];
   const docIssues = selDocChecks.filter((c) => c.level !== "ok").length;
   const sortedVisible = [...visible].sort((x, y) => Number(myTurn(y.data)) - Number(myTurn(x.data)));
-  const tabs: Array<[string, string]> = [
-    ["toate", "Toate"],
-    ["rândul meu", `Rândul meu${turnCount ? ` · ${turnCount}` : ""}`],
-    ["ale mele", "Ale mele"],
+  const turnIds = items.filter((r) => myTurn(r.data)).map((r) => r.id);
+  const next = sel ? items.find((r) => myTurn(r.data) && r.id !== sel.id) : undefined;
+  const tabs: Array<[string, string, number | null]> = [
+    ["toate", "Toate", items.length],
+    ["rândul meu", "Te așteaptă", turnCount],
+    ["ale mele", "Ale mele", null],
   ];
   const plural = `${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)}`;
+  const isRequester = me?.role === S.flow.requester;
+  const steps_ = sel && actor ? available(S.flow, sel.data, actor) : [];
+  const primaryStep = steps_.find((t) => !t.danger);
+  const title = turnCount ? `${turnCount} ${turnCount === 1 ? S.request.singular : S.request.plural} te așteaptă` : plural;
+
+  // cererea nouă (cine cere): în centru când nu e nimic de făcut, altfel în coloana din dreapta
+  const newRequest =
+    isRequester && S.documents?.enabled ? (
+      <Card label="Cerere nouă" title={S.documents.title}>
+        <DocumentIntake existing={docs.map((d) => d.doc)} onSubmit={submitDocument} />
+      </Card>
+    ) : isRequester ? (
+      <Card label="Cerere nouă" title={S.request.addTitle}>
+        <div className="prompt-box p-3">
+          <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full resize-none p-1 leading-snug" aria-label={S.request.addTitle} />
+          <div className="mt-1 flex items-center justify-between">
+            <button className="grid h-10 w-10 place-items-center rounded-full text-ink-2 hover:bg-paper-2 disabled:opacity-40" onClick={speech.listening ? speech.stop : speech.start} disabled={!speech.supported} title="Spune cu vocea" aria-label="Spune cu vocea">
+              <MicIcon on={speech.listening} />
+            </button>
+            <ArrowButton label="Pregătește cererea" busy={busy === "structure"} onClick={() => void structure()} disabled={busy !== null || !raw.trim()} />
+          </div>
+        </div>
+        {draft && (
+          <div className="mt-4 space-y-2 text-sm">
+            <p className="label-caps">Verifică înainte să salvezi</p>
+            <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full px-3 py-2" aria-label="Titlu" />
+            <div className="flex gap-2">
+              <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="min-w-0 flex-1 px-2 py-2" aria-label="Categorie">
+                {S.categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+              <input type="number" min={1} value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: Number(e.target.value) })} className="w-16 px-2 py-2" aria-label="Cantitate" />
+              <input value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} className="w-24 px-2 py-2" aria-label="Unitate" />
+            </div>
+            <div className="flex gap-2">
+              <input value={draft.address} onChange={(e) => setDraft({ ...draft, address: e.target.value })} className="min-w-0 flex-1 px-3 py-2" aria-label="Adresă" />
+              <input type="number" min={1} max={5} value={draft.urgency} onChange={(e) => setDraft({ ...draft, urgency: Number(e.target.value) })} className="w-16 px-2 py-2" aria-label="Urgență" title="Urgența 1–5, propusă de AI; decizi tu" />
+            </div>
+            <Button variant="primary" className="w-full" onClick={() => void save()}>
+              {S.features.map ? "Salvează pe hartă" : "Salvează"}
+            </Button>
+          </div>
+        )}
+      </Card>
+    ) : null;
 
   return (
     <div>
-      <PageHeader eyebrow={me ? `Ești ${roleOf(me.role).label.toLowerCase()}` : undefined} title={turnCount ? `${plural}: *${turnCount} te așteaptă*` : `${plural} *în lucru*`}>
-        <div className="flex items-center gap-3 text-sm text-muted">
-          <span>
-            {items.length} {S.request.plural}
-          </span>
-          {!pitchMode(S) && (
-            <Button variant="ghost" className="!px-2 !py-1 text-xs" onClick={() => void Promise.all([reset(), live.reset(), sent.reset()])}>
-              Resetează datele demo
-            </Button>
-          )}
-        </div>
-      </PageHeader>
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <h1 className="text-[1.75rem] font-semibold leading-tight text-ink sm:text-[2rem]">{title}</h1>
+        <p className="text-sm text-muted">
+          {items.length} {S.request.plural}
+        </p>
+      </header>
       <ErrorNote error={dbError} />
       {notice && (
-        <p role="status" className="mb-5 rounded-2xl bg-sage px-4 py-3 text-sm text-sage-ink ring-1 ring-[#cfe3c9]" data-testid="notice">
-          {notice}
+        <p role="status" className="mb-5 flex items-start gap-2 rounded-xl bg-ok-tint px-4 py-3 text-sm text-ok" data-testid="notice">
+          <CheckIcon />
+          <span>{notice}</span>
         </p>
       )}
       {actor?.suspended && (
-        <p role="alert" className="mb-5 rounded-2xl bg-coral-tint px-4 py-3 text-sm text-coral-deep ring-1 ring-[#f2cdc5]">
+        <p role="alert" className="mb-5 rounded-xl bg-coral-tint px-4 py-3 text-sm text-coral-deep">
           Cont suspendat după prea multe „n-a mers”. Nu mai poți prelua {S.request.plural} noi.
         </p>
       )}
-      <div className="grid items-start gap-6 lg:grid-cols-[1fr_400px]">
-        <div className="min-w-0 space-y-4">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {tabs.map(([id, label]) => (
-              <button key={id} onClick={() => setFilter(id)} className={`rounded-full px-3.5 py-1.5 text-sm ring-1 transition ${filter === id ? "bg-ink text-white ring-ink" : "bg-card text-ink-2 ring-line hover:ring-coral/40"}`}>
-                {label}
-              </button>
-            ))}
-            {CAT_IDS.includes(filter) && (
-              <button onClick={() => setFilter("toate")} className="inline-flex items-center gap-1.5 rounded-full bg-paper-2 px-3 py-1.5 text-sm text-ink-2 ring-1 ring-line" aria-label="Scoate filtrul">
-                <span className="h-2 w-2 rounded-full" style={{ background: categoryOf(filter).color }} aria-hidden />
-                {categoryOf(filter).label} ×
-              </button>
-            )}
-          </div>
-          {S.features.map && (
-            <div data-tour="board-map">
-              <MapView points={points} selectedId={selected} onSelect={(id) => !id.startsWith("raport:") && setSelected(id)} origin={origin} className="h-[320px]" />
-            </div>
-          )}
-          <ul className="space-y-2" data-testid="request-list">
-            {sortedVisible.map((r) => (
-              <li key={r.id}>
-                <button onClick={() => setSelected(r.id)} className={`flex w-full items-center gap-3 rounded-2xl bg-card px-4 py-3.5 text-left text-sm ring-1 transition ${r.id === selected ? "ring-coral/60 shadow-[0_0_0_4px_var(--color-coral-tint)]" : "ring-line hover:ring-coral/30"}`}>
-                  <StatusDot status={r.data.status} />
-                  <span className="min-w-0 flex-1 truncate">
-                    <b className="font-semibold text-ink">{r.data.title}</b> <span className="hidden text-muted sm:inline">· {nameOf(r.data.requester)}</span>
-                  </span>
-                  {myTurn(r.data) && <span className="shrink-0 font-serif text-[0.85rem] text-coral-deep">rândul tău</span>}
-                  <StatusPill status={r.data.status} />
-                  <span className="hidden w-24 shrink-0 whitespace-nowrap text-right text-xs text-muted md:block">{ageLabel(ageMinutes({ at: r.data.history.at(-1)!.at }))}</span>
-                </button>
-              </li>
-            ))}
-            {!sortedVisible.length && <li className="rounded-2xl bg-card px-4 py-6 text-center text-sm text-muted ring-1 ring-line">Nimic aici.</li>}
-          </ul>
-        </div>
-
-        <div className="space-y-4 lg:sticky lg:top-28" data-tour="board-side" ref={sideRef}>
+      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 space-y-8">
           {sel ? (
-            <section className="card p-6" data-tour="board-detail">
-              <div className="flex items-center justify-between gap-3">
-                <StatusPill status={sel.data.status} />
-                <button onClick={() => setSelected(null)} className="grid h-8 w-8 place-items-center rounded-full text-muted hover:bg-paper-2" aria-label="Închide">
-                  ×
-                </button>
-              </div>
-              <h2 className="mt-3 text-[1.5rem] font-semibold leading-tight text-ink">{sel.data.title}</h2>
-              <p className="mt-1 text-sm text-muted">
-                {nameOf(sel.data.requester)}
-                {Object.values(sel.data.actors).map((h) => ` → ${nameOf(h)}`)}
-                {sel.data.address && ` · ${sel.data.address}`}
-                {isExpired(S.flow, sel.data) && <span className="text-coral-deep"> · expirată</span>}
-              </p>
-              <p className="mt-4 text-[2rem] font-semibold leading-none tracking-[-0.03em] text-ink tabular-nums">
-                {sel.data.quantity} <span className="text-base font-normal text-muted">{sel.data.unit}</span>
-              </p>
-
-              <div className="mt-5 flex flex-wrap gap-2" data-testid="steps">
-                {actor && available(S.flow, sel.data, actor).some((t) => t.note) && (
-                  <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Motiv, dacă e cazul" aria-label="Motiv" className="w-full px-3 py-2 text-sm" />
+            <section className="card overflow-hidden" data-tour="board-detail" ref={sideRef}>
+              <div className={`grid gap-6 p-5 sm:p-7 ${selDoc ? "sm:grid-cols-[230px_minmax(0,1fr)]" : ""}`}>
+                {selDoc && (
+                  <div className="relative mx-auto w-full max-w-[230px] -rotate-1">
+                    <DocPaper doc={selDoc}>
+                      {stamp && (
+                        <span className={`stamp absolute top-[40%] left-[12%] whitespace-nowrap text-[0.85rem] ${stamp.good ? "text-ok" : "text-bad"}`} role="img" aria-label={`Ștampila: ${stamp.label}`}>
+                          {stamp.label}
+                        </span>
+                      )}
+                    </DocPaper>
+                  </div>
                 )}
-                {actor &&
-                  available(S.flow, sel.data, actor).map((t) => (
-                    <Button key={t.id} variant={t.danger ? "danger" : "primary"} className="flex-1" disabled={busy !== null || (t.note === "required" && !note.trim())} onClick={() => void step(sel, t.id)}>
-                      {t.label}
-                    </Button>
-                  ))}
-                {actor && available(S.flow, sel.data, actor).length === 0 && <p className="text-sm text-muted">{waitingFor(sel.data)}</p>}
+                <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm text-muted">
+                      {nameOf(sel.data.requester)}
+                      {Object.values(sel.data.actors).map((h) => ` → ${nameOf(h)}`)} · {ageLabel(ageMinutes({ at: sel.data.history.at(-1)!.at }))}
+                      {sel.data.address && ` · ${sel.data.address}`}
+                      {isExpired(S.flow, sel.data) && <span className="text-bad"> · expirată</span>}
+                    </p>
+                    {selected && (
+                      <button onClick={() => setSelected(null)} className="-mt-1 -mr-2 grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted hover:bg-paper-2 hover:text-ink" aria-label="Închide">
+                        <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden>
+                          <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                  <h2 className="mt-0.5 text-xl font-semibold leading-snug text-ink">{sel.data.title}</h2>
+                  {!selDoc && sel.data.description && <p className="mt-1 text-ink-2">{sel.data.description}</p>}
+                  <p className="mt-4 text-[2.6rem] leading-none font-semibold tracking-[-0.03em] text-ink tabular-nums">{formatQty(sel.data.quantity, sel.data.unit)}</p>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+                    <StatusPill status={sel.data.status} />
+                    {selDoc && S.documents && (
+                      <span className={`inline-flex items-center gap-1.5 font-medium ${docIssues ? "text-warn" : "text-ok"}`}>
+                        {docIssues ? <WarnIcon /> : <CheckIcon />}
+                        {docIssues ? `${docIssues} ${docIssues === 1 ? "verificare" : "verificări"} de văzut` : `Toate cele ${selDocChecks.length} verificări trec`}
+                      </span>
+                    )}
+                    {!selDoc && stamp && <span className={`stamp text-sm ${stamp.good ? "text-ok" : "text-bad"}`}>{stamp.label}</span>}
+                  </div>
+                  {docIssues > 0 && (
+                    <ul className="mt-2 space-y-0.5 text-sm text-warn">
+                      {selDocChecks
+                        .filter((c) => c.level !== "ok")
+                        .map((c) => (
+                          <li key={c.id}>{c.detail}</li>
+                        ))}
+                    </ul>
+                  )}
+
+                  <div className="mt-6 flex flex-wrap items-center gap-2" data-testid="steps">
+                    {steps_.some((t) => t.note) && <input value={note} onChange={(e) => setNote(e.target.value)} placeholder={`Motiv (obligatoriu pentru „${steps_.find((t) => t.note)!.label}”)`} aria-label="Motiv" className="order-last mt-1 w-full px-3 py-2 text-sm" />}
+                    {steps_.map((t) => (
+                      <Button key={t.id} variant={t.danger ? "danger" : t === primaryStep ? "primary" : "secondary"} className={t === primaryStep ? "min-w-32" : ""} disabled={busy !== null || (t.note === "required" && !note.trim())} onClick={() => void step(sel, t.id)}>
+                        {t.label}
+                      </Button>
+                    ))}
+                    {actor && steps_.length === 0 && <p className="text-sm text-muted">{waitingFor(sel.data)}</p>}
+                    {turnIds.includes(sel.id) && turnCount > 1 && <span className="ml-auto text-sm text-muted tabular-nums">{turnIds.indexOf(sel.id) + 1} din {turnCount}</span>}
+                    {!steps_.length && next && (
+                      <Button variant="secondary" className="ml-auto" onClick={() => setSelected(next.id)}>
+                        Următorul: {next.data.title}
+                        <span aria-hidden>→</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-6 divide-y divide-line border-t border-line text-sm">
+              <div className="divide-y divide-line border-t border-line bg-paper/60 px-5 text-sm sm:px-7">
                 {selDoc && S.documents && (
-                  <details className="group py-3">
+                  <details className="py-3">
                     <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-ink">
-                      Documentul
-                      <span className={docIssues ? "text-amber-200" : "text-sage-ink"}>{docIssues ? `${docIssues} de verificat` : "toate verificările trec"}</span>
+                      Verificările documentului <span className="font-normal text-muted">{selDocChecks.length - docIssues} din {selDocChecks.length} trec</span>
                     </summary>
-                    {/* doar ce nu iese e la vedere; bonul întreg se deschide la clic */}
-                    {docIssues > 0 && (
-                      <ul className="mt-2 space-y-1 group-open:hidden">
-                        {selDocChecks
-                          .filter((c) => c.level !== "ok")
-                          .map((c) => (
-                            <li key={c.id} className={c.level === "error" ? "text-coral-deep" : "text-amber-200"}>
-                              {c.detail}
-                            </li>
-                          ))}
-                      </ul>
-                    )}
-                    <div className="mt-3 space-y-3">
-                      <DocTable doc={selDoc} />
+                    <div className="mt-3 grid gap-4 sm:grid-cols-2">
                       <ChecksList checks={selDocChecks} />
+                      <DocTable doc={selDoc} />
                     </div>
                   </details>
                 )}
                 <details className="py-3">
                   <summary className="flex cursor-pointer list-none items-center justify-between font-medium text-ink">
-                    Istoric <span className="text-muted">{sel.data.history.length} pași</span>
+                    Istoric <span className="font-normal text-muted">{sel.data.history.length} pași</span>
                   </summary>
                   <div className="mt-3">
                     <Timeline r={sel.data} nameOf={nameOf} />
                   </div>
                 </details>
-                <Link href={`/fisa/${sel.id}`} className="block py-3 text-coral-deep hover:underline">
-                  Fișa pentru tipărit →
+                <Link href={`/fisa/${sel.id}`} className="flex items-center justify-between py-3 font-medium text-ink hover:text-coral-deep">
+                  Fișa pentru tipărit <span aria-hidden>→</span>
                 </Link>
               </div>
             </section>
           ) : (
-            <>
-              {me?.role === S.flow.requester && S.documents?.enabled && (
-                <Card label="Cerere nouă" title={S.documents.title}>
-                  <DocumentIntake existing={docs.map((d) => d.doc)} onSubmit={submitDocument} />
-                </Card>
+            (newRequest ?? (
+              <section className="card flex items-center gap-4 px-6 py-8" data-tour="board-detail">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-ok-tint text-ok">
+                  <CheckIcon />
+                </span>
+                <div>
+                  <p className="font-semibold text-ink">Nimic nu te așteaptă acum.</p>
+                  <p className="text-sm text-muted">Când cineva are nevoie de tine, apare aici.</p>
+                </div>
+              </section>
+            ))
+          )}
+
+          {S.features.map && (
+            <div data-tour="board-map" className="overflow-hidden rounded-[14px] border border-line">
+              <MapView points={points} selectedId={sel?.id ?? null} onSelect={(id) => !id.startsWith("raport:") && setSelected(id)} origin={origin} className="h-[300px]" />
+            </div>
+          )}
+
+          <section>
+            <div className="mb-3 flex flex-wrap items-center gap-5 border-b border-line text-sm" role="tablist" aria-label="Filtru">
+              {tabs.map(([id, label, count]) => (
+                <button key={id} role="tab" aria-selected={filter === id} onClick={() => setFilter(id)} className={`-mb-px border-b-2 pb-2.5 transition-colors ${filter === id ? "border-ink font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}>
+                  {label}
+                  {count !== null && <span className="ml-1.5 text-muted tabular-nums">{count}</span>}
+                </button>
+              ))}
+              {CAT_IDS.includes(filter) && (
+                <button onClick={() => setFilter("toate")} className="mb-2 inline-flex items-center gap-1.5 rounded-md bg-paper-2 px-2.5 py-1 text-ink-2" aria-label="Scoate filtrul">
+                  <span className="h-2 w-2 rounded-full" style={{ background: categoryOf(filter).color }} aria-hidden />
+                  {categoryOf(filter).label} ×
+                </button>
               )}
-              {me?.role === S.flow.requester && !S.documents?.enabled && (
-                <Card label="Cerere nouă" title={S.request.addTitle}>
-                  <div className="prompt-box p-4">
-                    <textarea value={raw} onChange={(e) => setRaw(e.target.value)} placeholder={S.request.addPlaceholder} className="h-24 w-full resize-none text-[1.02rem] leading-snug" aria-label={S.request.addTitle} />
-                    <div className="mt-1 flex items-center justify-between">
-                      <button className="grid h-10 w-10 place-items-center rounded-full text-ink-2 hover:bg-white/70 disabled:opacity-40" onClick={speech.listening ? speech.stop : speech.start} disabled={!speech.supported} title="Spune cu vocea" aria-label="Spune cu vocea">
-                        <MicIcon on={speech.listening} />
+            </div>
+            <ul className="card divide-y divide-line overflow-hidden" data-testid="request-list">
+              {sortedVisible.map((r) => (
+                <li key={r.id}>
+                  <button
+                    onClick={() => setSelected(r.id)}
+                    aria-current={r.id === sel?.id ? "true" : undefined}
+                    className={`flex w-full items-center gap-4 px-4 py-3 text-left transition-colors ${r.id === sel?.id ? "bg-paper-2" : "hover:bg-paper"} ${myTurn(r.data) ? "shadow-[inset_3px_0_0_var(--color-coral)]" : ""}`}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-ink">{r.data.title}</span>
+                      <span className="block truncate text-sm text-muted max-sm:hidden">
+                        {nameOf(r.data.requester)} · {ageLabel(ageMinutes({ at: r.data.history.at(-1)!.at }))}
+                      </span>
+                      <span className="block sm:hidden">
+                        <StatusPill status={r.data.status} />
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right font-medium text-ink tabular-nums">{formatQty(r.data.quantity, r.data.unit)}</span>
+                    <span className="hidden w-40 shrink-0 sm:block">
+                      <StatusPill status={r.data.status} />
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {!sortedVisible.length && <li className="px-4 py-8 text-center text-sm text-muted">{filter === "rândul meu" ? "Nimic nu te așteaptă." : "Nimic aici."}</li>}
+            </ul>
+          </section>
+        </div>
+
+        <aside className={`space-y-4 lg:sticky lg:top-24 ${isRequester && sel ? "max-lg:order-first" : ""}`} data-tour="board-side">
+          {sel && newRequest}
+          {me && !isRequester && S.features.matching && (
+            <Card label="Potrivire" title={S.request.offerTitle}>
+              <div className="prompt-box flex items-end gap-2 p-3">
+                <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full resize-none p-1 leading-snug" aria-label={S.request.offerTitle} />
+                <ArrowButton label="Găsește potriviri" busy={busy === "match"} onClick={() => void match()} disabled={busy !== null || !offer.trim()} />
+              </div>
+              <ol className="mt-3 space-y-2">
+                {matches.map((m) => {
+                  const r = items.find((x) => x.id === m.id);
+                  if (!r) return null;
+                  return (
+                    <li key={m.id}>
+                      <button onClick={() => setSelected(m.id)} className="flex w-full items-center justify-between gap-3 rounded-lg bg-paper px-3 py-2.5 text-left text-sm ring-1 ring-line hover:ring-[#cfccc4]">
+                        <span className="min-w-0">
+                          <b className="font-medium">{r.data.title}</b>
+                          <span className="block truncate text-muted">{m.why}</span>
+                        </span>
+                        <span className="shrink-0 font-semibold text-ink tabular-nums">{m.score}</span>
                       </button>
-                      <ArrowButton label="Pregătește cererea" busy={busy === "structure"} onClick={() => void structure()} disabled={busy !== null || !raw.trim()} />
-                    </div>
-                  </div>
-                  {draft && (
-                    <div className="mt-4 space-y-2 text-sm">
-                      <p className="label-caps">Verifică înainte să salvezi</p>
-                      <input value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="w-full px-3 py-2" aria-label="Titlu" />
-                      <div className="flex gap-2">
-                        <select value={draft.category} onChange={(e) => setDraft({ ...draft, category: e.target.value })} className="min-w-0 flex-1 px-2 py-2" aria-label="Categorie">
-                          {S.categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
-                        <input type="number" min={1} value={draft.quantity} onChange={(e) => setDraft({ ...draft, quantity: Number(e.target.value) })} className="w-16 px-2 py-2" aria-label="Cantitate" />
-                        <input value={draft.unit} onChange={(e) => setDraft({ ...draft, unit: e.target.value })} className="w-24 px-2 py-2" aria-label="Unitate" />
-                      </div>
-                      <div className="flex gap-2">
-                        <input value={draft.address} onChange={(e) => setDraft({ ...draft, address: e.target.value })} className="min-w-0 flex-1 px-3 py-2" aria-label="Adresă" />
-                        <input type="number" min={1} max={5} value={draft.urgency} onChange={(e) => setDraft({ ...draft, urgency: Number(e.target.value) })} className="w-16 px-2 py-2" aria-label="Urgență" title="Urgența 1–5, propusă de AI; decizi tu" />
-                      </div>
-                      <Button variant="primary" className="w-full" onClick={() => void save()}>
-                        Salvează pe hartă
-                      </Button>
-                    </div>
-                  )}
-                </Card>
-              )}
-              {me && me.role !== S.flow.requester && S.features.matching && (
-                <Card label="Potrivire" title={S.request.offerTitle}>
-                  <div className="prompt-box flex items-end gap-2 p-4">
-                    <textarea value={offer} onChange={(e) => setOffer(e.target.value)} className="h-20 w-full resize-none text-[1.02rem] leading-snug" aria-label={S.request.offerTitle} />
-                    <ArrowButton label="Găsește potriviri" busy={busy === "match"} onClick={() => void match()} disabled={busy !== null || !offer.trim()} />
-                  </div>
-                  <ol className="mt-3 space-y-2">
-                    {matches.map((m) => {
-                      const r = items.find((x) => x.id === m.id);
-                      if (!r) return null;
-                      return (
-                        <li key={m.id}>
-                          <button onClick={() => setSelected(m.id)} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-paper px-4 py-3 text-left text-sm ring-1 ring-line hover:ring-coral/40">
-                            <span className="min-w-0">
-                              <b className="font-semibold">{r.data.title}</b>
-                              <span className="block truncate text-muted">{m.why}</span>
-                            </span>
-                            <span className="shrink-0 font-semibold tabular-nums text-coral-deep">{m.score}</span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ol>
-                </Card>
-              )}
-              {me && me.role !== S.flow.requester && !S.features.matching && (
-                <p className="rounded-2xl bg-card px-5 py-6 text-center text-sm text-muted ring-1 ring-line">Alege din listă. Cele marcate „rândul tău” te așteaptă.</p>
-              )}
-            </>
+                    </li>
+                  );
+                })}
+              </ol>
+            </Card>
           )}
           <ErrorNote error={error?.msg} hint={error?.hint} />
 
-          <details className="card px-5 py-1 text-sm">
+          <details className="card px-4 text-sm">
             <summary className="flex cursor-pointer list-none items-center justify-between py-3 font-medium text-ink">
-              {S.notify.channel === "sms" ? "SMS-uri trimise" : "Emailuri trimise"} <span className="text-muted">{sent.items.length}</span>
+              {S.notify.channel === "sms" ? "SMS-uri trimise" : "Emailuri trimise"} <span className="font-normal text-muted tabular-nums">{sent.items.length}</span>
             </summary>
             <ul className="space-y-2 pb-4" data-testid="outbox">
               {[...sent.items].reverse().slice(0, 4).map((n) => (
-                <li key={n.id} className="rounded-xl bg-paper px-3 py-2 ring-1 ring-line">
+                <li key={n.id} className="rounded-lg bg-paper px-3 py-2">
                   <p className="text-xs text-muted">
-                    {timeOf(n.data.at)} · {n.data.toName} · <span className={n.data.status === "eșuat" ? "text-coral-deep" : n.data.status === "simulat" ? "text-amber-200" : "text-sage-ink"}>{n.data.status}</span>
+                    {timeOf(n.data.at)} · {n.data.toName} · <span className={n.data.status === "eșuat" ? "text-bad" : n.data.status === "simulat" ? "text-warn" : "text-ok"}>{n.data.status}</span>
                   </p>
                   <p className="mt-0.5 break-words text-ink">{n.data.message}</p>
-                  {n.data.error && <p className="mt-0.5 text-xs text-coral-deep">{n.data.error}</p>}
+                  {n.data.error && <p className="mt-0.5 text-xs text-bad">{n.data.error}</p>}
                 </li>
               ))}
               {!sent.items.length && <li className="text-muted">Niciunul încă.</li>}
@@ -538,30 +600,48 @@ export function BoardPage() {
           </details>
 
           {S.reports.enabled && !S.reports.toRequest && (
-            <details className="card px-5 py-1 text-sm" open>
+            <details className="card px-4 text-sm" open>
               <summary className="flex cursor-pointer list-none items-center justify-between py-3 font-medium text-ink">
-                {S.reports.title} <span className="text-muted">{recentReports.length}</span>
+                {S.reports.title} <span className="font-normal text-muted tabular-nums">{recentReports.length}</span>
               </summary>
               <ul className="space-y-1 pb-3" data-testid="live-reports">
                 {recentReports.slice(0, 4).map((r) => (
                   <li key={r.id} className="flex items-center gap-2 py-1" style={{ opacity: Math.max(0.5, freshness(r.data, S.reports)) }}>
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: reportTypeOf(r.data.type).color }} aria-hidden />
+                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: reportTypeOf(r.data.type).color }} aria-hidden />
                     <span className="min-w-0 flex-1 truncate">{r.data.note || reportTypeOf(r.data.type).label}</span>
                     <span className="shrink-0 text-xs text-muted">{ageLabel(ageMinutes(r.data))}</span>
                   </li>
                 ))}
               </ul>
               <details className="pb-4">
-                <summary className="cursor-pointer list-none text-coral-deep">Cod QR pentru telefon</summary>
+                <summary className="cursor-pointer list-none font-medium text-ink hover:text-coral-deep">Cod QR pentru telefon</summary>
                 <div className="mt-3">
                   <QrPanel url={`${location.origin}/raport`} size={140} />
                 </div>
               </details>
             </details>
           )}
-        </div>
+        </aside>
       </div>
     </div>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" className="mt-px shrink-0" aria-hidden>
+      <circle cx="8" cy="8" r="7" fill="currentColor" />
+      <path d="m4.8 8.2 2.1 2.1 4.3-4.5" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WarnIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" className="shrink-0" aria-hidden>
+      <path d="M8 1.8 15 14H1z" fill="currentColor" />
+      <path d="M8 6v3.6M8 11.6v.2" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
 

@@ -3,33 +3,38 @@ import { describeEntry, type Request, stateOf, type Tone, transitionOf } from ".
 import { scenario } from "../config";
 import type { Rank } from "../types";
 
-// etichetele de stare: fundal pal, text închis, aceeași familie de culori ca punctul
-const TONE_STYLE: Record<Tone, string> = {
-  open: "bg-[#fbf0d9] text-[#8a5a0a]",
-  progress: "bg-lilac text-lilac-ink",
-  waiting: "bg-[#efeafd] text-[#5a3fb5]",
-  returned: "bg-[#fde8d8] text-[#9a4a12]",
-  done: "bg-sage text-sage-ink",
-  failed: "bg-coral-tint text-coral-deep",
-};
-const TONE_DOT: Record<Tone, string> = {
-  open: "#e0a83a",
-  progress: "#7b6fe0",
-  waiting: "#9b7be6",
-  returned: "#e08a4a",
-  done: "#58a65c",
-  failed: "#d35f52",
+// o stare = un punct de culoare + textul ei (culoarea nu e niciodată singurul semnal)
+export const TONE_DOT: Record<Tone, string> = {
+  open: "#d9a03a",
+  progress: "#6f73c9",
+  waiting: "#8f93b8",
+  returned: "#d0705d",
+  done: "#3f9d64",
+  failed: "#b4372a",
 };
 
-export function StatusPill({ status }: { status: string }) {
+/** Starea cererii: punct + text. */
+export function StatusPill({ status, className = "" }: { status: string; className?: string }) {
   const st = stateOf(scenario.flow, status);
-  return <span className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${TONE_STYLE[st.tone]}`}>{st.label}</span>;
+  return (
+    <span className={`inline-flex shrink-0 items-center gap-1.5 text-[0.85rem] whitespace-nowrap text-ink-2 ${className}`}>
+      <StatusDot status={status} />
+      {st.label}
+    </span>
+  );
 }
 
-/** Punctul de stare din fața unui rând (verde = încheiat, coral = n-a mers, muștar = așteaptă pe cineva). */
+/** Doar punctul de stare (verde = încheiat, roșu = n-a mers, galben = așteaptă pe cineva). */
 export function StatusDot({ status }: { status: string }) {
   const st = stateOf(scenario.flow, status);
-  return <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: TONE_DOT[st.tone], boxShadow: `0 0 0 3px ${TONE_DOT[st.tone]}22` }} aria-hidden />;
+  return <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: TONE_DOT[st.tone] }} aria-hidden />;
+}
+
+/** Cantitatea cu unitatea ei; banii cu două zecimale („86,50 lei”). */
+export function formatQty(quantity: number, unit: string): string {
+  const money = /^(lei|ron|eur|€)$/i.test(unit.trim());
+  const n = money ? quantity.toLocaleString("ro-RO", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : quantity.toLocaleString("ro-RO");
+  return `${n} ${unit}`.trim();
 }
 
 export const timeOf = (iso: string) => new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
@@ -57,7 +62,7 @@ export function Avatar({ name, rank, size = 40 }: { name: string; rank?: Rank; s
     .toUpperCase();
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-paper-2 font-semibold text-ink"
+      className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#e4e5ee] font-semibold text-ink"
       style={{ width: size, height: size, boxShadow: rank ? `0 0 0 3px ${rank.frame}` : undefined, fontSize: size / 2.8 }}
       title={rank?.name}
       aria-hidden
