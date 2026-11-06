@@ -16,19 +16,23 @@ AI-ul face un singur lucru: transformă ce scrie, spune sau fotografiază omul �
 | **Cronometrul procesului** | cât stă fiecare cerere la fiecare pas, unde se blochează, reminder; costul lunar doar din cifrele spuse de oameni | `src/lib/metrics.ts`, `/cronometru` |
 | **Rezultat editabil** | fișa finală cu fapte din date și rezumat propus de AI, corectat de om, tipărit ca PDF | `/fisa/:id` |
 | **Notificări cu link** | SMS sau email la fiecare pas (mock fără chei), cu link de confirmare pe telefon | `api/notify.ts`, `/c/:id` |
-| **Hartă și raport live** | cereri pe hartă, potrivire cu scor determinist, raport rapid la locația curentă, live între telefoane | `/harta`, `/raport`, `src/lib/live.tsx` |
+| **Hartă și raport live** | cereri pe hartă, potrivire cu scor determinist, raport rapid la locația curentă, live între telefoane; cu `reports.toRequest` raportul devine cerere cu flux | `/cereri`, `/raport`, `src/lib/live.tsx` |
 | **Puncte și ranguri** | calculate de cod din confirmări, doar când brief-ul le cere | `src/lib/gamification.ts`, `/clasament` |
 | **Mascota** | vocea verificărilor și a așteptărilor, execută acțiuni doar cu confirmare | `src/modules/mascot/`, `scenario.mascot` |
 | **Validare** | sondaj prin QR și business canvas: cifra reală și plătitorul pentru pitch | `/survey`, `/business` |
 
 Două scenarii exemplu, ca să vedeți cum arată config-ul:
 - **`deconturi`** (implicit): angajat → manager → contabil, bonul verificat de cod, cronometrul. Plătitorul e firma.
-- **`vecini`**: două roluri, hartă, puncte, raport live. Arată mecanica briefurilor ITFest 2023–2024; nu are un plătitor verificat și nu e o idee de pitch.
+- **`sesizari`**: raportezi de pe telefon (GPS și oră), raportul devine sesizare cu flux, echipa primăriei o preia și o rezolvă, cetățeanul confirmă din SMS sau spune „nu s-a rezolvat”. Forma brief-ului din 2024. Plătitorul: primăria (ipoteză).
+- **`resurse`**: repetiția pe brief-ul ResourceWise 2023 (restaurante → adăposturi, hartă, puncte, ranguri). Vezi `docs/REPETITIE-2023.md`.
+- **`vecini`**: două roluri, hartă, puncte, raport live. Arată mecanica; nu are un plătitor verificat și nu e o idee de pitch.
+
+Scenariul se alege cu `VITE_SCENARIO=<id>` (în `.env` local și în setările Vercel, la build) sau schimbând valoarea implicită din `src/scenario/config.ts`.
 
 ## Din brief în aplicație (primele 2 ore)
 
 1. Brief-ul în `docs/BRIEF.md`, cu fiecare „you can include…” pe un rând. Ideea trece prin trei filtre: problemă cu cifră spusă de un om, un plătitor care plătește deja, cel puțin două lucruri din tabelul de mai sus.
-2. Copiați `src/scenario/scenarios/deconturi.ts` (sau `vecini.ts`, dacă brief-ul are hartă) în `src/scenario/scenarios/<nume>.ts` și adăugați-l în `SCENARIOS` din `src/scenario/config.ts`.
+2. Copiați scenariul cel mai apropiat din `src/scenario/scenarios/` (`deconturi` pentru procese, `sesizari` pentru raportare live, `resurse` pentru „cine are / cine are nevoie” pe hartă) în `src/scenario/scenarios/<nume>.ts` și adăugați-l în `SCENARIOS` din `src/scenario/config.ts`.
 3. Schimbați, în ordinea asta: `id`, `app`, `business`, `roles`, `flow`, `categories`, `documents`, `features`, `mascot`, `seed`. Checklist-ul complet: `docs/AMBALARE.md`.
 4. `npm test`: `validateScenario` și `validateFlow` spun ce nu se leagă (roluri, stări fără ieșire, pași imposibili în seed), iar `tests/urme.test.ts` prinde numele din scenariul vechi rămase în cod. Pe `/start` trebuie să scrie „✓ Config-ul trece verificările”.
 5. `npm run dev` și parcurgeți fluxul cu fiecare rol (comutatorul „Sunt” din antet sau `?ca=<handle>` pe telefon).

@@ -15,7 +15,8 @@ La ITFest, Adobe a dat de fiecare dată un scenariu cu funcționalități opțio
 | Dacă brief-ul seamănă cu… | Porniți de la scenariul | Ce schimbați |
 |---|---|---|
 | un proces între oameni dintr-o organizație (aprobări, cereri interne, deconturi, documente) | `deconturi` | `roles`, `flow`, `documents.rules`, `seed` |
-| oameni care au ceva și oameni care au nevoie, pe o hartă (resurse, voluntariat, sesizări) | `vecini` | `roles`, `flow`, `categories`, `reports`, `points`, `seed` |
+| oameni care au ceva și oameni care au nevoie, pe o hartă (resurse, voluntariat) | `resurse` | `roles`, `flow`, `categories`, `reports`, `points`, `seed` |
+| raportare în timp real, la locația curentă (sesizări, incidente, ce vezi acum) | `sesizari` | `reports.types`, `flow`, `roles`, `seed` |
 | citit și înțeles documente lungi | modulul `/docs` + `flow` pentru ce urmează după citire | documentul, întrebările |
 | un material creativ sau accesibilitate | modulul `/design` | brief-ul, formatul, regulile auditului |
 

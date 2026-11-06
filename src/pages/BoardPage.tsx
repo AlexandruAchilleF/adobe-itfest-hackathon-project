@@ -61,7 +61,8 @@ export function BoardPage() {
     const t = setInterval(() => tick((n) => n + 1), 30_000); // rapoartele se estompează cu vechimea
     return () => clearInterval(t);
   }, []);
-  const recentReports = S.reports.enabled ? visibleReports(live.items, S.reports) : [];
+  // rapoartele care au devenit cereri (reports.toRequest) apar pe hartă ca cereri, nu de două ori
+  const recentReports = S.reports.enabled ? visibleReports(live.items, S.reports).filter((r) => !r.data.requestId) : [];
   const [selected, setSelected] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("toate");
   const [error, setError] = useState<{ msg: string; hint?: string } | null>(null);
@@ -323,7 +324,7 @@ export function BoardPage() {
                 {f === "toate" || f === "ale mele" ? f : `${categoryOf(f).icon} ${categoryOf(f).label}`}
               </button>
             ))}
-            {S.reports.enabled && (
+            {S.reports.enabled && !S.reports.toRequest && (
               <button onClick={() => setShowReports((v) => !v)} className={`ml-auto rounded-full px-3 py-1 text-xs ${showReports ? "bg-sky-300 text-slate-900" : "bg-slate-800 text-slate-300"}`} aria-pressed={showReports}>
                 📍 rapoarte live ({recentReports.length})
               </button>

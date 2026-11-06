@@ -15,6 +15,8 @@ export const Report = z.object({
   by: z.string(),
   /** true = n-am avut GPS, am pus centrul orașului */
   approx: z.boolean(),
+  /** cererea creată din raport (reports.toRequest) */
+  requestId: z.string().optional(),
 });
 export type Report = z.infer<typeof Report>;
 

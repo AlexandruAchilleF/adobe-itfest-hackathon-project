@@ -9,14 +9,14 @@ import { scenario } from "../scenario/config";
 
 // Cerințele tipice din briefurile ITFest × Adobe → piesa din template care le acoperă.
 const BRIEF_MAP = [
-  { need: "un proces între oameni: cine cere, cine aprobă, cine execută", piece: "scenario.roles + scenario.flow (pași, retur cu motiv, „n-a mers”)", href: "/harta" },
-  { need: "documente, bonuri, facturi, formulare", piece: "scenario.documents → AI citește, codul verifică (sumă, CUI, dată, duplicate, plafoane)", href: "/harta" },
+  { need: "un proces între oameni: cine cere, cine aprobă, cine execută", piece: "scenario.roles + scenario.flow (pași, retur cu motiv, „n-a mers”)", href: "/cereri" },
+  { need: "documente, bonuri, facturi, formulare", piece: "scenario.documents → AI citește, codul verifică (sumă, CUI, dată, duplicate, plafoane)", href: "/cereri" },
   { need: "eficiență, „cât durează”, optimizarea unui proces", piece: "/cronometru: timp pe pas, blocaje, reminder, cost din cifre spuse de oameni", href: "/cronometru" },
-  { need: "un document final, raport, proces-verbal", piece: "/fisa/:id: fapte din date + rezumat editabil, tipărit ca PDF", href: "/harta" },
-  { need: "Interactive Mapping, găsește în apropiere", piece: "/harta: cereri pe hartă + potrivire cu scor determinist", href: "/harta" },
+  { need: "un document final, raport, proces-verbal", piece: "/fisa/:id: fapte din date + rezumat editabil, tipărit ca PDF", href: "/cereri" },
+  { need: "Interactive Mapping, găsește în apropiere", piece: "/cereri: cereri pe hartă + potrivire cu scor determinist", href: "/cereri" },
   { need: "Gamification, puncte, recompense", piece: "scenario.points + ranks → /profil, /clasament", href: "/clasament" },
-  { need: "raportare în timp real, la locația curentă", piece: "scenario.reports → /raport pe telefon, live pe hartă", href: "/raport" },
-  { need: "încredere: a ajuns sau nu?", piece: "ciclul cererii, „nu am primit”, suspendare, SMS cu link /c/:id", href: "/harta" },
+  { need: "raportare în timp real, la locația curentă", piece: "scenario.reports → /raport pe telefon, live pe hartă; cu toRequest devine cerere cu flux (scenariul sesizari)", href: "/raport" },
+  { need: "încredere: a ajuns sau nu?", piece: "ciclul cererii, „nu am primit”, suspendare, SMS cu link /c/:id", href: "/cereri" },
 ];
 
 const MODULES = [

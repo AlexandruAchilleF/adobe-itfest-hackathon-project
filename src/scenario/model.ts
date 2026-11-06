@@ -54,6 +54,28 @@ export function buildRequestSeed(s: Scenario, now: Date = new Date()): Request[]
   });
 }
 
+/** Cererea creată dintr-un raport de pe telefon (reports.toRequest): locul și ora vin din telefon, nu din AI. */
+export function requestFromReport(s: Scenario, r: Pick<Report, "type" | "note" | "lat" | "lng" | "at" | "approx">, requester: string): Request {
+  const type = s.reports.types.find((t) => t.id === r.type);
+  const label = type?.label ?? r.type;
+  return createRequest(
+    s.flow,
+    {
+      title: r.note ? `${label}: ${r.note}`.slice(0, 80) : label,
+      category: r.type,
+      description: r.note || label,
+      quantity: 1,
+      unit: s.request.singular,
+      urgency: Math.min(5, Math.max(1, type?.urgency ?? 3)),
+      address: r.approx ? "fără GPS (centrul orașului)" : `GPS ${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}`,
+      lat: r.lat,
+      lng: r.lng,
+    },
+    requester,
+    new Date(r.at),
+  );
+}
+
 /** Verificări pentru un scenariu nou: prind greșelile de copy-paste înainte de demo. */
 export function validateScenario(s: Scenario): string[] {
   const roles = Object.keys(s.roles);
@@ -80,6 +102,7 @@ export function validateScenario(s: Scenario): string[] {
   if (s.ranks[0]?.min !== 0) problems.push("Primul rang trebuie să înceapă de la 0 puncte.");
   s.ranks.forEach((r, i) => i && r.min <= s.ranks[i - 1].min && problems.push(`Rangul ${r.name} trebuie să ceară mai multe puncte decât ${s.ranks[i - 1].name}.`));
   if (s.reports.enabled && s.reports.types.length === 0) problems.push("Raportarea e pornită, dar nu are tipuri.");
+  if (s.reports.toRequest) s.reports.types.forEach((t) => !cats.has(t.id) && problems.push(`Raportul „${t.label}” devine cerere, dar categoria ${t.id} nu există.`));
   return problems;
 }
 

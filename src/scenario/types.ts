@@ -35,6 +35,8 @@ export interface ReportType {
   label: string;
   icon: string;
   color: string;
+  /** cu reports.toRequest: urgența cererii create din raport (1–5, implicit 3) */
+  urgency?: number;
 }
 
 /** O persoană din seed sau creată pe loc. `handle` e stabil, ca să-l poată referi cererile. */
@@ -145,6 +147,9 @@ export interface Scenario {
     freshMinutes: number;
     /** după câte minute dispare de pe hartă */
     expireMinutes: number;
+    /** true = fiecare raport devine și o cerere cu flux (sesizare → preluată → rezolvată → confirmată).
+     *  Tipurile de raport trebuie să existe și ca categorii, iar cel care raportează are rolul flow.requester. */
+    toRequest?: boolean;
   };
   notify: {
     channel: "sms" | "email";

@@ -118,7 +118,7 @@ function Shell() {
               </details>
             )}
           </nav>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex flex-wrap items-center gap-3">
             <RoleSwitcher />
             {!pitchMode(S) && <RecordButton />}
             {!pitchMode(S) && (
@@ -148,13 +148,14 @@ function Shell() {
           <Route path="/docs" component={DocsPage} />
           <Route path="/design" component={DesignPage} />
           <Route path="/assistant" component={AssistantPage} />
+          <Route path="/cereri" component={BoardPage} />
           <Route path="/harta" component={BoardPage} />
           <Route path="/profil" component={ProfilePage} />
           <Route path="/clasament" component={LeaderboardPage} />
           <Route path="/cronometru" component={ProcessPage} />
           <Route path="/fisa/:id" component={RecordPage} />
           <Route path="/map">
-            <Redirect to="/harta" />
+            <Redirect to="/cereri" />
           </Route>
           <Route path="/business" component={BusinessPage} />
           <Route path="/survey" component={SurveyPage} />

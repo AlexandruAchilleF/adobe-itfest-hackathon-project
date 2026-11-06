@@ -80,7 +80,7 @@ export function ProfilePage() {
           <ul className="space-y-2">
             {toConfirm.map((r) => (
               <li key={r.id}>
-                <Link href={r.data.requester === me.handle ? `/c/${r.id}` : "/harta"} className="text-accent hover:underline">
+                <Link href={r.data.requester === me.handle ? `/c/${r.id}` : "/cereri"} className="text-accent hover:underline">
                   {categoryOf(r.data.category).icon} {r.data.title} →
                 </Link>
               </li>
@@ -100,7 +100,7 @@ export function ProfilePage() {
               <StatusPill status={r.data.status} />
             </li>
           ))}
-          {!mine.length && <li className="text-sm text-slate-500">Nimic încă. <Link href="/harta" className="text-accent">Vezi harta →</Link></li>}
+          {!mine.length && <li className="text-sm text-slate-500">Nimic încă. <Link href="/cereri" className="text-accent">Vezi harta →</Link></li>}
         </ul>
       </Card>
     </div>

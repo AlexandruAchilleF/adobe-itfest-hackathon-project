@@ -70,7 +70,7 @@ export function ProcessPage() {
     const role = w.waitingOn[0];
     const to = people.find((p) => p.handle === w.who) ?? people.find((p) => p.role === role);
     if (!to) return;
-    const message = `„${w.title}” te așteaptă de ${formatDuration(w.minutes)} (${S.flow.states.find((s) => s.id === w.state)?.label}). ${location.origin}/harta`;
+    const message = `„${w.title}” te așteaptă de ${formatDuration(w.minutes)} (${S.flow.states.find((s) => s.id === w.state)?.label}). ${location.origin}/cereri`;
     const n = await sendNotification(outbox, { channel: S.notify.channel, to: { handle: to.handle, name: to.name, address: to.phone }, message, subject: S.app.name, requestId: w.id });
     setSent(`Reminder ${n.status} către ${to.name}.`);
     mascot.say(`I-am amintit lui ${to.name}: „${w.title}” așteaptă de ${formatDuration(w.minutes)}.`, "idle");

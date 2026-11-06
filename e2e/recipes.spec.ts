@@ -16,7 +16,7 @@ test("start: produsul pentru juriu, ghidul pentru echipă", async ({ page }) => 
   await expect(page.getByRole("heading", { name: "Vecin la nevoie" })).toBeVisible();
   await expect(page.getByTestId("impact")).toContainText("cereri încheiate și confirmate");
   await page.getByRole("button", { name: /Sunt vârstnic/ }).click();
-  await expect(page).toHaveURL(/\/harta$/);
+  await expect(page).toHaveURL(/\/cereri$/);
   await expect(page.getByLabel(/Ce îți lipsește/)).toBeVisible();
 
   await page.goto("/start");
@@ -123,7 +123,7 @@ test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }
 
   await box.getByLabel(/Mesaj pentru/).fill("du-mă la hartă");
   await box.getByRole("button", { name: "↵" }).click();
-  await expect(page).toHaveURL(/\/harta/);
+  await expect(page).toHaveURL(/\/cereri/);
 });
 
 test("mascota: turul ghidat evidențiază pașii (?tour=1 pentru pitch)", async ({ page }) => {

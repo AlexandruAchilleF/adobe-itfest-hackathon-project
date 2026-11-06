@@ -36,7 +36,7 @@ export function ScenarioHome() {
   const enter = (role: string) => {
     const first = people.find((p) => p.role === role);
     if (first) setMe(first.handle);
-    navigate("/harta");
+    navigate("/cereri");
   };
 
   return (

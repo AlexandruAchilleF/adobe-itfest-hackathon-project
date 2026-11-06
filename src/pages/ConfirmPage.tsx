@@ -3,12 +3,12 @@
 
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { available } from "../lib/flow";
+import { available, waitingOn } from "../lib/flow";
 import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { scenario } from "../scenario/config";
-import { categoryOf, requests } from "../scenario/model";
-import { StatusPill } from "../scenario/ui/parts";
+import { categoryOf, requests, roleOf } from "../scenario/model";
+import { StatusPill, Timeline } from "../scenario/ui/parts";
 import { useSteps } from "../scenario/useSteps";
 
 const S = scenario;
@@ -50,10 +50,16 @@ export function ConfirmPage() {
         {categoryOf(rec.data.category).icon} {rec.data.title}
       </h1>
       <p className="text-slate-300">
-        {helpers || "Cererea ta"}:{" "}
-        <b>
-          {rec.data.quantity} {rec.data.unit}
-        </b>{" "}
+        {helpers || `${S.request.singular[0].toUpperCase()}${S.request.singular.slice(1)} ta`}
+        {/* „1 sesizare” nu spune nimic; cantitatea apare doar când e o cantitate reală */}
+        {!(rec.data.quantity === 1 && rec.data.unit === S.request.singular) && (
+          <>
+            :{" "}
+            <b>
+              {rec.data.quantity} {rec.data.unit}
+            </b>
+          </>
+        )}{" "}
         <StatusPill status={rec.data.status} />
       </p>
       {result ? (
@@ -79,8 +85,13 @@ export function ConfirmPage() {
             ))}
         </>
       ) : (
-        <p className="text-slate-400">Nu mai e nimic de confirmat aici.</p>
+        <p className="text-slate-400" data-testid="confirm-waiting">
+          {waitingOn(S.flow, rec.data).length
+            ? `Acum așteaptă: ${waitingOn(S.flow, rec.data).map((r) => roleOf(r).label.toLowerCase()).join(" sau ")}. Primești SMS când e rândul tău.`
+            : "Nu mai e nimic de făcut aici."}
+        </p>
       )}
+      <Timeline r={rec.data} nameOf={nameOf} />
       {error && <p role="alert" className="text-rose-300">{error}</p>}
     </main>
   );

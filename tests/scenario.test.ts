@@ -130,3 +130,19 @@ describe("toate scenariile din SCENARIOS", async () => {
     it(`${id}: id-ul din fișier e cel din SCENARIOS`, () => expect(s.id).toBe(id));
   }
 });
+
+describe("raportul de pe telefon devine sesizare (reports.toRequest)", async () => {
+  const { requestFromReport } = await import("../src/scenario/model");
+  const { sesizari } = await import("../src/scenario/scenarios/sesizari");
+  const r = { type: "groapa", note: "lângă stație", lat: 44.44, lng: 26.12, at: "2026-11-07T10:00:00.000Z", approx: false };
+  it("locul, ora și urgența vin din telefon și din config, nu din AI", () => {
+    const req = requestFromReport(sesizari, r, "ana-cetatean");
+    expect(req).toMatchObject({ title: "Groapă în carosabil: lângă stație", category: "groapa", urgency: 4, lat: 44.44, requester: "ana-cetatean", status: "raportat" });
+    expect(req.history[0]).toMatchObject({ at: r.at, event: "create" });
+    expect(requestFromReport(sesizari, { ...r, approx: true, note: "" }, "x").address).toContain("fără GPS");
+  });
+  it("validarea cere ca fiecare tip de raport să fie și categorie", () => {
+    const broken = { ...sesizari, categories: sesizari.categories.filter((c) => c.id !== "gunoi") };
+    expect(validateScenario(broken).join("\n")).toContain("categoria gunoi nu există");
+  });
+});

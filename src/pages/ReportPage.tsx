@@ -8,14 +8,16 @@ import { ageLabel, ageMinutes, visibleReports } from "../lib/reports";
 import { useCollection } from "../lib/store";
 import { currentPosition, type LatLng } from "../modules/map/geo";
 import { scenario } from "../scenario/config";
-import { reports, reportTypeOf } from "../scenario/model";
+import { reports, reportTypeOf, requestFromReport, requests, roleOf } from "../scenario/model";
 import { timeOf } from "../scenario/ui/parts";
 
 const S = scenario;
 
 export function ReportPage() {
   const { items, add } = useCollection(reports);
-  const { me } = useMe();
+  const { me, people, join } = useMe();
+  const { add: addRequest } = useCollection(requests);
+  const [followUrl, setFollowUrl] = useState<string | null>(null);
   const [pos, setPos] = useState<(LatLng & { accuracy: number }) | null | undefined>(undefined);
   const [note, setNote] = useState("");
   const [sent, setSent] = useState<string | null>(null);
@@ -30,7 +32,16 @@ export function ReportPage() {
   async function report(type: string) {
     const where = pos ?? S.app.center;
     const at = new Date().toISOString();
-    await add({ type, note: note.trim(), lat: where.lat, lng: where.lng, at, by: me?.handle ?? "anonim", approx: !pos });
+    const report = { type, note: note.trim(), lat: where.lat, lng: where.lng, at, by: me?.handle ?? "anonim", approx: !pos };
+    if (S.reports.toRequest) {
+      // raportul devine o cerere cu flux; cine raportează trebuie să aibă rolul care cere (ex: cetățean)
+      const reporter = me?.role === S.flow.requester ? me : await join(`${roleOf(S.flow.requester).label} ${people.filter((p) => p.role === S.flow.requester).length + 1}`, S.flow.requester);
+      const rec = await addRequest(requestFromReport(S, report, reporter.handle));
+      await add({ ...report, by: reporter.handle, requestId: rec.id });
+      setFollowUrl(`/c/${rec.id}`);
+    } else {
+      await add(report);
+    }
     setSent(`${reportTypeOf(type).icon} ${reportTypeOf(type).label}, trimis la ${timeOf(at)}`);
     setNote("");
     navigator.vibrate?.(30);
@@ -57,6 +68,11 @@ export function ReportPage() {
       {sent && (
         <p role="status" className="rounded-xl bg-emerald-500/15 px-4 py-3 text-emerald-200">
           ✓ {sent}. Apare acum pe hartă.
+          {followUrl && (
+            <Link href={followUrl} className="mt-1 block underline">
+              Urmărește ce se întâmplă cu ea →
+            </Link>
+          )}
         </p>
       )}
       <section>
@@ -71,7 +87,7 @@ export function ReportPage() {
           ))}
         </ul>
       </section>
-      <Link href="/harta" className="text-center text-sm text-slate-500 underline">
+      <Link href="/cereri" className="text-center text-sm text-slate-500 underline">
         Vezi harta
       </Link>
     </main>
