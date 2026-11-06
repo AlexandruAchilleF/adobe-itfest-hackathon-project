@@ -31,7 +31,7 @@ const PATH = happyPath(S.flow);
 const SEED = S.seed.requests[0];
 const parsedDoc = Doc.safeParse(SEED?.extra?.doc);
 const SEED_DOC = parsedDoc.success ? parsedDoc.data : null;
-const PROMPT = SEED_DOC ? `${SEED.title}: ${formatQty(SEED_DOC.total, SEED_DOC.currency)}. Bonul e în poză.` : S.request.addPlaceholder.replace(/^ex:\s*/i, "") || SEED?.description || "";
+const PROMPT = SEED_DOC ? `${SEED.title}: ${formatQty(SEED_DOC.total, SEED_DOC.currency)}. Documentul e atașat.` : S.request.addPlaceholder.replace(/^ex:\s*/i, "") || SEED?.description || "";
 // în cer: primul pas al fluxului (ex: „Aprobă”) și alternativa lui, plus câte verificări trec pe documentul din seed
 const HERO_STEP = PATH[0];
 const HERO_DANGER = S.flow.transitions.find((t) => t.danger && HERO_STEP && t.from.some((f) => HERO_STEP.from.includes(f)));
@@ -382,7 +382,7 @@ function AiChapter() {
             <span className="rounded-md bg-ok-tint px-2 py-0.5 text-xs font-medium text-ok">verificare deterministă</span>
           </div>
           <div className="rounded-2xl bg-white p-4 ring-1 ring-line">
-            <p className="text-xs font-medium text-muted">{SEED_DOC ? "Textul de pe bon" : "Cum ar spune-o omul"}</p>
+            <p className="text-xs font-medium text-muted">{SEED_DOC ? "Textul de pe document" : "Cum ar spune-o omul"}</p>
             <p className="mt-1 min-h-[3em] leading-snug">
               {typed}
               {!done && <span className="caret" />}
