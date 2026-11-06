@@ -11,7 +11,7 @@ async function offline(page: Page) {
 
 test("telefon → sesizare → echipa o rezolvă → cetățeanul spune „nu s-a rezolvat” → echipa reia", async ({ context, page }) => {
   await offline(page);
-  await page.goto("/cereri?demo=1&ca=echipa-drumuri");
+  await page.goto("/cereri?demo=1&dev=1&ca=echipa-drumuri");
   await page.getByRole("button", { name: "Resetează datele demo" }).click();
   await expect(page.getByText("8 sesizări")).toBeVisible();
 
@@ -53,7 +53,7 @@ test("telefon → sesizare → echipa o rezolvă → cetățeanul spune „nu s-
 
 test("cronometrul arată cât stau sesizările nepreluate", async ({ page }) => {
   await offline(page);
-  await page.goto("/cereri?demo=1&ca=echipa-iluminat");
+  await page.goto("/cereri?demo=1&dev=1&ca=echipa-iluminat");
   await page.getByRole("button", { name: "Resetează datele demo" }).click();
   await page.goto("/cronometru?demo=1");
   await expect(page.getByTestId("process-waiting")).toContainText("Bec stins pe toată aleea");

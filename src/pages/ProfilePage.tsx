@@ -9,8 +9,8 @@ import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { useMascotPage } from "../modules/mascot/page";
 import { scenario } from "../scenario/config";
-import { categoryOf, requests } from "../scenario/model";
-import { Avatar, StatusPill } from "../scenario/ui/parts";
+import { requests } from "../scenario/model";
+import { Avatar, formatQty, StatusPill } from "../scenario/ui/parts";
 
 const S = scenario;
 
@@ -89,18 +89,16 @@ export function ProfilePage() {
         </Card>
       )}
       <Card title={me.role === S.flow.requester ? `${S.request.plural[0].toUpperCase()}${S.request.plural.slice(1)} mele` : "Ce am făcut"}>
-        <ul className="space-y-1" data-testid="profile-requests">
+        <ul className="divide-y divide-line" data-testid="profile-requests">
           {mine.map((r) => (
-            <li key={r.id} className="flex items-center gap-3 rounded-xl bg-slate-800/50 px-3 py-2 text-sm">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: categoryOf(r.data.category).color }} aria-hidden />
-              <span className="min-w-0 flex-1 truncate">
-                {r.data.title} · {r.data.quantity} {r.data.unit}
-              </span>
-              {credited && toneOf(S.flow, r.data) === "done" && <span className="text-xs text-accent">+{pointsFor(r.data, S.points)}</span>}
+            <li key={r.id} className="flex items-center gap-4 py-3 text-sm">
+              <span className="min-w-0 flex-1 truncate font-medium text-ink">{r.data.title}</span>
+              <span className="shrink-0 font-medium text-ink tabular-nums">{formatQty(r.data.quantity, r.data.unit)}</span>
+              {credited && toneOf(S.flow, r.data) === "done" && <span className="text-xs font-medium text-ok">+{pointsFor(r.data, S.points)}</span>}
               <StatusPill status={r.data.status} />
             </li>
           ))}
-          {!mine.length && <li className="text-sm text-slate-500">Nimic încă. <Link href="/cereri" className="text-accent">Vezi harta →</Link></li>}
+          {!mine.length && <li className="text-sm text-slate-500">Nimic încă. <Link href="/cereri" className="font-medium text-ink underline">{S.features.map ? "Vezi harta" : `Vezi ${S.request.plural}`}</Link></li>}
         </ul>
       </Card>
     </div>

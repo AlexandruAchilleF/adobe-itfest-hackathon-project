@@ -8,7 +8,7 @@ import { useMe } from "../lib/identity";
 import { useCollection } from "../lib/store";
 import { scenario } from "../scenario/config";
 import { requests, roleOf } from "../scenario/model";
-import { StatusPill, Timeline } from "../scenario/ui/parts";
+import { formatQty, StatusPill, Timeline } from "../scenario/ui/parts";
 import { useSteps } from "../scenario/useSteps";
 
 const S = scenario;
@@ -24,8 +24,8 @@ export function ConfirmPage() {
   const [error, setError] = useState<string | null>(null);
   const rec = items.find((r) => r.id === id);
 
-  if (loading) return <p className="p-6 text-center text-slate-400">Se încarcă…</p>;
-  if (!rec) return <p className="p-6 text-center text-slate-400">Linkul nu mai e valid. <Link href="/" className="underline">Înapoi</Link></p>;
+  if (loading) return <p className="p-6 text-center text-muted">Se încarcă…</p>;
+  if (!rec) return <p className="p-6 text-center text-muted">Linkul nu mai e valid. <Link href="/" className="font-medium text-ink underline">Înapoi</Link></p>;
 
   // linkul din SMS acționează în numele celui care a cerut
   const actor = { handle: rec.data.requester, role: S.flow.requester };
@@ -44,27 +44,30 @@ export function ConfirmPage() {
   }
 
   return (
-    <div className="sky min-h-dvh">
+    <div className="min-h-dvh bg-paper">
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-5 px-6 py-8">
-      <p className="label-caps">{S.app.name}</p>
+      <p className="flex items-center gap-2 text-sm font-semibold text-ink">
+        <span className="grid h-5 w-5 place-items-center rounded-[5px] bg-ink" aria-hidden>
+          <span className="h-2 w-2 rounded-[2px] bg-coral-bright" />
+        </span>
+        {S.app.name}
+      </p>
       <h1 className="text-[2rem] font-semibold leading-[1.05] text-ink">
         {rec.data.title}
       </h1>
-      <p className="text-slate-300">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-2">
         {helpers || `${S.request.singular[0].toUpperCase()}${S.request.singular.slice(1)} ta`}
         {/* „1 sesizare” nu spune nimic; cantitatea apare doar când e o cantitate reală */}
         {!(rec.data.quantity === 1 && rec.data.unit === S.request.singular) && (
           <>
             :{" "}
-            <b>
-              {rec.data.quantity} {rec.data.unit}
-            </b>
+            <b className="font-semibold text-ink tabular-nums">{formatQty(rec.data.quantity, rec.data.unit)}</b>
           </>
         )}{" "}
         <StatusPill status={rec.data.status} />
       </p>
       {result ? (
-        <p role="status" className="rounded-xl bg-emerald-500/15 px-4 py-3 text-emerald-200" data-testid="confirm-result">
+        <p role="status" className="rounded-xl bg-ok-tint px-4 py-3 text-ok" data-testid="confirm-result">
           {result}
         </p>
       ) : can.length ? (
@@ -73,27 +76,27 @@ export function ConfirmPage() {
             .filter((t) => !t.danger)
             .map((t) => (
               <button key={t.id} className={`${big} btn-primary`} onClick={() => void act(t.id)} disabled={t.note === "required" && !note.trim()}>
-                ✓ {t.label}
+                {t.label}
               </button>
             ))}
-          {can.some((t) => t.note) && <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce s-a întâmplat?" className="rounded-xl border border-slate-700 bg-slate-950 px-3 py-3" aria-label="Ce s-a întâmplat" />}
+          {can.some((t) => t.note) && <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ce s-a întâmplat?" className="px-3.5 py-3" aria-label="Ce s-a întâmplat" />}
           {can
             .filter((t) => t.danger)
             .map((t) => (
               <button key={t.id} className={`${big} btn-danger`} onClick={() => void act(t.id, true)} disabled={t.note === "required" && !note.trim()}>
-                ✗ {t.label}
+                {t.label}
               </button>
             ))}
         </>
       ) : (
-        <p className="text-slate-400" data-testid="confirm-waiting">
+        <p className="text-muted" data-testid="confirm-waiting">
           {waitingOn(S.flow, rec.data).length
             ? `Acum așteaptă: ${waitingOn(S.flow, rec.data).map((r) => roleOf(r).label.toLowerCase()).join(" sau ")}. Primești SMS când e rândul tău.`
             : "Nu mai e nimic de făcut aici."}
         </p>
       )}
       <Timeline r={rec.data} nameOf={nameOf} />
-      {error && <p role="alert" className="text-rose-300">{error}</p>}
+      {error && <p role="alert" className="text-bad">{error}</p>}
     </main>
     </div>
   );

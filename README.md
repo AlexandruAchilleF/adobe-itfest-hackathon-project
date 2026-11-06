@@ -63,7 +63,7 @@ Codul scris dinainte e permis la ITFest × Adobe 2026. Îl declarăm, ca juriul 
 
 **Cu cine am vorbit azi:** _(câți oameni, ce cifre au spus; vezi `docs/BRIEF.md`)_
 
-## Module opționale (meniul „Pentru echipă”)
+## Module opționale (panoul echipei, `?dev=1`)
 
 | Modul | Fluxul |
 |---|---|
@@ -72,7 +72,7 @@ Codul scris dinainte e permis la ITFest × Adobe 2026. Îl declarăm, ca juriul 
 | **Asistent cu confirmare** (`/assistant`) | cerere în limbaj natural → acțiuni pe cererile scenariului → omul aprobă orice modificare |
 | **Business canvas + sondaj** (`/business`, `/survey`) | problemă, cine plătește, piață → sondaj prin QR → „11 din 14 (79%) au răspuns Da” |
 
-Înainte de pitch: `features.optionalModules: false` în scenariu, ca juriul să vadă un singur drum.
+Paginile astea, modul demo, înregistrarea video și resetarea datelor apar în panoul echipei: deschideți aplicația cu `?dev=1` (rămâne pornit în browserul vostru până la `?dev=0`). Juriul vede doar paginile scenariului.
 
 ## Piesele de bază în cod
 

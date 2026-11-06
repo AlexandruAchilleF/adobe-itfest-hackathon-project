@@ -82,6 +82,7 @@ export const vecini = defineScenario({
   features: { map: true, gamification: true, matching: true, optionalModules: true },
   mascot: {
     enabled: true,
+    character: true,
     name: "Țepi",
     color: "#8b5e3c",
     persona: "un arici prietenos care vorbește rar și clar, pentru oameni în vârstă",

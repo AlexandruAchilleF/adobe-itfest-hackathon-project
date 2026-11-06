@@ -8,3 +8,7 @@ playwright-report
 *.log
 .DS_Store
 public/mediapipe
+
+# înregistrări de referință: țineți-le în afara repo-ului (sunt mari)
+docs/referinte/*.mov
+docs/referinte/*.mp4

@@ -25,11 +25,11 @@ Fișierul de lucru e `src/scenario/scenarios/<nume>.ts`. Activarea: `src/scenari
 
 ## 2. Urme de template (înainte de ora 6)
 
-- [ ] `features.optionalModules: false`. Meniul arată doar paginile scenariului.
+- [ ] `features.optionalModules: false` și `?dev=0` pe laptopul de pitch: panoul echipei (Rec, Mod demo, resetare) nu se vede.
 - [ ] `VITE_APP_NAME` pe Vercel (sau doar `app.name`).
 - [ ] `/business` și `/survey` au fost folosite? Ștergeți exemplul cu licitațiile SEAP din canvas dacă îl arătați juriului.
 - [ ] Nicio pagină din meniu nu spune „template”, „rețetă”, „demo” sau „exemplu”.
-- [ ] Bifa „Mod demo” e oprită dacă aveți cheie AI. Pastila „AI: mock” în antet citește „fals” pentru juriu.
+- [ ] Bifa „Mod demo” din panoul echipei e oprită dacă aveți cheie AI.
 
 ## 3. README pentru juriu (ultima oră)
 
