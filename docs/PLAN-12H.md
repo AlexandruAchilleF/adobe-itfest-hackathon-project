@@ -16,6 +16,7 @@ La ITFest, Adobe a dat de fiecare dată un scenariu cu funcționalități opțio
 |---|---|---|
 | un proces între oameni dintr-o organizație (aprobări, cereri interne, deconturi, documente) | `deconturi` | `roles`, `flow`, `documents.rules`, `seed` |
 | oameni care au ceva și oameni care au nevoie, pe o hartă (resurse, voluntariat) | `resurse` | `roles`, `flow`, `categories`, `reports`, `points`, `seed` |
+| cereri interne: IT, HR, onboarding, aprobări fără documente | `interne` | `roles`, `flow`, `categories`, `seed` |
 | raportare în timp real, la locația curentă (sesizări, incidente, ce vezi acum) | `sesizari` | `reports.types`, `flow`, `roles`, `seed` |
 | citit și înțeles documente lungi | modulul `/docs` + `flow` pentru ce urmează după citire | documentul, întrebările |
 | un material creativ sau accesibilitate | modulul `/design` | brief-ul, formatul, regulile auditului |

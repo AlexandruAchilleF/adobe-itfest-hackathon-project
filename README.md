@@ -25,6 +25,7 @@ Două scenarii exemplu, ca să vedeți cum arată config-ul:
 - **`deconturi`** (implicit): angajat → manager → contabil, bonul verificat de cod, cronometrul. Plătitorul e firma.
 - **`sesizari`**: raportezi de pe telefon (GPS și oră), raportul devine sesizare cu flux, echipa primăriei o preia și o rezolvă, cetățeanul confirmă din SMS sau spune „nu s-a rezolvat”. Forma brief-ului din 2024. Plătitorul: primăria (ipoteză).
 - **`resurse`**: repetiția pe brief-ul ResourceWise 2023 (restaurante → adăposturi, hartă, puncte, ranguri). Vezi `docs/REPETITIE-2023.md`.
+- **`interne`**: cereri interne IT și onboarding (angajat → manager → IT → „funcționează” sau „nu merge”), fără hartă și fără documente. Plătitorul: firma (ipoteză).
 - **`vecini`**: două roluri, hartă, puncte, raport live. Arată mecanica; nu are un plătitor verificat și nu e o idee de pitch.
 
 Scenariul se alege cu `VITE_SCENARIO=<id>` (în `.env` local și în setările Vercel, la build) sau schimbând valoarea implicită din `src/scenario/config.ts`.
