@@ -745,15 +745,20 @@
     if (bubble.hidden || bubble.dataset.summary !== "true") return;
     var proposals = globalThis.SpireCritique.modificationSuggestions(crits);
     if (proposals.length) {
-      line(bubble, "h2", "Aș modifica…");
+      var changes = document.createElement("details");
+      line(changes, "summary", "Aș modifica…");
       var list = document.createElement("ul");
-      proposals.forEach(function (text) { line(list, "li", text); }); bubble.appendChild(list);
+      proposals.forEach(function (text) { line(list, "li", text); }); changes.appendChild(list); bubble.appendChild(changes);
     }
     line(bubble, "h2", "Pentru campania ta");
     var questions = globalThis.SpireCritique.briefQuestions(crits.map(function (c) { return c.evidence && ["primary-action", "navigation"].includes(c.evidence.category) ? "link-vag" : c.ruleId; }), title);
     var questionIndex = 0;
     var conversation = document.createElement("div"); bubble.appendChild(conversation);
     var finalActions = document.createElement("div");
+    function revealAnswer(target) {
+      positionPopup(bubble);
+      bubble.scrollTop += Math.max(0, target.getBoundingClientRect().bottom - bubble.getBoundingClientRect().bottom + 16);
+    }
     function renderQuestion() {
       conversation.replaceChildren(); answerInputs = {};
       questions.slice(0, questionIndex).forEach(function (q) {
@@ -761,7 +766,7 @@
         line(answer, "strong", q.text + " "); line(answer, "span", briefAnswers[q.id] || "");
       });
       finalActions.hidden = questionIndex < questions.length;
-      if (questionIndex >= questions.length) { positionPopup(bubble); return; }
+      if (questionIndex >= questions.length) { revealAnswer(finalActions); return; }
       var q = questions[questionIndex];
       line(conversation, "p", "Întrebarea " + (questionIndex + 1) + " din " + questions.length);
       var label = document.createElement("label"); label.className = "spire-question";
@@ -782,7 +787,7 @@
       next.disabled = !input.value.trim();
       input.addEventListener("input", function () { memoryVersion++; briefAnswers[q.id] = input.value; next.disabled = !input.value.trim(); });
       input.addEventListener("keydown", function (event) { if (event.key === "Enter") { event.preventDefault(); advance(); } });
-      input.focus({ preventScroll: true }); positionPopup(bubble);
+      input.focus({ preventScroll: true }); revealAnswer(conversation);
     }
     var note = line(bubble, "p", memoryError); note.setAttribute("role", "status");
     button(finalActions, "Păstrează răspunsurile", async function () {
@@ -830,7 +835,7 @@
     return new Promise(function (resolve) {
       var request = { requestId: "crit-" + Date.now() + "-" + token, resolve: resolve, sent: false };
       activeAiCritique = request;
-      request.timer = setTimeout(function () { finish({ error: true }); }, 13000 * (globalThis.__spireTestAiTimeoutScale || 1));
+      request.timer = setTimeout(function () { finish({ error: true }); }, 50000 * (globalThis.__spireTestAiTimeoutScale || 1));
       function finish(value) {
         if (activeAiCritique !== request) return;
         clearTimeout(request.timer); clearTimeout(request.readyTimer); activeAiCritique = null; value.screenshot = request.screenshot; resolve(value);
@@ -843,7 +848,7 @@
         iframe.contentWindow.postMessage({ type: "spire:critique-request", requestId: request.requestId, input: request.input }, config.APP_ORIGIN);
       };
       ensureApp(true);
-      request.readyTimer = setTimeout(function () { if (!appReady) finish({ error: true }); }, 2000 * (globalThis.__spireTestAiTimeoutScale || 1));
+      request.readyTimer = setTimeout(function () { if (!appReady) finish({ error: true }); }, 8000 * (globalThis.__spireTestAiTimeoutScale || 1));
       void critiqueScreenshot().then(function (image) {
         if (image) request.input.screenshot = image;
         request.screenshot = image;

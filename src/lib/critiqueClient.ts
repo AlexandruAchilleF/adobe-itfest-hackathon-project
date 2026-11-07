@@ -93,7 +93,7 @@ export async function critiqueWithAi(input: z.input<typeof CritiqueRequest>): Pr
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => { controller.abort(); reject(new Error("Analiza AI a depășit timpul disponibil.")); }, 10_000);
+      timer = setTimeout(() => { controller.abort(); reject(new Error("Analiza AI a depășit timpul disponibil.")); }, 45_000);
     });
     const { data, raw } = await Promise.race([ask({
       system: SYSTEM,

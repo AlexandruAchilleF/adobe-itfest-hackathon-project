@@ -33,7 +33,7 @@ let appMode: "raspunde" | "tace" | "redirect" = "raspunde";
 // content.js nu mai scanează la `load`-ul iframe-ului; fără cererea asta nu vine spire:page.
 let appScan = true;
 let appReadyAuto = true;
-let aiMode: "error" | "mock" | "silent" = "error";
+let aiMode: "error" | "mock" | "silent" | "long" = "error";
 
 // Dublura aplicației: ține minte mesajele primite și, la cerere, răspunde cu spire:picks.
 // Alegerile de aici sunt doar o dublură de test, după text și tag; regulile reale stau în
@@ -64,7 +64,8 @@ window.addEventListener("message", function (event) {
     window.__critiqueRequest = data;
     if (${JSON.stringify(aiMode)} === "silent") return;
     var c={elementId:data.input.elements[0]?.id || null,ruleId:"ai-critique",level:"important",title:"Titlul nu explică produsul",body:"Valoarea produsului rămâne neclară.",fix:"Aș numi produsul în titlu.",agent:"",evidence:{category:"purpose"}};
-    parent.postMessage({type:"spire:critique-result",requestId:data.requestId, ...(${JSON.stringify(aiMode)} === "error" ? {error:true} : {result:{critiques:[c],mode:"mock"}})}, "*");
+    var crits = ${JSON.stringify(aiMode)} === "long" ? ["oferta", "navigarea", "produsul"].map(function(topic,index){return {...c,elementId:null,fix:"Aș prezenta " + topic + " într-o secțiune clară, cu informații verificate despre serviciu, disponibilitate și condiții, astfel încât vizitatorii să poată lua o decizie informată.",evidence:{category:["purpose","hierarchy","navigation"][index]}};}) : [c];
+    parent.postMessage({type:"spire:critique-result",requestId:data.requestId, ...(${JSON.stringify(aiMode)} === "error" ? {error:true} : {result:{critiques:crits,mode:"mock"}})}, "*");
     return;
   }
   // Referința (A3): o arătăm ca aplicația reală, cu titlul „Ce am văzut”, și o ținem minte.
@@ -1038,3 +1039,23 @@ for (const mode of [{}, { status: 500 }, { model: "mock" }, { delayMs: 200 }]) {
     if (!("status" in mode)) expect(await sw.evaluate(() => (globalThis as unknown as { __aiBody: unknown }).__aiBody)).toMatchObject({ attachment: "image/jpeg", hasSchema: true });
   });
 }
+
+test('brief: întrebarea și continuarea rămân la vedere după observații pe un ecran scund', async () => {
+  aiMode = 'long';
+  const page = await openFixture();
+  await page.setViewportSize({ width: 1280, height: 540 });
+  await inject(); await finishCritique(page);
+  const root = page.locator('#spire-root');
+  await expect(root.getByRole('textbox')).toBeInViewport({ratio:1});
+  await expect(root.getByRole('button',{name:'Continuă',exact:true})).toBeInViewport({ratio:1});
+  for (let i=0; i<4 && await root.getByRole('button',{name:'Continuă',exact:true}).isVisible(); i++) {
+    await root.getByRole('textbox').fill('Un răspuns detaliat pentru campanie, public și mesaj. '.repeat(5));
+    await root.getByRole('button',{name:'Continuă',exact:true}).click();
+    if (await root.getByRole('textbox').count()) {
+      await expect(root.getByRole('textbox')).toBeInViewport({ratio:1});
+      await expect(root.getByRole('button',{name:'Continuă',exact:true})).toBeInViewport({ratio:1});
+    }
+  }
+  await expect(root.getByRole('button',{name:'Continuă cu o campanie'})).toBeInViewport({ratio:1});
+  await page.close();
+});

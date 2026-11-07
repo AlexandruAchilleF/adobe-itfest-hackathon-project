@@ -13,6 +13,15 @@ const respond = (observations = [finding()], provider = "gemini") => vi.mocked(a
 beforeEach(() => vi.clearAllMocks());
 
 describe("critica AI", () => {
+  it("primește răspunsul Gemini care ajunge după douăsprezece secunde", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(ask).mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: { observations: [] }, raw: { provider: "gemini" } } as never), 12_000)));
+      const assertion = expect(critiqueWithAi(input())).resolves.toMatchObject({ mode: "ai" });
+      await vi.advanceTimersByTimeAsync(12_000);
+      await assertion;
+    } finally { vi.useRealTimers(); }
+  });
   it("precompletează brief-ul din același răspuns, numai cu dovezi valide", async () => {
     vi.mocked(ask).mockResolvedValue({ data: { observations: [], brief: {
       product: { value: "Servicii", evidence: "Servicii" },
@@ -140,13 +149,13 @@ describe("critica AI", () => {
     expect(result.searchOptimization[0].query).toContain("Servicii");
     expect(result.searchOptimization.every((item) => item.status === "needs-check")).toBe(true);
   });
-  it("întrerupe apelul după zece secunde și propagă erorile", async () => {
+  it("întrerupe apelul după bugetul celor două modele și propagă erorile", async () => {
     vi.useFakeTimers();
     try {
       vi.mocked(ask).mockReturnValue(new Promise(() => {}));
       const pending = critiqueWithAi(input());
       const assertion = expect(pending).rejects.toThrow(/timp/i);
-      await vi.advanceTimersByTimeAsync(10_000);
+      await vi.advanceTimersByTimeAsync(45_000);
       await assertion;
       expect(vi.mocked(ask).mock.calls[0][0].signal?.aborted).toBe(true);
     } finally { vi.useRealTimers(); }
