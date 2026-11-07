@@ -98,6 +98,14 @@ function Shell() {
   }, []);
   useEffect(() => setMenu(false), [location]);
 
+  // în extensie, /nou e un panou îngust, fără meniu: Spire stă peste pagina omului
+  if (location === "/nou" && new URLSearchParams(window.location.search).get("din") === "extensie") {
+    return (
+      <Suspense fallback={<Loading />}>
+        <NewCampaignPage />
+      </Suspense>
+    );
+  }
   const bare = BARE.find(([path]) => location === path || location.startsWith(`${path}/`));
   if (bare) {
     const Page = bare[1];
@@ -131,7 +139,7 @@ function Shell() {
           </Link>
           <nav className="hidden h-full items-stretch gap-6 lg:flex">{navLinks}</nav>
           <div className="ml-auto flex items-center gap-1">
-            <RoleSwitcher />
+            {!S.nav && <RoleSwitcher />}
             <button className="grid h-10 w-10 place-items-center rounded-lg text-ink hover:bg-paper-2 lg:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
               <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden>
                 <path d={menu ? "M3 1l14 12M17 1L3 13" : "M1 1h18M1 7h18M1 13h18"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />

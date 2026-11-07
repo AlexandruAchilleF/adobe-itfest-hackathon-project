@@ -15,7 +15,7 @@ import {
 import type { Design, DesignElement } from "../../lib/design";
 import { newId } from "../../lib/design";
 
-type Tagged = FabricObject & { designId?: string };
+type Tagged = FabricObject & { designId?: string; designFont?: string };
 
 const topLeft = { originX: "left", originY: "top" } as const;
 
@@ -66,11 +66,21 @@ export async function elementToFabric(el: DesignElement): Promise<FabricObject> 
     }
   }
   (obj as Tagged).designId = el.id;
+  if (el.type === "text") (obj as Tagged).designFont = el.fontFamily;
   return obj;
 }
 
+/** Pânza desenează textul o singură dată: fonturile mărcii trebuie să fie gata înainte. */
+async function loadFonts(design: Design): Promise<void> {
+  const families = new Set(design.elements.flatMap((e) => (e.type === "text" && e.fontFamily ? [e.fontFamily] : [])));
+  await Promise.allSettled([...families].flatMap((f) => [document.fonts.load(`16px "${f} Variable"`), document.fonts.load(`bold 16px "${f} Variable"`)]));
+}
+
 export async function loadDesign(canvas: StaticCanvas, design: Design): Promise<void> {
+  await loadFonts(design);
   const objects = await Promise.all(design.elements.map(elementToFabric));
+  // între timp pânza poate fi fost închisă (ai plecat de pe pagină)
+  if (canvas.destroyed || canvas.disposed) return;
   canvas.clear();
   canvas.backgroundColor = design.background;
   canvas.add(...objects);
@@ -98,6 +108,7 @@ export function fabricToElement(obj: FabricObject): DesignElement | null {
       fill: color(obj.fill, "#000000"),
       fontWeight: String(obj.fontWeight) === "bold" || Number(obj.fontWeight) >= 600 ? "bold" : "normal",
       align: obj.textAlign === "center" || obj.textAlign === "right" ? obj.textAlign : "left",
+      fontFamily: (obj as Tagged).designFont,
       rotation,
     };
   }
