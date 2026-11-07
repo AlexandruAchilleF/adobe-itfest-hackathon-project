@@ -156,5 +156,6 @@ Notele 1–5 sunt pe cele 9 întrebări din `docs/JURIU.md`; nota ponderată e c
 | 08:xx | Respinsă: aprobarea agenție ↔ client (AI ar fi add-on) | AI-Driven Innovation |
 | 09:xx | Aleasă: „stilul altcuiva, conținutul tău” (referință → stil; mascota, culorile și textele mărcii), verificat de cod | AI-Driven Innovation, Problem Solving, Demo |
 | 09:xx | Scop: static acum, video (storyboard + animatic) după ora 6; logo scos; interfața site-ului după hackathon | Demo, Technical Excellence |
+| 10:xx | Scanarea site-ului e pentru campanie, nu pentru site: uliul alege elementele utile, din stilul ales iese kitul (postare + story + hero), cu reguli de conversie în gardă; site-ul întreg nu se reface | Problem Solving, Brief („optimizează conversii”) |
 | 10:xx | Al doilea consiliu + decizia echipei: extensia rămâne, ca „corpul” agentului (uliul apare peste site, se uită, întreabă); referința din demo e licențiată sau propria campanie, nu concurentul; buclă de agent cu garda; spec: `docs/superpowers/specs/2026-11-07-uli-stil-pe-marca-design.md` | AI-Driven Innovation, Demo |
 | 09:xx | Consiliul: originalitatea e în gardă și în rezultatul editabil, nu în clonare; extensia doar ca strat subțire; citirea paginii utilă doar pe site-uri, nu pe Meta/Instagram | Technical Excellence |

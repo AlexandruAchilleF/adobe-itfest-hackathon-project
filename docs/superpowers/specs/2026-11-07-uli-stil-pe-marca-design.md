@@ -7,6 +7,8 @@ Brief-ul, criteriile și deciziile: `docs/BRIEF.md`, `docs/JURIU.md`.
 
 Un agent care trăiește peste orice site: omul de marketing vede un design care îi place, apasă iconița, uliul apare peste pagină, se uită la ea, îi arată ce a observat, îl întreabă 3–5 lucruri cu variante și reface elementul ales pe marca omului (mascota lui în același stil, culorile din brand guidelines, textele lui). Elementul poate fi o imagine (postare, banner, afiș, mascotă) sau o secțiune de site (de exemplu hero-ul unui landing page). Rezultatul e verificat de cod: o imagine devine design pe straturi, exportabil în Adobe Express; o secțiune de site devine secțiunea ta, cu previzualizare, PNG și cod HTML/CSS.
 
+Ținta e o **campanie**, nu un site: uliul scanează pagina după elementele utile pentru o campanie (hero, bannere de ofertă, mascotă, CTA-uri, insigne de reducere), iar din stilul ales face un **kit de campanie** coerent pe marca omului: postare (1080×1350), story (1080×1920) și secțiunea hero pentru landing page, toate din aceeași anatomie. Site-ul întreg nu se reface (ar fi web design, nu marketing; v0, Lovable, Framer fac deja asta; risc de „copie”).
+
 ## 2. Pentru cine și ce durere
 
 - **Omul:** cel care face marketing într-o firmă (mică, medie, mare), fără designer la îndemână, pe laptop. Pentru demo: o singură persoană, cu o marcă de demo cu mascotă (pinguin).
@@ -20,12 +22,12 @@ Un agent care trăiește peste orice site: omul de marketing vede un design care
 |---|---|---|---|
 | 0. Marca (o dată) | formular: logo, culori cu roluri (principală, accent, fundal, text), fonturi, ton, mențiuni obligatorii, mascota (poză/desen). Precompletat pentru demo | om | înainte |
 | 1. Uliul intră | iconița extensiei → uliul apare peste pagină | extensia | 0–5 |
-| 2. Uliul se uită | chenare care se aprind pe rând peste elementele paginii; în balon, ce a văzut („mascota lor e desenată plat, cu contur gros; culori: roșu, crem”) | extensia (citirea paginii) + AI (rezumat) | 5–20 |
-| 3. Omul arată elementul | clic pe element sau decupaj cu dreptunghi | om + extensia | 20–25 |
+| 2. Uliul scanează | chenare care se aprind pe rând peste elementele paginii; uliul alege elementele utile pentru o campanie („am găsit 4: hero-ul, banner-ul de −20%, mascota, butonul principal”) și spune de ce merge fiecare | extensia (citirea paginii) + AI (alegerea și rezumatul) | 5–20 |
+| 3. Omul alege stilul | clic pe unul din elementele găsite, pe alt element sau decupaj cu dreptunghi | om + extensia | 20–25 |
 | 4. Anatomia | ce fel de element e (imagine sau secțiune de site), zonele (titlu, ofertă, CTA, ilustrație, logo), rolurile culorilor, stilul ilustrației, subiectul, de ce merge | AI cu vedere (+ structura citită din pagină, la secțiuni) | 25–35 |
-| 5. Întrebările | 3–5 întrebări cu variante în balonul uliului (ce promovezi, oferta, CTA, canalul); mascota și culorile vin din marcă | cod (ce lipsește) + AI (variantele) | 35–50 |
-| 6. Rezultatul | în panou: așezarea din referință, culorile și fonturile mărcii pe roluri, mascota mărcii generată în stilul referinței, textele. Demo: hero-ul unui site → hero-ul tău, cu pinguinul tău | cod + AI | 50–75 (wow) |
-| 7. Garda | bife lângă design; ce pică se corectează automat de agent (cel mult 2 reîncercări) înainte să vadă omul | cod (+ o verificare AI marcată ca atare) | 75–90 |
+| 5. Întrebările | 3–5 întrebări cu variante în balonul uliului (ce promovezi, oferta, CTA, ce formate din kit); mascota și culorile vin din marcă | cod (ce lipsește) + AI (variantele) | 35–50 |
+| 6. Kitul de campanie | în panou: postarea, story-ul și hero-ul, cu așezarea din referință adaptată fiecărui format, culorile și fonturile mărcii pe roluri, mascota mărcii generată o dată în stilul referinței, textele. Demo: hero-ul unui site → kitul tău, cu pinguinul tău | cod + AI | 50–75 (wow) |
+| 7. Garda | bife lângă fiecare format, plus regulile de conversie și consecvența ofertei între formate; ce pică se corectează automat de agent (cel mult 2 reîncercări) înainte să vadă omul | cod (+ o verificare AI marcată ca atare) | 75–90 |
 | 8. Retuș | clic pe un strat, schimbi prețul → bifa devine roșie, apoi verde după corectare | om | 90–110 |
 | 9. Export | imagine: PNG și Adobe Express (add-on sau Embed SDK, după test); secțiune de site: PNG (în Express ca imagine) și cod HTML/CSS de copiat | cod | 110–120 |
 
@@ -44,7 +46,8 @@ Logică pură, în `src/lib/`, cu teste în `tests/`:
 | `brand.ts` | schema profilului mărcii + seed-ul de demo | Zod |
 | `anatomy.ts` | schema `Anatomy`: `kind: "image" \| "section"`, formatul, `zones[]` (rol, casetă în coordonate 0–1, lungimea textului), `colorRoles` (fundal, principală, accent, text: hex + sursa „pagină”/„pixeli”), `illustration` (stilul, subiectul, caseta), `why[]` | Zod |
 | `gaps.ts` | anatomie + marcă + răspunsuri → întrebările care lipsesc (deterministe), cu variantele propuse de AI | — |
-| `compose.ts` | anatomie + marcă + răspunsuri + texte + ilustrație → `Design` (schema din `design.ts`), culorile mărcii mapate pe roluri | `design.ts` |
+| `compose.ts` | anatomie + marcă + răspunsuri + texte + ilustrație + format (postare, story, banner) → `Design` (schema din `design.ts`), culorile mărcii mapate pe roluri; zonele se reașază pe raportul formatului, păstrând ierarhia | `design.ts` |
+| `campaign.ts` | elementele găsite pe pagină → cele utile pentru campanie (reguli: rol, mărime, poziție în primul ecran) ordonate; anatomie + formatele alese → kitul (o listă de rezultate, câte unul pe format) | `compose`, `restyle` |
 | `color.ts` | hex ↔ Lab, distanța între culori, culorile dominante din pixeli | — |
 | `similarity.ts` | amprenta perceptuală a unei imagini (din pixeli), distanța dintre amprente | — |
 | `guard.ts` | design + marcă + răspunsuri + referință + ilustrație → listă de verificări `{ id, ok, mesaj, sursa: "cod" \| "ai" }` | `color`, `similarity`, `accessibility.ts` |
@@ -58,6 +61,8 @@ Verificările gărzii:
 - culorile designului sunt din paleta mărcii; paleta ilustrației generate e aproape de culorile mărcii (prag pe distanța de culoare);
 - ilustrația nouă nu e aproape identică cu cea din referință (prag pe distanța amprentelor);
 - contrastul și lizibilitatea (`auditDesign`, `autoFixDesign` existente);
+- regulile de conversie: CTA-ul există, se vede în primul ecran (la hero) sau în zona de jos a postării, are contrast ≥ 4,5:1 și o mărime minimă; titlul are cel mult un număr de cuvinte stabilit;
+- consecvența kitului: oferta (preț, procent, dată) și CTA-ul sunt aceleași pe toate formatele;
 - **verificare AI, marcată „AI”:** mascota generată seamănă cu mascota mărcii (AI cu vedere compară cele două imagini).
 
 Pentru secțiunile de site, în plus: contrastul se calculează din culorile reale ale fiecărui text pe fundalul lui; nu rămâne nicio culoare, niciun font și niciun text din original (comparat cu lista citită din pagină); imaginile originale sunt toate înlocuite.
@@ -103,7 +108,7 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 
 ## 6. Teste și dovezi
 
-- **Unitare:** `gaps`, `compose`, `restyle` (pe 2 secțiuni serializate de exemplu), `color`, `similarity`, `guard`, `agentLoop` (cu apeluri AI false), pe 3 anatomii de exemplu.
+- **Unitare:** `gaps`, `compose` (pe toate cele 3 formate), `campaign`, `restyle` (pe 2 secțiuni serializate de exemplu), `color`, `similarity`, `guard`, `agentLoop` (cu apeluri AI false), pe 3 anatomii de exemplu.
 - **E2e (Playwright, mock):** aplicația web: referința exemplu → anatomie → răspunsuri → design cu bifele gărzii → retuș (prețul schimbat face bifa roșie) → export. Extensia, încărcată în Chromium: uliul apare peste o pagină locală de test (cu un hero și o mascotă), decupajul ajunge în aplicație, iar hero-ul refăcut nu mai conține culorile, fonturile și textele originale.
 - **Manual, cu cheia reală (nu în `npm run check`):** 10 generări „stil + mascota mărcii”, prag ≥ 5/10 publicabile; 10–15 referințe reale, cu acuratețea anatomiei și rata de reușită după bucla de corectare (cifre pentru Technical Excellence).
 
@@ -111,7 +116,7 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 
 - Video (storyboard + animatic) doar dacă fluxul static merge cap-coadă la ora 6.
 - Logo-ul nu se adaptează.
-- Pagini întregi (doar câte o secțiune azi), animațiile CSS/Lottie, biblioteca de inspirație, profiluri multiple de marcă pentru agenții, brand book PDF (după ora 6, dacă rămâne timp).
+- Site-uri sau pagini întregi (doar secțiunea hero azi), animațiile CSS/Lottie, biblioteca de inspirație, profiluri multiple de marcă pentru agenții, brand book PDF (după ora 6, dacă rămâne timp).
 - Aprobarea responsabilului de brand.
 
 ## 8. Scenariul din template
@@ -121,6 +126,6 @@ Config-ul de scenariu rămâne stratul de texte, pitch și verificări (`/start`
 ## 9. Ordinea de lucru și pragurile
 
 1. Ora 1: testul de generare (în paralel cu stratul extensiei și cu schemele `brand` / `anatomy`).
-2. Până la ora 6: drumul cap-coadă cu mock, în aplicația web și în extensie; întâi imaginea cu mascota, apoi secțiunea de site (omul cu extensia, după ce citirea paginii merge).
+2. Până la ora 6: drumul cap-coadă cu mock, în aplicația web și în extensie; întâi imaginea cu mascota (o postare), apoi kitul (story din aceeași anatomie, regulile de conversie), apoi secțiunea hero (omul cu extensia, după ce citirea paginii merge). Ce nu merge la ora 6 iese din demo.
 3. Ora 6: nu mai adăugăm funcționalități (excepție: video, doar dacă tot fluxul merge).
 4. Ora 9: deploy, test pe laptopul de juriu cu extensia instalată, video de rezervă.
