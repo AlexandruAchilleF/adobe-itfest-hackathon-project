@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, defaultAllowedOrigins } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { apiRoutes } from "./server/vite-api-plugin.ts";
@@ -13,7 +13,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss(), apiRoutes()],
-    server: { host: true, port: 5173 },
+    server: {
+      host: true,
+      port: 5173,
+      // Preflight-ul către /api/ai îl prinde CORS-ul din Vite, deci extensia Spire trebuie permisă și aici.
+      cors: { origin: [defaultAllowedOrigins, /^chrome-extension:\/\/[a-p]{32}$/] },
+    },
     // doar aplicația: add-on-ul Express (express-addon/, adobe-express-addon/) are build-ul lui
     optimizeDeps: { entries: ["index.html"] },
     build: { chunkSizeWarningLimit: 1500 },

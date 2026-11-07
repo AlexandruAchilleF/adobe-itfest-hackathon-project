@@ -26,4 +26,6 @@ Uliul Spire trăiește pe pagină, nu într-un panou: se plimbă peste orice sit
 
 ## Ce nu facem acum
 
-AI pentru formulări sau ierarhie vizuală, rezumatul pentru juriu cu cifre, salvarea criticii în `/campanii`.
+Rezumatul pentru juriu cu cifre, salvarea criticii în `/campanii`.
+
+Adăugat ulterior: observațiile AI despre ierarhie și mesaj (`src/lib/critiqueAi.ts`), peste reguli, cu verificări deterministe și fallback pe reguli.

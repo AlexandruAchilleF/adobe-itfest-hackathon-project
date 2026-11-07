@@ -47,15 +47,52 @@ async function capture(windowId) {
   }
 }
 
+// Observațiile AI ale criticii. Fetch-ul stă aici, nu în pagină: din pagină ar fi supus CORS-ului
+// site-ului. Chrome oprește service worker-ul dacă un fetch depășește 30 s, deci renunțăm înainte.
+const AI_TIMEOUT_MS = 28000;
+const AI_IMAGE_WIDTH = 1280;
+
+async function shrinkImage(dataUrl) {
+  const bitmap = await createImageBitmap(await (await fetch(dataUrl)).blob());
+  const scale = Math.min(1, AI_IMAGE_WIDTH / bitmap.width);
+  const canvas = new OffscreenCanvas(Math.round(bitmap.width * scale), Math.round(bitmap.height * scale));
+  canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  const bytes = new Uint8Array(await (await canvas.convertToBlob({ type: "image/jpeg", quality: 0.75 })).arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 32768) binary += String.fromCharCode(...bytes.subarray(i, i + 32768));
+  return btoa(binary);
+}
+
+async function askCritique(request, image) {
+  try {
+    const attachment = { mimeType: "image/jpeg", data: await shrinkImage(image) };
+    const res = await fetch(SPIRE_CONFIG.APP_URL + "/api/ai", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ prompt: request.prompt, schema: request.schema, mock: request.mock, attachments: [attachment] }),
+      signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) return { ok: false, error: (body && body.error) || "HTTP " + res.status };
+    return { ok: true, data: body && body.data, model: body && body.model };
+  } catch (e) {
+    return { ok: false, error: e && e.message ? e.message : String(e) };
+  }
+}
+
 // Doar mesajele extensiei noastre (content.js), venite dintr-o filă. Paginile web nu pot trimite aici
 // (manifestul nu are externally_connectable), dar verificăm oricum expeditorul.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || !sender.tab) return false;
-  if (!message || message.type !== "capture") return false;
+  if (!message || (message.type !== "capture" && message.type !== "critique-ai")) return false;
   // Doar cadrul principal al filei (content.js nu rulează în iframe-uri).
   if (sender.frameId !== 0) {
     sendResponse({ ok: false, error: "Captura se cere doar din pagina principală." });
     return false;
+  }
+  if (message.type === "critique-ai") {
+    askCritique(message.request, message.image).then(sendResponse);
+    return true;
   }
   capture(sender.tab.windowId).then(sendResponse);
   return true; // răspunsul vine asincron

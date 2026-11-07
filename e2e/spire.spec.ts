@@ -65,7 +65,7 @@ test("landing: critica și extensia apar după noapte, în ordinea poveștii", a
   expect(at("Stilul altcuiva")).toBeLessThan(at("Ochi de uliu"));
   expect(at("Ochi de uliu")).toBeLessThan(at("inSPIRĂ"));
   expect(at("inSPIRĂ")).toBeLessThan(at("N-ai designer"));
-  await expect(page.locator("#critica")).toContainText("local, fără AI");
+  await expect(page.locator("#critica")).toContainText("părere despre ierarhie și mesaj");
   await expect(page.locator("#critica")).toContainText("cel mult 8 observații");
   await expect(page.locator("main")).not.toContainText("audit complet");
 });

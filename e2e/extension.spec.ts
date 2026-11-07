@@ -773,6 +773,94 @@ test("critica aterizează, conturează elementul, avansează și termină cu rez
   await page.close();
 });
 
+// Dublura lui /api/ai, în service worker. `delayMs` simulează un model lent; primele observații se leagă de <h1>.
+async function fakeCritiqueAi(mode: { status?: number; delayMs?: number; model?: string }) {
+  await sw.evaluate((m) => {
+    const g = globalThis as unknown as { __realFetch?: typeof fetch; __aiBody?: unknown; fetch: typeof fetch };
+    g.__realFetch ??= g.fetch;
+    g.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (!String(input).endsWith("/api/ai")) return g.__realFetch!(input, init);
+      const body = JSON.parse(String(init?.body));
+      g.__aiBody = { attachment: body.attachments?.[0]?.mimeType, size: body.attachments?.[0]?.data?.length, hasSchema: Boolean(body.schema) };
+      await new Promise((r) => setTimeout(r, m.delayMs ?? 0));
+      if (m.status) return new Response(JSON.stringify({ error: "picat" }), { status: m.status });
+      const id = (/"id":"(crit-\d+)","tag":"h1"/.exec(body.prompt) ?? [])[1];
+      const observations = [
+        { elementId: id, level: "important", title: "Titlul nu spune oferta", body: "Nu e clar ce primește vizitatorul.", fix: "Spune oferta în titlu." },
+        { elementId: "inventat", level: "important", title: "Observație inventată", body: "x", fix: "y" },
+      ];
+      return new Response(JSON.stringify({ provider: "gemini", model: m.model ?? "gemini-3.8-flash", text: "", data: { observations }, ms: 1 }));
+    }) as typeof fetch;
+  }, mode);
+}
+
+test("critica AI: observația verificată vine prima, cu marcaj, iar cea inventată dispare", async () => {
+  await fakeCritiqueAi({});
+  const page = await openFixture();
+  await inject();
+  await startCritique(page);
+  const root = page.locator("#spire-root"), bubble = root.locator(".spire-bubble");
+  await expect(bubble.locator("h2")).toHaveText("Titlul nu spune oferta");
+  await expect(bubble.locator(".spire-level")).toContainText("părere AI");
+  await expect(bubble).not.toContainText("Pentru asistenții AI");
+  await expect(root.locator(".spire-crit-outline")).toBeVisible();
+  expect(await sw.evaluate(() => (globalThis as unknown as { __aiBody: unknown }).__aiBody)).toMatchObject({ attachment: "image/jpeg", size: expect.any(Number), hasSchema: true });
+  for (let i = 0; i < 10 && !(await bubble.getAttribute("data-summary")); i++) {
+    await expect(bubble).not.toContainText("Observație inventată");
+    const next = root.getByRole("button", { name: "Următorul" });
+    if (await next.isVisible()) await next.click();
+    await page.waitForTimeout(450);
+  }
+  await expect(root.locator('.spire-bubble[data-summary="true"]')).not.toContainText("n-a ajuns");
+  await page.close();
+});
+
+test("critica AI: dacă serverul pică, rămân regulile și rezumatul spune asta", async () => {
+  await fakeCritiqueAi({ status: 500 });
+  const page = await openFixture();
+  await inject();
+  await startCritique(page);
+  const root = page.locator("#spire-root"), bubble = root.locator(".spire-bubble");
+  await expect(bubble.locator(".spire-level")).not.toContainText("părere AI");
+  for (let i = 0; i < 10 && !(await bubble.getAttribute("data-summary")); i++) {
+    const next = root.getByRole("button", { name: "Următorul" });
+    if (await next.isVisible()) await next.click();
+    await page.waitForTimeout(450);
+  }
+  await expect(root.locator('.spire-bubble[data-summary="true"]')).toContainText("Părerea AI n-a ajuns");
+  await page.close();
+});
+
+test("critica AI: un model lent nu blochează turul, iar observația intră din mers", async () => {
+  await fakeCritiqueAi({ delayMs: 2500 });
+  const page = await openFixture();
+  await inject();
+  await startCritique(page);
+  const root = page.locator("#spire-root"), bubble = root.locator(".spire-bubble");
+  // Turul a pornit cu regulile, înainte să răspundă modelul.
+  await expect(bubble.locator(".spire-level")).not.toContainText("părere AI");
+  // Baloanele avansează singure în test; observația apare între ele când răspunde modelul.
+  await expect(bubble.locator(".spire-level", { hasText: "părere AI" })).toBeVisible({ timeout: 15000 });
+  await page.close();
+});
+
+test("critica AI: captura nu conține stratul Spire, iar răspunsul mock e marcat exemplu", async () => {
+  await fakeCritiqueAi({ model: "mock" });
+  const page = await openFixture();
+  await inject();
+  await page.evaluate(() => {
+    const host = document.querySelector("#spire-root") as HTMLElement;
+    (window as unknown as { __hidden: number }).__hidden = 0;
+    new MutationObserver(() => { if (host.style.visibility === "hidden") (window as unknown as { __hidden: number }).__hidden++; }).observe(host, { attributes: true, attributeFilter: ["style"] });
+  });
+  await startCritique(page);
+  const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-bubble .spire-level")).toContainText("exemplu demo");
+  expect(await page.evaluate(() => (window as unknown as { __hidden: number }).__hidden)).toBeGreaterThan(0);
+  await expect.poll(() => page.evaluate(() => (document.querySelector("#spire-root") as HTMLElement).style.visibility)).not.toBe("hidden");
+  await page.close();
+});
+
 test("CSP strict: uliul are stiluri și critica merge fără iframe", async () => {
   const page = await context.newPage();
   await page.goto(SITE_ORIGIN + "/csp");

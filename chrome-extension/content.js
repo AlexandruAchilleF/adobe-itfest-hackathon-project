@@ -375,6 +375,7 @@
 .spire-level:before {content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#b08834;margin-right:8px}
 .spire-level[data-level="important"]:before {background:#F25C3B}
 .spire-level[data-level="marunt"]:before {background:#8b94a6}
+.spire-note {margin:0;max-width:210px;font-size:12px;line-height:1.35;color:#5f6775}
 .spire-row {display:flex;gap:8px;align-items:center;margin-top:12px}
 .spire-row span {flex:1}
 .spire-crit-outline {position:fixed;border:2px solid #F25C3B;border-radius:6px;background:#F25C3B0A;pointer-events:none}
@@ -529,6 +530,7 @@
     return b;
   }
   button(menu, "Critică pagina", function () { menu.hidden = true; critique(); }, true);
+  line(menu, "p", "Trimite la AI o captură a ecranului și textele din ea.", "spire-note");
   button(menu, "Fă o campanie", function () { menu.hidden = true; openCampaign(); });
   button(menu, "Închide Spire", function () { stopCritique(); menu.hidden = true; host.style.setProperty("display", "none", "important"); });
   shadow.append(bird, bubble, menu);
@@ -707,9 +709,11 @@
     }
     delete bubble.dataset.summary;
     var labels={"important":"Important","de-imbunatatit":"De îmbunătățit","marunt":"Mărunt"};
-    var level=line(bubble,"div",labels[c.level],"spire-level");
+    var origin=c.ruleId!=="parere-ai"?"":c.evidence.sursa==="demo"?" · exemplu demo":" · părere AI";
+    var level=line(bubble,"div",labels[c.level]+origin,"spire-level");
     level.dataset.level=c.level;
-    line(bubble,"h2",c.title);line(bubble,"p",c.fix);
+    // Regulile au balonul scurt; la părerea AI, explicația e chiar observația.
+    line(bubble,"h2",c.title);if(c.ruleId==="parere-ai")line(bubble,"p",c.body);line(bubble,"p",c.fix);
     var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);line(row,"span",(index+1)+" din "+total);
     return new Promise(function(resolve){
       var done=false;
@@ -718,14 +722,43 @@
       var timer=setTimeout(next,8000*speed);resumeBubble=next;positionPopup(bubble);
     });
   }
+  // Câte așteptăm observațiile AI înainte să pornim turul; dacă vin mai târziu, intră din mers.
+  var AI_HEAD_START_MS = 6000, AI_GIVE_UP_MS = 30000;
+  // Lista de critici verificate; null dacă AI-ul n-a putut răspunde. Nu eșuează niciodată.
+  async function askCritiqueAi(facts, crits) {
+    try {
+      setLayerHidden(true);
+      await Promise.race([twoFrames(), wait(300)]);
+      var image=await captureTab();
+      setLayerHidden(false);
+      var request=globalThis.SpireCritique.critiqueAiRequest(facts,crits);
+      var reply=await Promise.race([chrome.runtime.sendMessage({type:"critique-ai",request:request,image:image}),new Promise(function(r){setTimeout(r,AI_GIVE_UP_MS);})]);
+      if(!reply || reply.ok!==true) return null;
+      var found=globalThis.SpireCritique.acceptAiCritiques(reply.data,facts);
+      if(reply.model==="mock") found.forEach(function(c){c.evidence.sursa="demo";});
+      return found;
+    } catch (_) {
+      setLayerHidden(false);
+      return null;
+    }
+  }
   async function critique() {
     stopCritique();mode="crit";var id=tour;pose("searching");await wait(1200);
     if(id!==tour)return;
     var facts=readFacts(), crits=globalThis.SpireCritique.critiquePage(facts.page,facts.elements,{w:innerWidth,h:innerHeight});
     // Observațiile despre pagină vin după parcurgerea elementelor.
     crits=crits.filter(function(c){return c.elementId!==null;}).concat(crits.filter(function(c){return c.elementId===null;}));
-    for(var i=0;i<crits.length;i++) {
+    // Regulile sunt gata; AI-ul răspunde când poate. `next` e prima critică încă neînceput.
+    var next=0, aiSettled=false, aiFailed=false;
+    var ai=askCritiqueAi(facts,crits).then(function(found){
+      aiSettled=true;aiFailed=found===null;
+      if(id===tour && found) crits=globalThis.SpireCritique.mergeAiCritiques(crits,found,next);
+    });
+    pose("thinking");await Promise.race([ai,wait(AI_HEAD_START_MS)]);
+    while(next<crits.length || !aiSettled) {
       if(id!==tour)return;
+      if(next>=crits.length) {pose("thinking");await ai;continue;}
+      var i=next++;
       bubble.hidden=true;outline.hidden=true;outlined=null;
       var c=crits[i], target=critiqueElements.get(c.elementId);
       if(target && target.isConnected) {
@@ -746,7 +779,7 @@
     }
     if(id!==tour)return;
     outlined=null;outline.hidden=true;pose(crits.some(function(c){return c.level==="important";})?"happy":"celebrate");
-    showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits)); mode="roam";
+    showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits)+(aiFailed?" Părerea AI n-a ajuns, așa că am folosit doar verificările automate.":"")); mode="roam";
   }
   pose("idle");place(pos.x,pos.y);scheduleRoam();
 

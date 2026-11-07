@@ -371,7 +371,7 @@ function CritiqueSection() {
           <Accent text={"Ochi de uliu\n*pe pagina ta.*"} />
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-[1.08rem] leading-relaxed text-ink-2">
-          Alegi „Critică pagina”, iar uliul aterizează pe ce merită schimbat și îți spune pe rând ce poți face. Verificarea rulează local, fără AI, și arată cel mult {MAX_CRITIQUES} observații: contrast slab, linkuri vagi, poze fără descriere. Gustul rămâne treaba ta.
+          Alegi „Critică pagina”, iar uliul aterizează pe ce merită schimbat și îți spune pe rând ce poți face. Regulile rulează local și găsesc contrast slab, linkuri vagi, poze fără descriere. O captură a ecranului merge la AI, pentru o părere despre ierarhie și mesaj, marcată ca atare. Vezi cel mult {MAX_CRITIQUES} observații, iar gustul rămâne treaba ta.
         </p>
       </Reveal>
       <Reveal delay={120} className="mx-auto mt-12 max-w-4xl">

@@ -35,8 +35,9 @@ export function health(): HealthResponse {
 }
 
 // Add-on-urile Adobe Express rulează pe https://<id>.wxp.adobe-addons.com (iar local pe
-// https://localhost:5241), deci au nevoie de CORS ca să cheme /api/ai.
-const ALLOWED_ORIGIN = /^(https:\/\/[\w-]+\.wxp\.adobe-addons\.com|https?:\/\/localhost(:\d+)?)$/;
+// https://localhost:5241), iar extensia Spire pe chrome-extension://<id>, fără host_permissions.
+// Toate au nevoie de CORS ca să cheme /api/ai.
+const ALLOWED_ORIGIN = /^(https:\/\/[\w-]+\.wxp\.adobe-addons\.com|https?:\/\/localhost(:\d+)?|chrome-extension:\/\/[a-p]{32})$/;
 
 export function corsHeaders(origin: string | null): Record<string, string> {
   if (!origin) return {};

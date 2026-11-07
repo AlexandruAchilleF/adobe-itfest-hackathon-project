@@ -96,6 +96,19 @@ describe("CORS pentru add-on-uri Adobe Express", async () => {
   });
 });
 
+describe("CORS pentru extensia Chrome", async () => {
+  const { corsHeaders } = await import("../server/ai");
+  const id = "abcdefghijklmnopabcdefghijklmnop";
+  it("permite o origine de extensie Chrome", () => {
+    expect(corsHeaders(`chrome-extension://${id}`)["access-control-allow-origin"]).toBe(`chrome-extension://${id}`);
+  });
+  it("refuză originile care doar seamănă", () => {
+    expect(corsHeaders("chrome-extension://scurt")).toEqual({});
+    expect(corsHeaders(`chrome-extension://${id}.evil.com`)).toEqual({});
+    expect(corsHeaders(`https://${id}`)).toEqual({});
+  });
+});
+
 describe("/api/image", () => {
   const old = { account: process.env.CLOUDFLARE_ACCOUNT_ID, token: process.env.CLOUDFLARE_API_TOKEN, provider: process.env.AI_PROVIDER };
   afterEach(() => {

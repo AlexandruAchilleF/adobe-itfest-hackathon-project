@@ -73,4 +73,11 @@ describe("pachetul criticii pentru extensie", () => {
     expect(JSON.parse(JSON.stringify(fromBundle))).toEqual(fromTs);
     expect(api.summarySentence(fromBundle)).toBe(summarySentence(fromTs));
   });
+
+  it("expune și partea de AI a criticii", () => {
+    const ctx = vm.createContext({});
+    vm.runInContext(code, ctx);
+    const types = vm.runInContext("['critiqueAiRequest','acceptAiCritiques','mergeAiCritiques'].map(function(n){return typeof globalThis.SpireCritique[n];})", ctx);
+    expect(Array.from(types as string[])).toEqual(["function", "function", "function"]);
+  });
 });

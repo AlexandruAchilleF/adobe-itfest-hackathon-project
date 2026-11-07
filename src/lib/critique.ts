@@ -1,4 +1,4 @@
-// Critica pe pagină: reguli deterministe, fără DOM și fără AI.
+// Critica pe pagină: reguli deterministe, fără DOM și fără AI (judecățile AI: critiqueAi.ts).
 // Intrarea sunt faptele citite din pagină de chrome-extension/content.js; ieșirea sunt
 // criticile pe care uliul le spune pe rând, în limbaj obișnuit. Cifrele (contrastul, mărimea
 // fontului) stau în `evidence`, nu în text. Modulul e împachetat ca IIFE în
@@ -101,9 +101,10 @@ export interface Critique {
   body: string;
   /** „Ce faci:” */
   fix: string;
-  /** „Pentru asistenții AI:” */
+  /** „Pentru asistenții AI:”; gol la observațiile AI */
   agent: string;
-  ruleId: CritiqueRule;
+  /** regula care a găsit-o sau „parere-ai”, pentru observațiile verificate din critiqueAi.ts */
+  ruleId: CritiqueRule | "parere-ai";
   /** cifrele din spatele criticii (nu apar în text) */
   evidence: Record<string, string | number>;
 }
@@ -248,7 +249,7 @@ function subject(e: ElementFacts, text: string): string {
   return `Textul ${quote(text)}`;
 }
 
-type Draft = Omit<Critique, "elementId"> & { el: ElementFacts | null };
+type Draft = Omit<Critique, "elementId" | "ruleId"> & { ruleId: CritiqueRule } & { el: ElementFacts | null };
 
 const FAKE_BUTTON_AGENT =
   "Asistenții AI care comandă sau rezervă în numele clienților nu-și dau seama că e un buton. Cere un buton real, accesibil și din tastatură.";

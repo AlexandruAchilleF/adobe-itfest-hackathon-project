@@ -57,7 +57,7 @@ function toProviderError(err: unknown, model: string): ProviderError {
 
 export async function callGemini(req: AiRequest, schema?: Record<string, unknown>): Promise<ProviderResult> {
   const primary = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  const fallback = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.1-flash-lite";
+  const fallback = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
   const models = [...new Set([primary, fallback])];
 
   let last: unknown;

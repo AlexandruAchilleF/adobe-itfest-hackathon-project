@@ -35,7 +35,7 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 ## Critica pe pagină
 
 Clic pe iconiță arată uliul, fără să încarce aplicația. Uliul se plimbă și aterizează pe
-elemente; clic pe el deschide meniul. „Critică pagina” verifică pagina local, apoi te
+elemente; clic pe el deschide meniul. „Critică pagina” verifică pagina local, cere o părere AI, apoi te
 duce pe rând la elementele cu probleme. Balonul arată problema și un remediu scurt.
 Căutarea cu AI este menționată doar la recomandarea privind datele structurate.
 „Următorul” avansează imediat;
@@ -43,7 +43,13 @@ altfel avansează după aproximativ 8 secunde. „Oprește” întrerupe turul.
 Escape închide meniul. Un nou clic pe iconița extensiei ascunde sau arată stratul.
 „Fă o campanie” deschide panoul existent cu aplicația la `/nou?din=extensie`.
 
-Critica este deterministă, fără apel AI, cheie sau rețea. Citește cel mult 200 de
+Critica are două surse. Regulile (`src/lib/critique.ts`) sunt deterministe, rulează local și dau
+cifrele. Peste ele, `src/lib/critiqueAi.ts` cere de la `/api/ai` (`APP_URL` din `config.js`) cel mult
+3 observații despre ierarhie și mesaj. La clic pe „Critică pagina”, serverul primește o captură a
+ecranului și textele din ea. Se păstrează doar observațiile legate de un element de pe ecran, fără
+cifre care nu apar în pagină, iar balonul le marchează „părere AI”. Dacă AI-ul nu răspunde în 6 s,
+turul pornește cu regulile și observațiile intră din mers; dacă pică, rămân regulile, iar rezumatul spune asta.
+Citește cel mult 200 de
 elemente dintr-o parcurgere plafonată la 5000 de noduri și arată cel mult 8 observații.
 Nu pretinde o evaluare completă de design sau un audit de accesibilitate.
 Fundalurile cu imagini ori transparență parțială sunt omise din verificarea de contrast.
