@@ -1,13 +1,14 @@
-# Uli: stilul care îți place, pe marca ta (spec)
+# Spire: stilul care îți place, pe marca ta (spec)
 
-Data: 7 noiembrie 2026 (ITFest × Adobe). Starea: de aprobat de echipă. Numele produsului e de lucru, de confirmat.
+Data: 7 noiembrie 2026 (ITFest × Adobe). Starea: de aprobat de echipă. Echipa: 2 oameni.
+Numele: **Spire** (de la „inspire”) e și mascota, și produsul. Spire e uliul desenat din template (`src/modules/mascot/MascotFigure.tsx`), aici agentul care apare peste site.
 Brief-ul, criteriile și deciziile: `docs/BRIEF.md`, `docs/JURIU.md`.
 
 ## 1. Ce construim, într-o frază
 
-Un agent care trăiește peste orice site: omul de marketing vede un design care îi place, apasă iconița, uliul apare peste pagină, se uită la ea, îi arată ce a observat, îl întreabă 3–5 lucruri cu variante și reface elementul ales pe marca omului (mascota lui în același stil, culorile din brand guidelines, textele lui). Elementul poate fi o imagine (postare, banner, afiș, mascotă) sau o secțiune de site (de exemplu hero-ul unui landing page). Rezultatul e verificat de cod: o imagine devine design pe straturi, exportabil în Adobe Express; o secțiune de site devine secțiunea ta, cu previzualizare, PNG și cod HTML/CSS.
+Un agent care trăiește peste orice site: omul de marketing vede un design care îi place, apasă iconița, Spire apare peste pagină, se uită la ea, îi arată ce a observat, îl întreabă 3–5 lucruri cu variante și reface elementul ales pe marca omului (mascota lui în același stil, culorile din brand guidelines, textele lui). Elementul poate fi o imagine (postare, banner, afiș, mascotă) sau o secțiune de site (de exemplu hero-ul unui landing page). Rezultatul e verificat de cod: o imagine devine design pe straturi, exportabil în Adobe Express; o secțiune de site devine secțiunea ta, cu previzualizare, PNG și cod HTML/CSS.
 
-Ținta e o **campanie**, nu un site: uliul scanează pagina după elementele utile pentru o campanie (hero, bannere de ofertă, mascotă, CTA-uri, insigne de reducere), iar din stilul ales face un **kit de campanie** coerent pe marca omului: postare (1080×1350), story (1080×1920) și secțiunea hero pentru landing page, toate din aceeași anatomie. Site-ul întreg nu se reface (ar fi web design, nu marketing; v0, Lovable, Framer fac deja asta; risc de „copie”).
+Ținta e o **campanie**, nu un site: Spire scanează pagina după elementele utile pentru o campanie (hero, bannere de ofertă, mascotă, CTA-uri, insigne de reducere), iar din stilul ales face un **kit de campanie** coerent pe marca omului: postare (1080×1350), story (1080×1920) și secțiunea hero pentru landing page, toate din aceeași anatomie. Site-ul întreg nu se reface (ar fi web design, nu marketing; v0, Lovable, Framer fac deja asta; risc de „copie”).
 
 ## 2. Pentru cine și ce durere
 
@@ -21,11 +22,11 @@ Un agent care trăiește peste orice site: omul de marketing vede un design care
 | Pas | Ce vede omul | Cine face | Secunda din demo |
 |---|---|---|---|
 | 0. Marca (o dată) | formular: logo, culori cu roluri (principală, accent, fundal, text), fonturi, ton, mențiuni obligatorii, mascota (poză/desen). Precompletat pentru demo | om | înainte |
-| 1. Uliul intră | iconița extensiei → uliul apare peste pagină | extensia | 0–5 |
-| 2. Uliul scanează | chenare care se aprind pe rând peste elementele paginii; uliul alege elementele utile pentru o campanie („am găsit 4: hero-ul, banner-ul de −20%, mascota, butonul principal”) și spune de ce merge fiecare | extensia (citirea paginii) + AI (alegerea și rezumatul) | 5–20 |
+| 1. Spire intră | iconița extensiei → Spire apare peste pagină | extensia | 0–5 |
+| 2. Spire scanează | chenare care se aprind pe rând peste elementele paginii; Spire alege elementele utile pentru o campanie („am găsit 4: hero-ul, banner-ul de −20%, mascota, butonul principal”) și spune de ce merge fiecare | extensia (citirea paginii) + AI (alegerea și rezumatul) | 5–20 |
 | 3. Omul alege stilul | clic pe unul din elementele găsite, pe alt element sau decupaj cu dreptunghi | om + extensia | 20–25 |
 | 4. Anatomia | ce fel de element e (imagine sau secțiune de site), zonele (titlu, ofertă, CTA, ilustrație, logo), rolurile culorilor, stilul ilustrației, subiectul, de ce merge | AI cu vedere (+ structura citită din pagină, la secțiuni) | 25–35 |
-| 5. Întrebările | 3–5 întrebări cu variante în balonul uliului (ce promovezi, oferta, CTA, ce formate din kit); mascota și culorile vin din marcă | cod (ce lipsește) + AI (variantele) | 35–50 |
+| 5. Întrebările | 3–5 întrebări cu variante în balonul lui Spire (ce promovezi, oferta, CTA, ce formate din kit); mascota și culorile vin din marcă | cod (ce lipsește) + AI (variantele) | 35–50 |
 | 6. Kitul de campanie | în panou: postarea, story-ul și hero-ul, cu așezarea din referință adaptată fiecărui format, culorile și fonturile mărcii pe roluri, mascota mărcii generată o dată în stilul referinței, textele. Demo: hero-ul unui site → kitul tău, cu pinguinul tău | cod + AI | 50–75 (wow) |
 | 7. Garda | bife lângă fiecare format, plus regulile de conversie și consecvența ofertei între formate; ce pică se corectează automat de agent (cel mult 2 reîncercări) înainte să vadă omul | cod (+ o verificare AI marcată ca atare) | 75–90 |
 | 8. Retuș | clic pe un strat, schimbi prețul → bifa devine roșie, apoi verde după corectare | om | 90–110 |
@@ -70,7 +71,7 @@ Pentru secțiunile de site, în plus: contrastul se calculează din culorile rea
 Compoziția e preluată intenționat (e stilul); pe ecran și la pitch spunem ce e nou (ilustrația, textele, culorile, logo-ul) și ce e preluat (așezarea). Nu promitem „originalitate certificată”.
 
 Apelurile AI, fiecare cu `mock` realist:
-1. `ask()` rezumatul paginii (texte, culori, fonturi citite + captura) → ce a văzut uliul, pentru balon.
+1. `ask()` rezumatul paginii (texte, culori, fonturi citite + captura) → ce a văzut Spire, pentru balon.
 2. `ask()` analiza elementului (decupaj + ce s-a citit de sub el) → `Anatomy` + variantele pentru întrebări.
 3. `ask()` textele pe zone, încadrate în lungimea zonelor.
 4. `api/image.ts` (nou) → modelul de imagine Gemini, cu referința (stilul) + mascota mărcii (subiectul) și o instrucțiune scrisă de cod: fundal transparent sau uniform, fără text. Mock: o mascotă generată dinainte, în `public/samples/`.
@@ -81,11 +82,11 @@ Paginile (în locul celor din scenariul vechi): `/marca`, `/nou` (referință �
 ### 4.2 Extensia (`chrome-extension/`, Manifest V3)
 
 - **Permisiuni:** `activeTab`, `scripting`, `sidePanel`; nimic permanent pe toate site-urile.
-- **Scriptul din pagină:** un strat într-un shadow root, care desenează uliul și balonul, chenarele de „scanare” și decupajul; citește elementele (texte, culori și fonturi calculate, casete, linkuri) și un rezumat al paginii, cu limită de mărime.
+- **Scriptul din pagină:** un strat într-un shadow root, care desenează Spire și balonul, chenarele de „scanare” și decupajul; citește elementele (texte, culori și fonturi calculate, casete, linkuri) și un rezumat al paginii, cu limită de mărime.
 - **Captura:** fundalul extensiei face `captureVisibleTab`; decupajul se face din captură.
-- **Legătura cu motorul:** uliul, întrebările și designul sunt aplicația web (`/nou?din=extensie`), încărcată într-un iframe în stratul din pagină și în panoul lateral; datele trec prin `postMessage`. Logica nu se scrie de două ori.
+- **Legătura cu motorul:** Spire, întrebările și designul sunt aplicația web (`/nou?din=extensie`), încărcată într-un iframe în stratul din pagină și în panoul lateral; datele trec prin `postMessage`. Logica nu se scrie de două ori.
 - **Secțiunea de site:** la clic pe o secțiune, scriptul serializează arborele ei (elemente, stiluri calculate relevante, texte, imagini, casete), cu limită de noduri și de mărime, și îl trimite motorului.
-- **Unde nu se poate citi pagina** (Instagram, Meta, secțiuni desenate pe canvas): uliul lucrează pe pixeli, iar rolurile culorilor sunt marcate „ghicite din pixeli”; o secțiune care nu se poate citi se tratează ca imagine.
+- **Unde nu se poate citi pagina** (Instagram, Meta, secțiuni desenate pe canvas): Spire lucrează pe pixeli, iar rolurile culorilor sunt marcate „ghicite din pixeli”; o secțiune care nu se poate citi se tratează ca imagine.
 
 ### 4.3 Exportul și integrările
 
@@ -100,7 +101,7 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 
 ## 5. Când ceva pică
 
-- AI-ul nu răspunde sau răspunde greșit: mesaj în balonul uliului + „Încearcă din nou”; Modul demo trece pe mock-uri.
+- AI-ul nu răspunde sau răspunde greșit: mesaj în balonul lui Spire + „Încearcă din nou”; Modul demo trece pe mock-uri.
 - Generarea mascotei pică sau nu trece garda după 2 reîncercări: în zona ilustrației se pune mascota originală a mărcii, iar garda spune „ilustrația originală, generarea n-a reușit”.
 - Pagina nu se poate citi: pixeli, rolurile culorilor marcate „ghicite”.
 - Secțiunea refăcută arată diferit (fonturi din alte domenii, animații, stiluri complicate): previzualizarea se compară vizual cu originalul doar ca așezare; pentru demo alegem și testăm dinainte un site pe care merge.
@@ -109,7 +110,7 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 ## 6. Teste și dovezi
 
 - **Unitare:** `gaps`, `compose` (pe toate cele 3 formate), `campaign`, `restyle` (pe 2 secțiuni serializate de exemplu), `color`, `similarity`, `guard`, `agentLoop` (cu apeluri AI false), pe 3 anatomii de exemplu.
-- **E2e (Playwright, mock):** aplicația web: referința exemplu → anatomie → răspunsuri → design cu bifele gărzii → retuș (prețul schimbat face bifa roșie) → export. Extensia, încărcată în Chromium: uliul apare peste o pagină locală de test (cu un hero și o mascotă), decupajul ajunge în aplicație, iar hero-ul refăcut nu mai conține culorile, fonturile și textele originale.
+- **E2e (Playwright, mock):** aplicația web: referința exemplu → anatomie → răspunsuri → design cu bifele gărzii → retuș (prețul schimbat face bifa roșie) → export. Extensia, încărcată în Chromium: Spire apare peste o pagină locală de test (cu un hero și o mascotă), decupajul ajunge în aplicație, iar hero-ul refăcut nu mai conține culorile, fonturile și textele originale.
 - **Manual, cu cheia reală (nu în `npm run check`):** 10 generări „stil + mascota mărcii”, prag ≥ 5/10 publicabile; 10–15 referințe reale, cu acuratețea anatomiei și rata de reușită după bucla de corectare (cifre pentru Technical Excellence).
 
 ## 7. Ce nu facem azi
@@ -121,11 +122,19 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 
 ## 8. Scenariul din template
 
-Config-ul de scenariu rămâne stratul de texte, pitch și verificări (`/start`, `/pitch`, `tests/urme.test.ts`): un scenariu nou `src/scenario/scenarios/uli.ts` (id `uli`) cu `app`, `business` (dovezile goale până la interviuri), `roles` (omul de marketing), `flow` minim pentru materiale (ciornă → verificat → exportat, cu „garda a respins”), `mascot` (uliul, ca agent al produsului), `features` cu harta, punctele, rapoartele și modulele opționale oprite. Meniul juriului: Marca, Material nou, Materiale.
+Config-ul de scenariu rămâne stratul de texte, pitch și verificări (`/start`, `/pitch`, `tests/urme.test.ts`): un scenariu nou `src/scenario/scenarios/spire.ts` (id `spire`) cu `app`, `business` (dovezile goale până la interviuri), `roles` (omul de marketing), `flow` minim pentru materiale (ciornă → verificat → exportat, cu „garda a respins”), `mascot` (Spire, ca agent al produsului), `features` cu harta, punctele, rapoartele și modulele opționale oprite. Meniul juriului: Marca, Material nou, Materiale.
 
-## 9. Ordinea de lucru și pragurile
+## 9. Ordinea de lucru și pragurile (echipă de 2)
 
-1. Ora 1: testul de generare (în paralel cu stratul extensiei și cu schemele `brand` / `anatomy`).
-2. Până la ora 6: drumul cap-coadă cu mock, în aplicația web și în extensie; întâi imaginea cu mascota (o postare), apoi kitul (story din aceeași anatomie, regulile de conversie), apoi secțiunea hero (omul cu extensia, după ce citirea paginii merge). Ce nu merge la ora 6 iese din demo.
-3. Ora 6: nu mai adăugăm funcționalități (excepție: video, doar dacă tot fluxul merge).
-4. Ora 9: deploy, test pe laptopul de juriu cu extensia instalată, video de rezervă.
+Asistentul de cod scrie o mare parte din cod; cei doi oameni conduc câte o jumătate, testează pe date reale și fac validarea.
+
+| Când | Omul A: extensia și pagina | Omul B: motorul și AI-ul |
+|---|---|---|
+| Ora 1 | stratul cu Spire peste pagină, scanarea cu chenare, decupajul | testul de generare (10 × „stil + mascota mărcii”, prag ≥ 5/10); marca de demo (seed cu pinguin) |
+| Orele 2–4 | citirea paginii (elemente, stiluri, texte), legătura cu aplicația prin `postMessage` | `anatomy`, `gaps`, `compose` (postarea), `api/image.ts`, pagina `/nou` |
+| Orele 4–6 | `campaign` (elementele utile), apoi `restyle` pentru hero | `guard`, `agentLoop`, story-ul din aceeași anatomie, export PNG; o încercare de 30 de minute cu add-on-ul Express |
+| Ora 6 | **prag:** drumul postare cu mascota merge cap-coadă cu mock, din extensie și din web. Ce nu merge iese din demo. | |
+| Orele 6–9 | interviurile și testul cu cronometrul pe hol (amândoi, câte 30–45 de minute), cifrele în `business.evidence`; calitate, rezerve, cazurile în care AI-ul greșește | |
+| Ora 9 | deploy, laptopul de juriu cu extensia instalată, video de rezervă, `/pitch` | |
+
+Ce se taie primul dacă rămânem în urmă, în ordine: secțiunea hero, add-on-ul Express (rămâne PNG), story-ul, citirea fonturilor din pagină. Nu se taie: Spire peste pagină, postarea cu mascota, garda, rezervele.
