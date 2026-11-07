@@ -22,6 +22,9 @@ export default defineConfig({
     { name: "deconturi", testMatch: ["birou.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5198" } },
     { name: "resurse", testMatch: ["repetitie.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5197" } },
     { name: "sesizari", testMatch: ["sesizari.spec.ts"], use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:5196" } },
+    // Extensia Spire: testul își pornește singur Chromium cu extensia (launchPersistentContext)
+    // și servește fixture-ul prin context.route, deci nu are nevoie de server propriu.
+    { name: "extension", testMatch: ["extension.spec.ts"] },
   ],
   webServer: [
     { command: "npx vite --port 5199 --strictPort", url: "http://localhost:5199", reuseExistingServer: false, env: { ...env, VITE_SCENARIO: "vecini" } },

@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Spire",
+  "version": "0.1.0",
+  "description": "Spire citește stilul unei pagini și îl refolosește pentru marca ta.",
+  "permissions": ["activeTab", "scripting", "sidePanel"],
+  "action": { "default_title": "Spire" },
+  "background": { "service_worker": "background.js" },
+  "web_accessible_resources": [
+    { "resources": ["overlay.css"], "matches": ["<all_urls>"] }
+  ]
+}

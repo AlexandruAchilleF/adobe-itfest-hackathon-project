@@ -1,0 +1,93 @@
+/* Stilurile stratului Spire. Se încarcă doar în shadow root-ul lui #spire-root, deci nu ating
+   pagina gazdă. Fără dark mode. Gazda (poziție fixă, all: initial) e stilată din content.js. */
+
+:host {
+  --spire-coral: #F25C3B;
+  --spire-ink: #1f2a44;
+  --spire-paper: #ffffff;
+  --spire-line: #e3e5ea;
+  font-family: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--spire-ink);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Stratul pentru chenare și decupaj: peste toată fereastra, transparent la clicuri. */
+.spire-boxes {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Un chenar de scanare (A2): elementul citit din pagină. Poziția vine din content.js. */
+.spire-box {
+  position: absolute;
+  border: 2px solid var(--spire-coral);
+  border-radius: 6px;
+  background: rgba(242, 92, 59, 0.06);
+  pointer-events: none;
+}
+
+/* Eticheta chenarului (ex. „titlu”, „buton”), deasupra colțului stânga-sus. */
+.spire-box-label {
+  position: absolute;
+  left: -2px;
+  bottom: 100%;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--spire-coral);
+  color: #ffffff;
+  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+/* Panoul din dreapta: aplicația Spire. */
+.spire-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--spire-paper);
+  border-left: 1px solid var(--spire-line);
+  box-shadow: -8px 0 24px rgba(31, 42, 68, 0.12);
+  pointer-events: auto;
+}
+
+.spire-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  display: block;
+  background: var(--spire-paper);
+}
+
+.spire-close {
+  align-self: flex-end;
+  margin: 8px 10px 0;
+  padding: 6px 12px;
+  border: 1px solid var(--spire-line);
+  border-radius: 10px;
+  background: var(--spire-paper);
+  color: var(--spire-ink);
+  font: 500 13px/1.2 "Geist", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.spire-close:hover {
+  background: #f4f5f7;
+}
+
+.spire-close:focus-visible {
+  outline: 2px solid var(--spire-ink);
+  outline-offset: 2px;
+}
