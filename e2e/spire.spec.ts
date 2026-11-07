@@ -64,8 +64,9 @@ test("landing: critica și extensia apar după noapte, în ordinea poveștii", a
   const order = await page.locator("main section").evaluateAll((all) => all.map((s) => s.querySelector("h1,h2")?.textContent ?? s.id));
   const at = (t: string) => order.findIndex((o) => o.includes(t));
   expect(at("Stilul altcuiva")).toBeLessThan(at("Ochi de uliu"));
-  expect(at("Ochi de uliu")).toBeLessThan(at("inSPIRĂ"));
-  expect(at("inSPIRĂ")).toBeLessThan(at("N-ai designer"));
+  expect(at("Ochi de uliu")).toBeLessThan(at("Ce te inspiră"));
+  expect(at("Ce te inspiră")).toBeLessThan(at("N-ai designer"));
+  await expect(page.locator("#extensie")).toContainText("inSPIRE");
   await expect(page.locator("#critica")).toContainText("părere despre ierarhie și mesaj");
   await expect(page.locator("#critica")).toContainText(`cel mult ${MAX_CRITIQUES} observații`);
   await expect(page.locator("main")).not.toContainText("audit complet");
