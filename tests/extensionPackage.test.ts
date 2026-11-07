@@ -59,7 +59,7 @@ describe("manifestul", () => {
 
 describe("ZIP-ul din public/", () => {
   const files = readZip(`public${EXTENSION_ZIP}`);
-  const prodUrl = 'var APP_URL = "https://spire-coral.vercel.app";';
+  const prodUrl = 'var APP_URL = "https://adobe-itfest-hackathon-project.vercel.app";';
 
   it("are manifest.json în rădăcină și nimic de test sau documentație", () => {
     expect(files.has("manifest.json")).toBe(true);

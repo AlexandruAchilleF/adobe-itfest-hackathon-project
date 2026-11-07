@@ -12,7 +12,7 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 ## Adresa aplicației (deploy)
 
 
-`config.js` rămâne pe `http://localhost:5173`, pentru dezvoltare. Pachetul de descărcare are adresa publică: `npm run ext:zip` copiază extensia într-un folder temporar, pune în copie `APP_URL = "https://spire-coral.vercel.app"` și scrie `public/spire-extensie.zip`, fără README și fără teste. ZIP-ul se comite; `tests/extensionPackage.test.ts` pică dacă rămâne în urma sursei.
+`config.js` rămâne pe `http://localhost:5173`, pentru dezvoltare. Pachetul de descărcare are adresa publică: `npm run ext:zip` copiază extensia într-un folder temporar, pune în copie `APP_URL = "https://adobe-itfest-hackathon-project.vercel.app"` și scrie `public/spire-extensie.zip`, fără README și fără teste. ZIP-ul se comite; `tests/extensionPackage.test.ts` pică dacă rămâne în urma sursei.
 
 ## Permisiuni și de ce
 

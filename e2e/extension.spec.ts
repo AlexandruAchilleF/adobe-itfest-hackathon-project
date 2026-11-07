@@ -991,7 +991,7 @@ test("ZIP-ul de pe landing page se încarcă în Chromium, cu adresa publică ș
       const m = g.chrome.runtime.getManifest();
       return { permissions: m.permissions, icons: Object.keys(m.icons), appUrl: g.SPIRE_CONFIG.APP_URL };
     });
-    expect(seen).toEqual({ permissions: ["activeTab", "scripting", "storage"], icons: ["16", "32", "48", "128"], appUrl: "https://spire-coral.vercel.app" });
+    expect(seen).toEqual({ permissions: ["activeTab", "scripting", "storage"], icons: ["16", "32", "48", "128"], appUrl: "https://adobe-itfest-hackathon-project.vercel.app" });
   } finally {
     await ctx.close();
     rmSync(dir, { recursive: true, force: true });

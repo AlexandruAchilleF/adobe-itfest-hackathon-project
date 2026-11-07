@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const APP_URL = "https://spire-coral.vercel.app";
+const APP_URL = "https://adobe-itfest-hackathon-project.vercel.app";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = join(root, "public", "spire-extensie.zip");
 const SKIP = /(^readme(\.|$)|\.md$|\.(test|spec)\.|^tests?$|^__tests__$)/i;
