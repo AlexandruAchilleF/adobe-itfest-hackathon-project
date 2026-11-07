@@ -93,7 +93,6 @@ export function PitchPage() {
           </section>
         ))}
       </div>
-      <p className="pointer-events-none fixed right-3 bottom-2 text-xs text-white/40 print:hidden">← → · F ecran complet · P PDF</p>
     </div>
   );
 }
@@ -322,35 +321,38 @@ function SlideBody({ s, active, reveal, data }: { s: Slide; active: boolean; rev
                 const rest = lit(a.steps.length + 1);
                 return (
                   <>
-                    <ol className="grid grid-cols-6 gap-3">
+                    <ol className="grid grid-cols-4 gap-8">
                       {a.steps.map((step, n) => (
                         <li key={step.title} className={`relative ${lit(n + 1)}`}>
-                          <div className="land-frame flex h-full flex-col px-5 py-5">
-                            <span className="flex items-center gap-2 text-[18px] font-medium tracking-[0.06em] text-muted uppercase">
-                              <span className={`h-3 w-3 rounded-full ${OWNER_DOT[step.owner]}`} aria-hidden />
+                          <div className="land-frame flex h-full flex-col px-7 py-7">
+                            <span className="flex items-center gap-2.5 text-[20px] font-medium tracking-[0.06em] text-muted uppercase">
+                              <span className={`h-3.5 w-3.5 rounded-full ${OWNER_DOT[step.owner]}`} aria-hidden />
                               {step.owner}
                             </span>
-                            <p className="mt-3 text-[27px] font-semibold tracking-[-0.02em] text-ink">{step.title}</p>
-                            <p className="mt-2 text-[20px] leading-snug text-ink-2">{step.text}</p>
+                            <p className="mt-3 text-[42px] leading-tight font-semibold tracking-[-0.03em] text-ink">{step.title}</p>
+                            <div className="mt-3 space-y-3 text-[25px] leading-snug text-ink-2">
+                              {step.lines.map((line) => (
+                                <p key={line}>{line}</p>
+                              ))}
+                            </div>
                           </div>
                           {n < a.steps.length - 1 && (
-                            <svg width="18" height="14" viewBox="0 0 40 24" className="absolute top-1/2 right-[-15px] z-10 -translate-y-1/2 text-coral" aria-hidden>
+                            <svg width="26" height="20" viewBox="0 0 40 24" className="absolute top-1/2 right-[-29px] z-10 -translate-y-1/2 text-coral" aria-hidden>
                               <path d="M2 12h34M26 3l10 9-10 9" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </li>
                       ))}
                     </ol>
-                    <div className={`relative h-[78px] ${rest}`}>
-                      <svg viewBox="0 0 1400 78" className="absolute inset-0 h-full w-full text-coral" aria-hidden>
-                        <path d="M1053 2V34H582V8M572 18l10-12 10 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <div className={`relative h-[86px] ${rest}`}>
+                      <svg viewBox="0 0 1400 86" className="absolute inset-0 h-full w-full text-coral" aria-hidden>
+                        <path d="M879 2V34H521V8M511 18l10-12 10 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      <p className="absolute top-[40px] left-[817px] -translate-x-1/2 text-[21px] font-medium whitespace-nowrap text-ink">{a.loop}</p>
+                      <p className="absolute top-[42px] left-[700px] -translate-x-1/2 text-[26px] font-medium whitespace-nowrap text-ink">{a.loop}</p>
                     </div>
-                    <p className={`mt-3 text-center text-[23px] font-medium text-ink ${rest}`}>{a.video}</p>
                     <ul className={`mt-5 grid grid-cols-3 gap-8 ${rest}`}>
                       {a.failures.map((f) => (
-                        <li key={f.when} className="text-[21px] leading-snug text-ink-2">
+                        <li key={f.when} className="text-[24px] leading-snug text-ink-2">
                           <span className="flex items-center gap-2.5 font-medium text-ink">
                             <span className="h-3 w-3 rounded-full bg-warn-dot" aria-hidden />
                             {f.when}

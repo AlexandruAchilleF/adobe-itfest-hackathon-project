@@ -74,12 +74,20 @@ describe("pitch deck", () => {
     const deck = buildDeck(all[0], PITCH);
     const slide = deck.findIndex((x) => x.kind === "architecture");
     const count = revealCount(deck[slide]);
-    expect(count).toBe(7);
+    expect(count).toBe(5);
     expect(move(deck, { slide: slide - 1, reveal: 1 }, 1)).toEqual({ slide, reveal: 1 });
     expect(move(deck, { slide, reveal: 3 }, 1)).toEqual({ slide, reveal: 4 });
     expect(move(deck, { slide, reveal: count }, 1)).toEqual({ slide: slide + 1, reveal: 1 });
     expect(move(deck, { slide: slide + 1, reveal: 1 }, -1)).toEqual({ slide, reveal: count });
     expect(move(deck, { slide, reveal: 2 }, -1)).toEqual({ slide, reveal: 1 });
+  });
+
+  it("deck-ul real e gata de prezentat: nimic de completat, fără termeni pe care nu-i spunem pe scenă", () => {
+    for (const s of all) {
+      const deck = buildDeck(s, PITCH);
+      expect(missing(deck)).toEqual([]);
+      expect(JSON.stringify(deck)).not.toMatch(/Zod|Delta E|dHash|activeTab|de completat/i);
+    }
   });
 
   it("la capetele deck-ului, clicul nu mai mută nimic", () => {

@@ -7,11 +7,9 @@ import type { Scenario } from "../scenario/types";
 
 export interface Architecture {
   /** cine face pasul: se vede pe slide, pentru că asta e ideea arhitecturii */
-  steps: Array<{ owner: "AI" | "cod" | "om"; title: string; text: string }>;
+  steps: Array<{ owner: "AI" | "cod" | "om"; title: string; lines: string[] }>;
   /** bucla de agent, sub pași */
   loop: string;
-  /** drumul clipului, cu verificarea lui proprie (src/lib/videoPlan.ts) */
-  video: string;
   failures: Array<{ when: string; then: string }>;
 }
 
@@ -60,10 +58,10 @@ export const PITCH: PitchConfig = {
   payerFacts: [{ text: "O agenție mică cere de la 99 €/lună pentru 8 postări cu design, până la 299 €/lună pentru 20, cu contract de minimum 3 luni.", source: "ESYS Agency, pachetele de social media" }],
   market: { figure: "930.000", text: "Circa 930.000 de IMM-uri în România, aproape toate microîntreprinderi.", source: "Comisia Europeană, SME Country Fact Sheet 2025 (date din 2024)" },
   builtToday: [
-    "Extensia Chrome: uliul peste site, scanarea și critica paginii",
-    "Anatomia referinței și întrebările, cu Gemini validat cu Zod",
+    "Extensia Chrome: uliul peste site, scanarea paginii și Inspire",
+    "Citirea referinței și întrebările, cu Gemini",
     "Mascota redesenată în stilul referinței, cu FLUX.2 pe Cloudflare",
-    "Compunerea pe straturi, garda deterministă și bucla de agent",
+    "Designul pe straturi, verificările din cod și reîncercările AI-ului",
     "Aplicația: campanii, marca, export PNG, clipul randat în browser, datele în Supabase",
   ],
   next: [
@@ -74,19 +72,16 @@ export const PITCH: PitchConfig = {
   ],
   architecture: {
     steps: [
-      { owner: "cod", title: "Extensia", text: "Citește pagina doar la clic, cu activeTab și scripting." },
-      { owner: "AI", title: "Analiza", text: "Gemini scrie anatomia și textele, validate cu Zod." },
-      { owner: "AI", title: "Ilustrația", text: "FLUX.2 pe Cloudflare, printr-un singur endpoint." },
-      { owner: "cod", title: "Compunerea", text: "Designul pe straturi, din anatomie și marcă." },
-      { owner: "cod", title: "Garda", text: "Preț, Delta E, dHash, contrast, mențiuni." },
-      { owner: "om", title: "Omul", text: "Editează, vede garda din nou și descarcă." },
+      { owner: "cod", title: "Citește", lines: ["Extensia vede pagina doar când apeși."] },
+      { owner: "AI", title: "Propune", lines: ["Gemini înțelege designul și scrie textele.", "FLUX.2 desenează mascota."] },
+      { owner: "cod", title: "Verifică", lines: ["Pune designul pe straturi.", "Verifică prețul, culorile, contrastul și dacă e o copie."] },
+      { owner: "om", title: "Aprobă", lines: ["Editează, vede verificarea din nou și descarcă."] },
     ],
-    loop: "Ce pică reparabil la gardă se întoarce la AI, de cel mult două ori",
-    video: "Clipul: Claude scrie scenariul, codul îl verifică, browserul îl randează.",
+    loop: "Ce nu trece se întoarce la AI, de cel mult două ori",
     failures: [
-      { when: "Gemini e supraîncărcat", then: "alt model, după 429, eroare de server sau 20 s" },
-      { when: "Ilustrația pică", then: "mascota originală, iar garda o spune" },
-      { when: "Fără cheie sau rețea", then: "mod demo, spus ca atare" },
+      { when: "Pică modelul Gemini", then: "trecem automat pe alt model" },
+      { when: "Pică desenul", then: "mascota originală, iar garda o spune" },
+      { when: "Fără cheie AI", then: "mod demo, spus ca atare" },
     ],
   },
   coverMark: false,
@@ -168,7 +163,7 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       system: orTodo(p.architecture, "drumul prin sistem și ce se întâmplă când pică ceva (PITCH.architecture)"),
     },
     { kind: "guard", theme: "cream", ribbon: "Garda", title: STORY.guardTitle, text: STORY.guardText },
-    { kind: "video", theme: "night", src: "/pitch/demo.mp4", missing: "Video-ul nu e încă aici: public/pitch/demo.mp4" },
+    { kind: "video", theme: "night", src: "/pitch/demo.mp4", missing: "Video-ul nu pornește. Continuăm cu slide-urile." },
     {
       kind: "close",
       theme: "dusk",
@@ -188,7 +183,7 @@ export interface Position {
   reveal: number;
 }
 
-/** Câte stări are un slide la clicker: arhitectura aprinde pașii pe rând, apoi bucla și rezervele. */
+/** Câte stări are un slide la clicker: arhitectura aprinde pașii pe rând, apoi bucla și ce se întâmplă când pică ceva. */
 export function revealCount(s: Slide): number {
   return s.kind === "architecture" && !isTodo(s.system) ? s.system.steps.length + 1 : 1;
 }

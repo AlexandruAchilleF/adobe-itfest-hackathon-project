@@ -16,7 +16,7 @@ export const spire = defineScenario({
   },
   business: {
     problem: "Postarea trebuie să iasă azi, n-ai designer la îndemână, iar ce faci singur arată amator și nu respectă brandul.",
-    payer: "Ipoteză de verificat: firma (abonament), care azi plătește designeri, ilustratori sau ore de agenție.",
+    payer: "Ipoteza noastră: plătește firma, cu un abonament, în locul orelor de designer sau de agenție. Prețul nu e validat încă.",
     evidence: [],
   },
   roles: {
