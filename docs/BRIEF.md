@@ -74,7 +74,7 @@ Obligatoriile vin din temă și din criterii; opționalele sunt cele trei stratu
 
 ## Ideea aleasă
 
-Ideea echipei (aleasă după discuție și după un consiliu de 5 perspective): **stilul altcuiva, conținutul tău**. Omul de marketing vede online un design care îi place. Unealta ia din el doar stilul (tehnica desenului, compoziția, atmosfera, rolurile culorilor) și refacе materialul cu conținutul mărcii lui: mascota lui regenerată în acel stil, culorile din brand guidelines puse pe rolurile culorilor din referință, textele lui. Fără prompturi: AI-ul citește referința și pune doar 3–5 întrebări cu variante. Codul verifică rezultatul.
+Ideea echipei (aleasă după discuție și după un consiliu de 5 perspective): **stilul altcuiva, conținutul tău**. Omul de marketing vede online un design care îi place. Unealta ia din el doar stilul (tehnica desenului, compoziția, atmosfera, rolurile culorilor) și reface materialul cu conținutul mărcii lui: mascota lui regenerată în acel stil, culorile din brand guidelines puse pe rolurile culorilor din referință, textele lui. Fără prompturi: AI-ul citește referința și pune doar 3–5 întrebări cu variante. Codul verifică rezultatul.
 
 - **Fraza (de lucru):** Ajutăm omul de marketing să transforme orice design care îi place într-un material pe marca lui, fără designer și fără zece prompturi.
 - **Omul:** omul de marketing dintr-o firmă mică, medie sau mare (de ales o singură persoană pentru demo). Lucrează pe laptop; aprobă și pe telefon.
