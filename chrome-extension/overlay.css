@@ -31,6 +31,22 @@
   border-radius: 6px;
   background: rgba(242, 92, 59, 0.06);
   pointer-events: none;
+  /* Stins până îi vine rândul; content.js pune .spire-box-lit pe rând, la 250 ms. */
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+.spire-box-lit {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spire-box {
+    transition: none;
+    transform: none;
+  }
 }
 
 /* Eticheta chenarului (ex. „titlu”, „buton”), deasupra colțului stânga-sus. */
