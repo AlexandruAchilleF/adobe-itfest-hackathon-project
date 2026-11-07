@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Pip, pinguinul mărcii">
   <rect width="400" height="400" fill="#F6F1E7"/>
-  <ellipse cx="150" cy="352" rx="42" ry="16" fill="#F25C3B"/>
-  <ellipse cx="250" cy="352" rx="42" ry="16" fill="#F25C3B"/>
+  <ellipse cx="150" cy="352" rx="42" ry="16" fill="#D43F1C"/>
+  <ellipse cx="250" cy="352" rx="42" ry="16" fill="#D43F1C"/>
   <path d="M104 200 C64 226 58 276 72 300 C98 288 116 256 120 224 Z" fill="#0E3A5B"/>
   <path d="M296 200 C330 196 350 176 352 150 C326 146 296 168 280 196 Z" fill="#0E3A5B"/>
   <ellipse cx="200" cy="216" rx="112" ry="136" fill="#0E3A5B"/>
@@ -10,7 +10,7 @@
   <circle cx="238" cy="146" r="24" fill="#FFFFFF"/>
   <circle cx="168" cy="148" r="11" fill="#0E3A5B"/>
   <circle cx="232" cy="148" r="11" fill="#0E3A5B"/>
-  <path d="M170 176 L230 176 L200 212 Z" fill="#F25C3B"/>
-  <path d="M332 158 L366 158 L349 214 Z" fill="#F25C3B"/>
+  <path d="M170 176 L230 176 L200 212 Z" fill="#D43F1C"/>
+  <path d="M332 158 L366 158 L349 214 Z" fill="#D43F1C"/>
   <circle cx="349" cy="138" r="26" fill="#7CC6D9"/>
 </svg>

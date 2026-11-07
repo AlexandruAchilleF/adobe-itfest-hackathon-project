@@ -4,7 +4,7 @@ import { Brand, brandColor, brandPalette, demoBrand } from "../src/lib/brand";
 describe("marca", () => {
   it("marca de demo trece schema", () => expect(Brand.parse(demoBrand)).toBeTruthy());
   it("culoarea se ia după rol", () => {
-    expect(brandColor(demoBrand, "primary")).toBe("#F25C3B");
+    expect(brandColor(demoBrand, "primary")).toBe("#D43F1C");
     expect(brandColor(demoBrand, "background")).toBe("#F6F1E7");
   });
   it("paleta are cele patru culori", () => {

@@ -33,7 +33,7 @@ export const demoBrand: Brand = {
   colors: [
     { role: "text", hex: "#0E3A5B" },
     { role: "background", hex: "#F6F1E7" },
-    { role: "primary", hex: "#F25C3B" },
+    { role: "primary", hex: "#D43F1C" },
     { role: "accent", hex: "#7CC6D9" },
   ],
   fonts: { heading: "Fraunces", body: "Geist" },
