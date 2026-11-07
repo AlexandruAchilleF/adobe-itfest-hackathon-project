@@ -347,7 +347,7 @@ function ruleVagueLink(e: ElementFacts): Draft | null {
 }
 
 function ruleImage(e: ElementFacts): Draft | null {
-  if (!e.isImage || e.alt !== null) return null;
+  if (!e.isImage || e.alt !== null || clean(e.accessibleName)) return null;
   const { w, h } = e.box;
   if (!(w >= LARGE_IMAGE_SIDE && h >= LARGE_IMAGE_SIDE && w * h >= LARGE_IMAGE_AREA)) return null;
   return {

@@ -128,6 +128,11 @@ describe("critica: link vag", () => {
 });
 
 describe("critica: imagine fără descriere", () => {
+  it("imagine ARIA cu nume accesibil: nu cere încă o descriere", () => {
+    const labelled = el({ tag: "svg", role: "img", isImage: true, text: "", alt: null,
+      accessibleName: "Logo Gelateria Uliu", box: { x: 0, y: 200, w: 300, h: 100 } });
+    expect(run([labelled])).toEqual([]);
+  });
   it("poză mare fără descriere", () => {
     const e = el({ tag: "img", role: "img", isImage: true, text: "", alt: null, box: { x: 0, y: 200, w: 600, h: 400 } });
     const [c] = run([e]);
