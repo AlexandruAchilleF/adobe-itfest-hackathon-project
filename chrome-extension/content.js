@@ -26,6 +26,7 @@
   // paginii (ex. „div { … }”) să nu o atingă.
   var host = document.createElement("div");
   host.id = ROOT_ID;
+  host.dataset.spireBuild = config.BUILD;
   var hostStyle = {
     all: "initial",
     position: "fixed",
@@ -755,7 +756,6 @@
 
   // fullscreen: videoclipul din panou se poate deschide pe tot ecranul
   iframe.allow = "clipboard-write; fullscreen";
-  iframe.allowFullscreen = true;
   panel.appendChild(iframe);
 
   // Panoul și iframe-ul se atașează doar la alegerea campaniei.
@@ -1041,12 +1041,14 @@
       var r=current.getBoundingClientRect(), cs=isVisible(current,r);
       if(!cs) continue;
       var tag=current.tagName.toLowerCase();
-      var semanticText=/^(a|button|label|summary|h[1-6])$/.test(tag) || /^(button|link|heading)$/.test(current.getAttribute("role") || "");
+      var zone=/^(nav|header|section|article|footer)$/.test(tag) || /^(navigation|region|banner|contentinfo)$/.test(current.getAttribute("role") || "");
+      var semanticText=zone || /^(a|button|label|summary|h[1-6])$/.test(tag) || /^(button|link|heading)$/.test(current.getAttribute("role") || "");
       var text=normalize(semanticText ? current.innerText : directText(current),120);
       if(tag==="h1") h1++;
       if(tag==="img" && !current.hasAttribute("alt")) missing++;
       if(elements.length>=200) continue;
       var role=current.getAttribute("role") || (tag==="button" || (tag==="input" && /^(button|submit|reset)$/.test(current.type)) ? "button" : tag==="a" && current.hasAttribute("href") ? "link" : /^h[1-6]$/.test(tag) ? "heading" : tag==="img" ? "img" : "");
+      if(zone && !role) role=tag==="nav"?"navigation":tag==="header"?"banner":tag==="footer"?"contentinfo":"region";
       var labelled=normalize((current.getAttribute("aria-labelledby") || "").split(/\s+/).slice(0,20).map(function(id){var n=document.getElementById(id);return n?n.textContent:"";}).join(" "),120);
       var image=current.querySelector("img[alt]"), name=normalize(current.getAttribute("aria-label") || labelled || text || current.getAttribute("title") || current.getAttribute("alt") || (image && image.getAttribute("alt")),120);
       var pointer=cs.cursor==="pointer" || current.hasAttribute("onclick");
@@ -1188,6 +1190,160 @@
   // Brieful, ca o conversație: o singură întrebare pe ecran. Răspunsurile date rămân sus, ca
   // etichete scurte; un clic pe una te întoarce la întrebarea ei. La final, un rezumat și pasul următor.
   var ANSWER_LABELS = { product: "Produs", audience: "Public", goal: "Obiectiv", cta: "Buton" };
+  // Previzualizare locală: doar proprietăți CSS permise, niciodată cod executat din răspunsul AI.
+  var critiqueEdits = [], critiqueAfter = false;
+  var marinaSite = /(^|\.)marinapark\.ro$/i.test(location.hostname);
+  var marinaPreviewStyle = null;
+  // Variantă de demo aleasă de echipă pentru Marina Park, nu design generat de AI.
+  var marinaPreviewCss = `
+    .site-header.main-header { background:#fbfaf6!important; position:relative!important; color:#163e43!important; box-shadow:0 2px 24px #143e4310!important; }
+    .site-header .top-header-bar { background:#163e43!important; color:#fbfaf6!important; border:0!important; }
+    .site-header .top-header-bar a,.site-header .top-header-bar span { color:#fbfaf6!important; }
+    .site-header .top-header-bar__row { min-height:36px!important; padding-block:6px!important; }
+    .site-header .date-time-widget { display:none!important; }
+    .site-header .header-block { background:#fbfaf6!important; }
+    .site-header .header-block__row--main { min-height:104px!important; padding-block:12px!important; }
+    .site-header .header-logo img { object-fit:contain!important; }
+    .site-header nav > ul.menu { display:flex!important; flex-wrap:wrap!important; align-items:center!important; gap:4px 18px!important; }
+    .site-header nav > ul.menu > li { margin:0!important; padding:0!important; }
+    .site-header nav > ul.menu > li > a { display:flex!important; align-items:center!important; min-height:44px!important; padding:8px 0!important; background:transparent!important; border:0!important; border-radius:0!important; color:#163e43!important; font:500 14px/1.3 Heebo,Arial,sans-serif!important; text-transform:none!important; letter-spacing:0!important; }
+    .site-header nav > ul.menu > li > a span { color:inherit!important; }
+    .site-header nav > ul.menu > li > a::after { background:#bf713e!important; }
+    .site-header nav > ul.menu > li.menu-item-1603 > a { background:#163e43!important; color:#fff!important; padding:12px 18px!important; border-radius:6px!important; }
+    .site-header nav .sub-menu { background:#fbfaf6!important; border:1px solid #dce5df!important; border-radius:8px!important; box-shadow:0 16px 40px #143e4320!important; }
+    .site-header nav .sub-menu a { color:#163e43!important; font:400 14px/1.5 Heebo,Arial,sans-serif!important; padding:12px 18px!important; }
+    .homepage-intro { background:#fbfaf6!important; padding-top:72px!important; padding-bottom:64px!important; }
+    .homepage-rooms { background:#edf3ef!important; padding-top:72px!important; padding-bottom:72px!important; }
+    .homepage-reviews { background:#fbfaf6!important; padding-top:64px!important; padding-bottom:48px!important; }
+    .homepage-events { background:#edf3ef!important; padding-top:64px!important; padding-bottom:64px!important; }
+    .homepage-intro h2,.homepage-rooms h2,.homepage-reviews h2 { color:#163e43!important; font-family:Trirong,Georgia,serif!important; font-weight:400!important; font-size:clamp(28px,3.1vw,46px)!important; line-height:1.22!important; letter-spacing:-.6px!important; max-width:900px!important; margin:0 auto 28px!important; text-align:center!important; }
+    .homepage-intro p { color:#435b5d!important; font:400 17px/1.8 Heebo,Arial,sans-serif!important; max-width:780px!important; margin:0 auto 20px!important; }
+    .homepage-intro .service-icons { margin-top:36px!important; padding-top:28px!important; border-top:1px solid #dce5df!important; }
+    .homepage-rooms .portfolio-item .item-box { overflow:hidden!important; border-radius:12px!important; background:#fff!important; box-shadow:0 8px 28px #163e4310!important; }
+    .homepage-rooms .portfolio-item .info { padding:24px!important; background:#fff!important; }
+    .homepage-rooms .portfolio-item h3 { margin:0 0 10px!important; font:500 21px/1.35 Heebo,Arial,sans-serif!important; }
+    .homepage-rooms .portfolio-item h3 a { color:#163e43!important; background:transparent!important; }
+    .homepage-rooms .portfolio-item .terms,.homepage-rooms .portfolio-item .terms a { color:#667a75!important; font:400 13px/1.5 Heebo,Arial,sans-serif!important; }
+    .site-footer.main-footer { background:#163e43!important; color:#f6f5ee!important; padding-top:56px!important; padding-bottom:40px!important; }
+    .site-footer.main-footer a,.site-footer.main-footer h2 { color:#f6f5ee!important; }
+    @media(min-width:1200px) { .site-header .header-block__row-container { width:calc(100% - 80px)!important; max-width:1440px!important; } }
+    @media(max-width:767px) { .homepage-intro,.homepage-rooms,.homepage-reviews,.homepage-events { padding-top:40px!important; padding-bottom:40px!important; } .homepage-intro p { font-size:16px!important; } }
+  `;
+  function critiqueZone(el) {
+    if (!el || !el.closest) return null;
+    var semantic = el.closest('nav,[role="navigation"]') || el.closest('section,article,header,footer,[role="region"],[role="banner"]');
+    if (semantic) return semantic;
+    // Site-urile fără HTML semantic: căutăm ansamblul, niciodată un singur link.
+    for (var node = el, depth = 0; node && depth < 6; node = node.parentElement, depth++) {
+      if (node.matches('body,main,html')) break;
+      if (node.children.length < 2) continue;
+      if (node.querySelectorAll('a[href],button').length >= 2 || (node.querySelector('h1,h2,h3') && node.querySelector('p'))) return node;
+    }
+    return null;
+  }
+  function groupZoneCritiques(crits) {
+    var grouped = [], seen = new Set();
+    crits.forEach(function(c) {
+      var target = critiqueElements.get(c.elementId), zone = critiqueZone(target);
+      if (!zone) { grouped.push(c); return; }
+      if (seen.has(zone)) return;
+      seen.add(zone);
+      var zoneId = c.elementId;
+      if (zone !== target) {
+        zoneId = "crit-zone-" + grouped.length;
+        critiqueElements.set(zoneId, zone);
+      }
+      grouped.push(Object.assign({}, c, { elementId: zoneId }));
+    });
+    return grouped;
+  }
+  function planCritiqueEdits(crits) {
+    var edits = [], seen = new Set();
+    function add(el, property, value) {
+      var key = edits.filter(function(e) { return e.el === el && e.property === property; });
+      if (!key.length && el.style.getPropertyValue(property) !== value) edits.push({ el: el, property: property, value: value,
+        before: el.style.getPropertyValue(property), priority: el.style.getPropertyPriority(property) });
+    }
+    crits.forEach(function(c) {
+      var el = critiqueZone(critiqueElements.get(c.elementId));
+      if (!el || !el.isConnected || seen.has(el) || !el.style) return;
+      seen.add(el);
+      var navigation = el.matches('nav,[role="navigation"],ul,ol') || (!el.querySelector('h1,h2,h3,p') && el.querySelectorAll('a[href]').length >= 2);
+      var region = el.children.length > 1 || el.matches('nav,header,section,article,footer,[role="navigation"],[role="region"],[role="banner"]');
+      if (region) {
+        // Respectăm structura și ordinea existente; ajustăm ansamblul, fără să refacem layout-ul.
+        add(el, "padding-block", navigation ? "16px" : "32px");
+        if (/flex|grid/.test(getComputedStyle(el).display)) add(el, "gap", "24px");
+        if (navigation) {
+          add(el, "display", "flex"); add(el, "flex-wrap", "wrap"); add(el, "align-items", "center"); add(el, "gap", "24px");
+        }
+        Array.from(el.querySelectorAll('ul,ol')).slice(0, 6).forEach(function(list) {
+          if (!navigation && !list.closest('nav,[role="navigation"]')) return;
+          add(list, "display", "flex"); add(list, "flex-wrap", "wrap"); add(list, "align-items", "center");
+          add(list, "gap", "24px"); add(list, "list-style", "none"); add(list, "padding", "0"); add(list, "margin", "0");
+        });
+        var primary = Array.from(el.querySelectorAll('a.cta,a[class*="primary"],button,[role="button"]')).find(function(child) {
+          return !navigation && !child.closest('nav,[role="navigation"]') && child.getClientRects().length;
+        });
+        var children = el.querySelectorAll('h1,h2,h3,p,a[href],button');
+        Array.from(children).slice(0, 40).forEach(function(child) {
+          var style = getComputedStyle(child);
+          if (style.display === "none" || style.visibility === "hidden" || !child.getClientRects().length) return;
+          if (/^H[1-3]$/.test(child.tagName)) {
+            add(child, "font-weight", "700"); add(child, "line-height", "1.15"); add(child, "margin-bottom", "20px");
+          } else if (child.tagName === "P") {
+            add(child, "line-height", "1.6"); add(child, "max-width", "65ch");
+          }
+          if (parseFloat(style.fontSize) < 16) add(child, "font-size", "16px");
+          if (child.matches('a[href],button')) {
+            var menuItem = navigation || child.closest('nav,[role="navigation"]');
+            if (!menuItem && child !== primary) return;
+            add(child, "display", "inline-flex"); add(child, "align-items", "center");
+            add(child, "min-height", "44px"); add(child, "padding", menuItem ? "8px 0" : "12px 24px");
+            add(child, "font-weight", "600");
+            if (menuItem) {
+              add(child, "background-color", "transparent"); add(child, "color", "inherit"); add(child, "border-radius", "0");
+            } else { add(child, "border-radius", "8px"); add(child, "background-color", "#172033"); add(child, "color", "#ffffff"); }
+          }
+        });
+        return;
+      }
+    });
+    return edits;
+  }
+  function setCritiquePreview(after) {
+    if (marinaSite) {
+      if (!marinaPreviewStyle) {
+        marinaPreviewStyle = document.createElement("style");
+        marinaPreviewStyle.setAttribute("data-spire-marina-preview", "true");
+        marinaPreviewStyle.textContent = marinaPreviewCss;
+        (document.head || document.documentElement).appendChild(marinaPreviewStyle);
+      }
+      marinaPreviewStyle.media = after ? "all" : "not all";
+      critiqueAfter = after;
+      return;
+    }
+    critiqueEdits.forEach(function(e) {
+      if (!e.el.isConnected) return;
+      if (after) e.el.style.setProperty(e.property, e.value, "important");
+      else if (e.before) e.el.style.setProperty(e.property, e.before, e.priority);
+      else e.el.style.removeProperty(e.property);
+    });
+    critiqueAfter = after;
+  }
+  function critiquePreviewControls(parent, crits) {
+    if (!marinaSite && !critiqueEdits.length) critiqueEdits = planCritiqueEdits(crits);
+    if (!marinaSite && !critiqueEdits.length) return;
+    var area = line(parent, "div", "", "spire-preview-controls");
+    line(area, "p", marinaSite ? "Previzualizare Marina Park — meniu, secțiuni și carduri. Modificările se aplică doar în această pagină." : "Ajustări pe zone: spațiere, ierarhie și lizibilitate. Previzualizare locală, până reîncarci pagina.", "spire-note");
+    var toggle = button(area, critiqueAfter ? "Vezi înainte" : "Aplică ajustările", function() {
+      setCritiquePreview(!critiqueAfter);
+      toggle.textContent = critiqueAfter ? "Vezi înainte" : "Vezi după";
+      status.textContent = critiqueAfter ? "După · ajustări aplicate local" : "Înainte · pagina originală";
+    }, true);
+    var status = line(area, "p", critiqueAfter ? "După · ajustări aplicate local" : "Aplică propunerea ca să vezi diferența pe pagină.", "spire-note-line");
+    status.setAttribute("role", "status");
+  }
   async function showBrief(crits, title) {
     await memoryReady;
     if (bubble.hidden || bubble.dataset.summary !== "true") return;
@@ -1206,6 +1362,7 @@
       line(meta, "span", critiqueProvenance, "spire-provenance");
       var steps = line(meta, "span", "", "spire-steps"); steps.setAttribute("aria-hidden", "true");
       questions.forEach(function (_, k) { var d = document.createElement("i"); d.className = k < questionIndex ? "done" : k === questionIndex ? "now" : ""; steps.appendChild(d); });
+      critiquePreviewControls(bubble, crits);
       var stage = line(bubble, "div", "", "spire-stage");
       if (slide && stage.animate && !motion.matches) stage.animate([{ opacity: 0, transform: "translateX(14px)" }, { opacity: 1, transform: "none" }], { duration: 280, easing: "cubic-bezier(.16,1,.3,1)" });
       if (questionIndex >= questions.length) renderDone(stage); else renderQuestion(stage);
@@ -1387,6 +1544,7 @@
     });
   }
   async function critique() {
+    setCritiquePreview(false); critiqueEdits = [];
     stopCritique();mode="crit";var id=tour;pose("searching");await wait(1200);
     if(id!==tour)return;
     var facts=readFacts();
@@ -1401,6 +1559,7 @@
       critiqueProvenance=result.mode==="mock"?"Analiză simulată":"Analiză AI";
       crits=result.critiques;
     }
+    crits = groupZoneCritiques(crits);
     await memoryReady;
     if (id !== tour) return;
     briefAnswers = globalThis.SpireCritique.fillBriefGaps(briefAnswers, Object.assign({}, globalThis.SpireCritique.briefSeed(facts.page, facts.elements), cleanAnswers(result.suggestedAnswers)));

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Spire",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Spire cite\u0219te stilul unei pagini \u0219i \u00eel refolose\u0219te pentru marca ta.",
   "permissions": [
     "activeTab",

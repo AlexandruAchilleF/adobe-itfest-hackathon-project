@@ -5,6 +5,28 @@ importScripts("config.js");
 // Injectează configurarea și scriptul din pagină.
 async function injectSpire(tabId) {
   try {
+    // O pagină poate păstra content script-ul vechi după actualizarea extensiei.
+    // Reîncărcarea elimină și stilurile vechi înainte să injectăm noua versiune.
+    const [state] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (build) => {
+        const root = document.getElementById("spire-root");
+        return Boolean(root && root.dataset.spireBuild !== build);
+      },
+      args: [SPIRE_CONFIG.BUILD],
+    });
+    if (state?.result) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => { chrome.tabs.onUpdated.removeListener(updated); reject(new Error("Pagina nu s-a reîncărcat la timp.")); }, 30000);
+        function updated(id, change) {
+          if (id === tabId && change.status === "complete") {
+            clearTimeout(timer); chrome.tabs.onUpdated.removeListener(updated); resolve();
+          }
+        }
+        chrome.tabs.onUpdated.addListener(updated);
+        chrome.tabs.reload(tabId).catch((error) => { clearTimeout(timer); chrome.tabs.onUpdated.removeListener(updated); reject(error); });
+      });
+    }
     await chrome.scripting.executeScript({
       target: { tabId },
       files: ["config.js", "mascot-poses.js", "critique.js", "inspire.js", "content.js"],

@@ -228,6 +228,29 @@ test.beforeEach(() => {
   appReadyAuto = true;
 });
 
+test("iframe-ul Spire permite fullscreen fără declarații duplicate sau erori de execuție", async () => {
+  const page = await openFixture();
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/allowfullscreen|Allow attribute will take precedence/i.test(message.text())) errors.push(message.text());
+  });
+  const session = await context.newCDPSession(page);
+  await session.send("Log.enable");
+  session.on("Log.entryAdded", ({ entry }) => {
+    if (/allowfullscreen|Allow attribute will take precedence/i.test(entry.text)) errors.push(entry.text);
+  });
+  await inject();
+  await appFrame(page);
+  const frame = page.locator("#spire-root iframe");
+  await expect(frame).toHaveAttribute("allow", "clipboard-write; fullscreen");
+  await expect(frame).not.toHaveAttribute("allowfullscreen", /.*/);
+  await expect.poll(() => page.frames().length).toBeGreaterThan(1);
+  expect(errors).toEqual([]);
+  await session.detach();
+  await page.close();
+});
+
 test("după injectare, Spire apare peste pagină: shadow root cu iframe la /nou?din=extensie", async () => {
   const page = await openFixture();
   expect(await inject()).toBe(true);
@@ -250,6 +273,20 @@ test("după injectare, Spire apare peste pagină: shadow root cu iframe la /nou?
 
   // Pagina gazdă rămâne întreagă: titlul și butonul ei sunt tot acolo.
   await expect(page.getByRole("link", { name: "Comandă acum" })).toBeVisible();
+  await page.close();
+});
+
+test("actualizarea extensiei înlocuiește stratul vechi și elimină stilurile lui", async () => {
+  const page = await openFixture(); await inject();
+  await page.evaluate(() => {
+    document.getElementById("spire-root")!.dataset.spireBuild = "versiune-veche";
+    const link = document.querySelector<HTMLElement>(".cta")!;
+    link.style.setProperty("background-color", "#172033", "important");
+  });
+  await inject();
+  await expect(page.locator("#spire-root")).toHaveCount(1);
+  await expect(page.locator("#spire-root")).toHaveAttribute("data-spire-build", "marina-sections-20261107-2");
+  await expect(page.locator(".cta")).toHaveCSS("background-color", "rgb(194, 65, 12)");
   await page.close();
 });
 
@@ -724,6 +761,91 @@ test("critica aterizează, conturează elementul, avansează și termină cu rez
   await page.close();
 });
 
+test("după critică, ajustările cer clic și comparația înainte/după restaurează pagina", async () => {
+  const page = await openFixture();
+  await page.locator(".cta").evaluate((el: HTMLElement) => { el.style.cssText = "font-size:10px;color:#ddd;background-color:white"; });
+  const original = await page.locator(".cta").getAttribute("style");
+  await inject(); await startCritique(page);
+  const root = page.locator("#spire-root");
+  for (let i = 0; i < 8 && !(await root.locator(".spire-bubble").getAttribute("data-summary")); i++) {
+    const next = root.getByRole("button", { name: "Următorul", exact: true });
+    if (await next.isVisible()) await next.click();
+    await page.waitForTimeout(450);
+  }
+  const apply = root.getByRole("button", { name: "Aplică ajustările", exact: true });
+  await expect(apply).toBeVisible();
+  await expect(page.locator(".cta")).toHaveAttribute("style", original!);
+  await apply.click();
+  await expect(page.locator(".cta")).toHaveCSS("min-height", "44px");
+  await expect(page.locator(".cta")).toHaveCSS("color", "rgb(255, 255, 255)");
+  await expect(page.locator(".cta")).toHaveAttribute("href", "#comanda");
+  await root.getByRole("button", { name: "Vezi înainte", exact: true }).click();
+  await expect(page.locator(".cta")).toHaveCSS("font-size", "10px");
+  await expect(page.locator(".cta")).toHaveCSS("color", "rgb(221, 221, 221)");
+  await root.getByRole("button", { name: "Vezi după", exact: true }).click();
+  await expect(page.locator(".cta")).toHaveCSS("min-height", "44px");
+  await page.close();
+});
+
+test("critica grupează meniul ca zonă și ajustează toate legăturile cu revenire", async () => {
+  const page = await openFixture();
+  await page.evaluate(() => {
+    const nav = document.createElement("nav");
+    nav.setAttribute("aria-label", "Meniul principal");
+    nav.style.cssText = "display:flex;gap:2px;padding:2px";
+    for (const text of ["click aici", "mai mult"]) {
+      const link = document.createElement("a"); link.href = "#detalii"; link.textContent = text;
+      link.style.cssText = "font-size:10px;color:#ddd;background:white";
+      nav.appendChild(link);
+    }
+    document.querySelector(".hero")!.prepend(nav);
+  });
+  await inject(); await finishCritique(page);
+  const root = page.locator("#spire-root");
+  const facts = JSON.parse((await root.locator(".spire-bird").getAttribute("data-facts"))!);
+  expect(facts.elements.some((e: { role: string }) => e.role === "navigation")).toBe(true);
+  await root.getByRole("button", { name: "Aplică ajustările", exact: true }).click();
+  const nav = page.getByRole("navigation", { name: "Meniul principal" });
+  await expect(nav).toHaveCSS("gap", "24px");
+  for (const link of await nav.locator("a").all()) {
+    await expect(link).toHaveCSS("font-size", "16px");
+    await expect(link).toHaveCSS("min-height", "44px");
+    await expect(link).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(link).toHaveCSS("border-radius", "0px");
+  }
+  await root.getByRole("button", { name: "Vezi înainte", exact: true }).click();
+  await expect(nav).toHaveCSS("gap", "2px");
+  await expect(nav.locator("a").first()).toHaveCSS("font-size", "10px");
+  await page.close();
+});
+
+test("Marina Park: aplică ansamblul pregătit și revine complet la original", async () => {
+  const url = "https://www.marinapark.ro/";
+  await context.route(url, route => route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="ro"><title>Marina Park</title><body>
+    <header class="site-header main-header"><div class="top-header-bar">Marina Park</div><nav><ul class="menu"><li><a href="#camere">Camere</a></li><li class="menu-item-1603"><a href="#rezerva">Rezervați acum</a></li></ul></nav></header>
+    <div class="homepage-intro"><h2>Camping în Vama Veche</h2><p style="font-size:10px;color:#ddd;background:white">Cazare și campare la Marina Park</p></div>
+    <div class="homepage-rooms"><h2>Camere</h2><div class="portfolio-item"><div class="item-box"><div class="info"><h3><a href="#camera">Camera dublă</a></h3></div></div></div></div>
+    </body></html>` }));
+  const page = await context.newPage(); await page.goto(url);
+  await sw.evaluate(async (url) => {
+    const g = globalThis as unknown as { chrome: { tabs: { query(q: { url: string }): Promise<Array<{id: number}>> } }; injectSpire(id: number): Promise<boolean> };
+    const [tab] = await g.chrome.tabs.query({ url }); await g.injectSpire(tab.id);
+  }, url);
+  await finishCritique(page);
+  const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-preview-controls")).toContainText("Previzualizare Marina Park");
+  await expect(root.locator(".spire-preview-controls")).not.toContainText("pregătită de echipă");
+  await root.getByRole("button", { name: "Aplică ajustările", exact: true }).click();
+  await expect(page.locator("header.site-header")).toHaveCSS("background-color", "rgb(251, 250, 246)");
+  await expect(page.locator(".homepage-rooms")).toHaveCSS("background-color", "rgb(237, 243, 239)");
+  await expect(page.locator("nav .menu-item-1603 > a")).toHaveCSS("background-color", "rgb(22, 62, 67)");
+  await expect(page.locator("nav li:first-child > a")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await root.getByRole("button", { name: "Vezi înainte", exact: true }).click();
+  await expect(page.locator("header.site-header")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(page.locator(".homepage-intro p")).toHaveCSS("font-size", "10px");
+  await page.close(); await context.unroute(url);
+});
+
 test("CSP strict: uliul are stiluri și critica folosește fallback când iframe e blocat", async () => {
   const page = await context.newPage();
   await page.goto(SITE_ORIGIN + "/csp");
@@ -831,7 +953,7 @@ test("brief: memorie a extensiei, reîncărcare, uitare și transfer doar după 
   await root.getByRole('textbox',{name:'Cui te adresezi?'}).fill('Părinți');
   await completeBrief(page);
   await root.getByRole('button',{name:'Păstrează răspunsurile'}).click();
-  await expect(root.getByRole('status')).toContainText('Răspunsuri păstrate.');
+  await expect(root.getByRole('status').filter({ hasText: 'Răspunsuri păstrate.' })).toBeVisible();
   expect(await page.evaluate(()=>localStorage.length)).toBe(0);
   await page.reload(); await inject(); await finishCritique(page);
   root=page.locator('#spire-root');
