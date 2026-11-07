@@ -106,6 +106,14 @@ function Shell() {
       </Suspense>
     );
   }
+  // landing page-ul are navigația lui, plutitoare peste cer
+  if (location === "/" && S.landing) {
+    return (
+      <Suspense fallback={<Loading />}>
+        <LandingPage />
+      </Suspense>
+    );
+  }
   const bare = BARE.find(([path]) => location === path || location.startsWith(`${path}/`));
   if (bare) {
     const Page = bare[1];

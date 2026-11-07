@@ -105,3 +105,11 @@ test("marca se schimbă din formular și rămâne salvată", async ({ page }) =>
   await page.reload();
   await expect(page.getByLabel("Numele mărcii")).toHaveValue("Altă marcă");
 });
+
+test("landing page-ul spune ce face Spire și duce la campania nouă", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Spire îl face pe marca ta.");
+  await expect(page.getByText(/\d+ din \d+ verificări trec/)).toBeAttached();
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Încearcă acum" }).click();
+  await expect(page).toHaveURL(/\/nou$/);
+});
