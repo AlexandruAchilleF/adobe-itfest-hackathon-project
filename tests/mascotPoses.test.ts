@@ -23,7 +23,7 @@ function forExtension(svg: string) {
       .replace(/\sclass="[^"]*"/, "")
       .replace(/\swidth="[^"]*"/, ' width="100%"')
       .replace(/\sheight="[^"]*"/, ' height="100%"');
-    return `<svg${clean}>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg"${clean}>`;
   });
 }
 
@@ -83,6 +83,7 @@ describe("pozele uliului pentru extensie", () => {
         const root = /^<svg[^>]*>/.exec(poses[mood][pose])?.[0] ?? "";
         expect(root).toContain('width="100%"');
         expect(root).toContain('height="100%"');
+        expect(root).toContain('xmlns="http://www.w3.org/2000/svg"');
         expect(root).not.toMatch(/class=/);
       }
     }

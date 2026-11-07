@@ -375,7 +375,6 @@
 .spire-level:before {content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#b08834;margin-right:8px}
 .spire-level[data-level="important"]:before {background:#F25C3B}
 .spire-level[data-level="marunt"]:before {background:#8b94a6}
-.spire-ai {border-top:1px solid #e3e5ea;padding-top:8px}
 .spire-row {display:flex;gap:8px;align-items:center;margin-top:12px}
 .spire-row span {flex:1}
 .spire-crit-outline {position:fixed;border:2px solid #F25C3B;border-radius:6px;background:#F25C3B0A;pointer-events:none}
@@ -710,7 +709,7 @@
     var labels={"important":"Important","de-imbunatatit":"De îmbunătățit","marunt":"Mărunt"};
     var level=line(bubble,"div",labels[c.level],"spire-level");
     level.dataset.level=c.level;
-    line(bubble,"h2",c.title);line(bubble,"p",c.body);line(bubble,"p","Ce faci: "+c.fix);line(bubble,"p","Pentru asistenții AI: "+c.agent,"spire-ai");
+    line(bubble,"h2",c.title);line(bubble,"p",c.fix);
     var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);line(row,"span",(index+1)+" din "+total);
     return new Promise(function(resolve){
       var done=false;

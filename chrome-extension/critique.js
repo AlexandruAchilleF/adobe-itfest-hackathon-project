@@ -163,7 +163,7 @@
 		if (e.tag === "button" || e.role === "button" || e.isButtonLike) return `Butonul ${quote(text)}`;
 		return `Textul ${quote(text)}`;
 	}
-	const FAKE_BUTTON_AGENT = "Asistenții AI care comandă sau rezervă în numele clienților nu-și dau seama că e un buton. Roagă-l pe cel care îți face site-ul să-l transforme într-un buton adevărat.";
+	const FAKE_BUTTON_AGENT = "Asistenții AI care comandă sau rezervă în numele clienților nu-și dau seama că e un buton. Cere un buton real, accesibil și din tastatură.";
 	function ruleContrast(e) {
 		const text = clean(e.text);
 		if (!text || e.isImage) return null;
@@ -175,7 +175,7 @@
 		const action = isActionEl(e);
 		const important = action && e.inFirstScreen;
 		const fakeButton = isFakeButton(e);
-		const fix = action ? c.textIsLighter ? "Fă butonul într-o culoare mai puternică, mai închisă, ca scrisul deschis să sară în ochi." : "Fă scrisul mult mai închis sau butonul într-o culoare puternică, cu scris deschis, ca să sară în ochi." : c.textIsLighter ? "Fă fundalul mai închis, ca scrisul deschis să iasă în evidență." : "Fă scrisul mai închis, ca să se citească ușor pe fundal.";
+		const fix = action ? c.textIsLighter ? "Închide culoarea butonului, ca scrisul să se vadă clar." : "Folosește scris mai închis pe un fundal deschis." : c.textIsLighter ? "Închide fundalul, ca scrisul deschis să se vadă clar." : "Închide culoarea scrisului.";
 		return {
 			el: e,
 			level: important ? "important" : "de-imbunatatit",
@@ -205,7 +205,7 @@
 			ruleId: "fara-nume",
 			title: isLink ? "Un link n-are nume" : "Un buton n-are nume",
 			body: `Probabil se vede doar o iconiță. Cine folosește un cititor de ecran aude doar „${isLink ? "link" : "buton"}”, fără să afle ce face.`,
-			fix: "Cere să i se dea un nume scurt, care spune ce face, de exemplu „Caută” sau „Deschide meniul”.",
+			fix: "Dă-i un nume care spune ce face, de exemplu „Caută”.",
 			agent: `Asistenții AI nu folosesc un ${isLink ? "link" : "buton"} fără nume: nu știu ce face, așa că îl ocolesc.`,
 			evidence: {
 				tag: e.tag,
@@ -221,9 +221,9 @@
 			el: e,
 			level: "de-imbunatatit",
 			ruleId: "buton-fals",
-			title: text ? `${quote(text)} arată ca un buton, dar nu e unul` : "Ceva arată ca un buton, dar nu e unul",
+			title: text ? `${quote(text)} nu e un buton real` : "Un buton nu poate fi folosit din tastatură",
 			body: "Merge cu mouse-ul, dar cine folosește tastatura sau un cititor de ecran nu ajunge la el.",
-			fix: "Roagă-l pe cel care îți face site-ul să-l transforme într-un buton adevărat.",
+			fix: "Cere un buton real, accesibil și din tastatură.",
 			agent: "Asistenții AI care fac lucruri în numele clienților nu-și dau seama că se poate apăsa, așa că îl ocolesc.",
 			evidence: { tag: e.tag }
 		};
@@ -238,7 +238,7 @@
 			ruleId: "link-vag",
 			title: `${quote(text)} nu spune unde ajungi`,
 			body: "Omul trebuie să ghicească ce găsește dacă apasă.",
-			fix: "Scrie direct ce e acolo, de exemplu „Vezi prețurile” sau „Citește despre livrare”.",
+			fix: "Spune unde duce linkul, de exemplu „Vezi prețurile”.",
 			agent: `Asistenții AI aleg linkurile după ce scrie pe ele. Pe ${quote(text)} nu-l vor alege niciodată.`,
 			evidence: {
 				text: normalize(text),
@@ -256,7 +256,7 @@
 			ruleId: "imagine-fara-descriere",
 			title: "Poza mare n-are descriere",
 			body: "Cine nu vede poza, sau un motor de căutare, nu află ce arată.",
-			fix: "Descrie-o într-o propoziție scurtă: ce produs sau ce loc se vede în ea.",
+			fix: "Adaugă o descriere scurtă a imaginii.",
 			agent: "Un asistent AI nu poate citi poza, doar descrierea ei. Fără ea, nu știe ce vinzi.",
 			evidence: {
 				w: Math.round(w),
@@ -288,9 +288,9 @@
 			el: e,
 			level: "de-imbunatatit",
 			ruleId: "titlu-nemarcat",
-			title: `${quote(text)} arată ca un titlu, dar nu e marcat ca titlu`,
+			title: `${quote(text)} nu e marcat ca titlu`,
 			body: "Pentru ochi e titlu, dar pentru cititoarele de ecran și pentru motoarele de căutare e doar un text mare.",
-			fix: "Cere să fie marcat ca titlu, ca să se vadă cum e împărțită pagina.",
+			fix: "Cere să fie marcat ca subtitlu al secțiunii.",
 			agent: "Asistenții AI se orientează după titluri. Pe acesta nu-l văd, așa că nu știu unde începe partea asta din pagină.",
 			evidence: { fontSizePx: e.fontSizePx }
 		};
@@ -319,7 +319,7 @@
 				ruleId: "pagina-fara-titlu",
 				title: best ? `${quote(best.text)} nu e marcat ca titlul paginii` : "Pagina n-are un titlu principal",
 				body: best ? "Arată ca titlul paginii, dar pagina nu are niciun titlu marcat ca principal." : "Nimic nu e marcat ca titlul principal, așa că nu e clar dintr-o privire despre ce e pagina.",
-				fix: best ? "Cere să fie marcat ca titlul paginii." : "Pune sus un titlu care spune ce oferi și cere să fie marcat ca titlul paginii.",
+				fix: best ? "Cere să fie marcat ca titlul paginii." : "Adaugă un titlu principal care spune ce oferi.",
 				agent: "Pentru asistenții AI, titlul principal spune despre ce e pagina. Fără el, nu știu sigur ce oferi.",
 				evidence: {
 					h1Count: 0,
@@ -332,7 +332,7 @@
 			ruleId: "mai-multe-titluri",
 			title: "Pagina are mai multe titluri principale",
 			body: "Mai multe texte sunt marcate ca titlul paginii, așa că nu e clar care e cel adevărat.",
-			fix: "Păstrează unul singur ca titlu principal; restul pot fi subtitluri.",
+			fix: "Păstrează un titlu principal; transformă restul în subtitluri.",
 			agent: "Asistenții AI nu știu pe care să-l creadă când rezumă pagina.",
 			evidence: { h1Count: h1 }
 		});
@@ -342,7 +342,7 @@
 			ruleId: "fara-descriere",
 			title: "Pagina n-are o descriere",
 			body: "În Google apare ce prinde motorul de căutare din pagină, nu ce ai vrea tu să spui.",
-			fix: "Scrie două fraze despre ce oferi și cere să fie puse ca descrierea paginii.",
+			fix: "Adaugă o descriere scurtă a ofertei în setările paginii.",
 			agent: "Asistenții AI citesc descrierea ca să afle repede despre ce e pagina. Fără ea, ghicesc din bucăți.",
 			evidence: { length: 0 }
 		});
@@ -350,9 +350,9 @@
 			el: null,
 			level: "de-imbunatatit",
 			ruleId: "fara-date-structurate",
-			title: "Asistenții AI nu găsesc direct datele afacerii",
+			title: "Lipsesc datele structurate ale afacerii",
 			body: "Oamenii găsesc informațiile citind pagina, dar ele nu sunt puse și într-o formă standard, pe care o înțeleg calculatoarele.",
-			fix: "Cere ca programul, adresa și prețurile să fie puse și ca date pentru motoarele de căutare.",
+			fix: "Adaugă adresa și programul verificate în format standard. Pot ajuta și căutarea cu AI.",
 			agent: "Asistenții AI nu găsesc direct programul, adresa, prețurile. Când cineva întreabă „e deschis acum?”, nu pot răspunde sigur.",
 			evidence: { types: 0 }
 		});
@@ -362,7 +362,7 @@
 			ruleId: "fara-limba",
 			title: "Pagina nu spune în ce limbă e",
 			body: "Cititoarele de ecran pot citi textul românesc cu accent englezesc, greu de înțeles.",
-			fix: "Cere să fie trecută limba paginii.",
+			fix: "Setează limba paginii.",
 			agent: "Asistenții AI pot traduce sau rezuma greșit dacă nu știu limba paginii.",
 			evidence: { lang: "" }
 		});

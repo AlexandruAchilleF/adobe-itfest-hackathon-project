@@ -36,8 +36,9 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 
 Clic pe iconiță arată uliul, fără să încarce aplicația. Uliul se plimbă și aterizează pe
 elemente; clic pe el deschide meniul. „Critică pagina” verifică pagina local, apoi te
-duce pe rând la elementele cu probleme. Balonul spune ce contează, ce poți schimba și
-ce împiedică un asistent AI să folosească pagina. „Următorul” avansează imediat;
+duce pe rând la elementele cu probleme. Balonul arată problema și un remediu scurt.
+Căutarea cu AI este menționată doar la recomandarea privind datele structurate.
+„Următorul” avansează imediat;
 altfel avansează după aproximativ 8 secunde. „Oprește” întrerupe turul.
 Escape închide meniul. Un nou clic pe iconița extensiei ascunde sau arată stratul.
 „Fă o campanie” deschide panoul existent cu aplicația la `/nou?din=extensie`.
