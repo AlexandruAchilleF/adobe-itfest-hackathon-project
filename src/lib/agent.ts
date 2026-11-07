@@ -33,7 +33,7 @@ export interface AgentAction<A extends AnyArgs = AnyArgs> {
   examples?: string[];
   /** Argumentele folosite în modul demo (sau o funcție care le construiește din cerere). */
   mockArgs?: z.infer<A> | ((input: string) => z.infer<A>);
-  /** Ce va face, în cuvinte, pentru pasul de confirmare (ex: „Aprobă „Prânz cu clientul” (236 lei)”). */
+  /** Ce va face, în cuvinte, pentru pasul de confirmare (ex: „Marchează „Postarea de vineri” ca verificată”). */
   describe?: (args: z.infer<A>) => string;
 }
 

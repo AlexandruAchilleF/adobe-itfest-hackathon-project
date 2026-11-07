@@ -5,6 +5,7 @@
 import type { DocRules } from "../lib/checks";
 import type { FlowDef, SeedStep } from "../lib/flow";
 import type { LatLng } from "../modules/map/geo";
+import type { NavItem } from "./nav";
 
 export interface Role {
   /** cum îi spune brief-ul: „Donator”, „Adăpost”, „Manager” */
@@ -187,6 +188,10 @@ export interface Scenario {
     /** paginile pe care mascota nu apare (ex: business canvas, documente) */
     hiddenOn: string[];
   };
+  /** meniul principal, când produsul are alte pagini decât fluxul de cereri */
+  nav?: NavItem[];
+  /** true = „/” e landing page-ul produsului (LandingPage), nu povestea din ScenarioHome */
+  landing?: boolean;
   seed: {
     people: PersonSeed[];
     requests: RequestSeed[];

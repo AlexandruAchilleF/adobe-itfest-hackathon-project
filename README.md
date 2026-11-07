@@ -23,7 +23,8 @@ AI-ul face un singur lucru: transformă ce scrie, spune sau fotografiază omul �
 | **Validare** | sondaj prin QR și business canvas: cifra reală și plătitorul pentru pitch | `/survey`, `/business` |
 
 Două scenarii exemplu, ca să vedeți cum arată config-ul:
-- **`deconturi`** (implicit): angajat → manager → contabil, bonul verificat de cod, cronometrul. Plătitorul e firma.
+- **`spire`** (implicit): agentul peste site, kitul de campanie pe marca ta, garda (`/nou`, `/campanii`, `/marca`).
+- **`deconturi`**: angajat → manager → contabil, bonul verificat de cod, cronometrul. Plătitorul e firma.
 - **`sesizari`**: raportezi de pe telefon (GPS și oră), raportul devine sesizare cu flux, echipa primăriei o preia și o rezolvă, cetățeanul confirmă din SMS sau spune „nu s-a rezolvat”. Forma brief-ului din 2024. Plătitorul: primăria (ipoteză).
 - **`resurse`**: repetiția pe brief-ul ResourceWise 2023 (restaurante → adăposturi, hartă, puncte, ranguri). Vezi `docs/REPETITIE-2023.md`.
 - **`interne`**: cereri interne IT și onboarding (angajat → manager → IT → „funcționează” sau „nu merge”), fără hartă și fără documente. Plătitorul: firma (ipoteză).

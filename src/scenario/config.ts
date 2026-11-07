@@ -6,9 +6,10 @@ import { deconturi } from "./scenarios/deconturi";
 import { interne } from "./scenarios/interne";
 import { resurse } from "./scenarios/resurse";
 import { sesizari } from "./scenarios/sesizari";
+import { spire } from "./scenarios/spire";
 import { vecini } from "./scenarios/vecini";
 import type { Scenario } from "./types";
 
-export const SCENARIOS: Record<string, Scenario> = { deconturi, interne, resurse, sesizari, vecini };
+export const SCENARIOS: Record<string, Scenario> = { deconturi, interne, resurse, sesizari, spire, vecini };
 
-export const scenario: Scenario = SCENARIOS[(import.meta.env.VITE_SCENARIO as string | undefined) ?? ""] ?? deconturi;
+export const scenario: Scenario = SCENARIOS[(import.meta.env.VITE_SCENARIO as string | undefined) ?? ""] ?? spire;

@@ -35,6 +35,11 @@ const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
 const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
 const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
 const PitchPage = page(() => import("./pages/PitchPage"), "PitchPage");
+const NewCampaignPage = page(() => import("./pages/spire/NewCampaignPage"), "NewCampaignPage");
+const CampaignsPage = page(() => import("./pages/spire/CampaignsPage"), "CampaignsPage");
+const CampaignPage = page(() => import("./pages/spire/CampaignPage"), "CampaignPage");
+const BrandPage = page(() => import("./pages/spire/BrandPage"), "BrandPage");
+const LandingPage = page(() => import("./pages/spire/LandingPage"), "LandingPage");
 const Loading = () => <p className="p-6 text-sm text-muted">Se încarcă…</p>;
 
 const S = scenario;
@@ -139,7 +144,11 @@ function Shell() {
       <main className={home ? "print:p-0" : "mx-auto max-w-6xl px-4 pt-8 pb-24 print:max-w-none print:p-0"}>
         <Suspense fallback={<Loading />}>
         <Switch>
-          <Route path="/" component={ScenarioHome} />
+          <Route path="/" component={S.landing ? LandingPage : ScenarioHome} />
+          <Route path="/nou" component={NewCampaignPage} />
+          <Route path="/campanii" component={CampaignsPage} />
+          <Route path="/campanii/:id" component={CampaignPage} />
+          <Route path="/marca" component={BrandPage} />
           <Route path="/start">
             <HomePage status={status} />
           </Route>

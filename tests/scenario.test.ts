@@ -3,7 +3,7 @@ import { distanceKm } from "../src/modules/map/geo";
 import { baselineScore, buildRequestSeed, requestSchema, validateScenario } from "../src/scenario/model";
 import { vecini } from "../src/scenario/scenarios/vecini";
 import type { Scenario } from "../src/scenario/types";
-import { scenario } from "../src/scenario/config";
+import { scenario, SCENARIOS } from "../src/scenario/config";
 
 describe("scenariul activ", () => {
   it("nu are probleme de configurare", () => expect(validateScenario(scenario)).toEqual([]));
@@ -11,10 +11,13 @@ describe("scenariul activ", () => {
     const schema = requestSchema(scenario);
     for (const r of buildRequestSeed(scenario)) expect(schema.safeParse(r).success, r.title).toBe(true);
   });
-  it("are 8–10 cereri în seed, ca demo-ul să pară plin", () => {
-    expect(scenario.seed.requests.length).toBeGreaterThanOrEqual(8);
-    expect(scenario.seed.requests.length).toBeLessThanOrEqual(12);
-  });
+  // un scenariu cu meniu propriu nu arată pagina de cereri, deci seed-ul lui nu trebuie să pară plin
+  for (const s of Object.values(SCENARIOS).filter((x) => !x.nav)) {
+    it(`${s.id}: are 8–10 cereri în seed, ca demo-ul să pară plin`, () => {
+      expect(s.seed.requests.length).toBeGreaterThanOrEqual(8);
+      expect(s.seed.requests.length).toBeLessThanOrEqual(12);
+    });
+  }
 });
 
 describe("validateScenario prinde greșelile de copy-paste", () => {
