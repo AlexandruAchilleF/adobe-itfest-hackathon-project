@@ -74,13 +74,17 @@ Obligatoriile vin din temă și din criterii; opționalele sunt cele trei stratu
 
 ## Ideea aleasă
 
-- **Fraza:** Ajutăm _[omul]_ să _[ce]_ fără _[durerea]_.
-- **Omul:**
-- **Durerea (cifra și sursa):**
-- **Plătitorul:**
-- **Diferența față de ChatGPT:**
-- **Bucla în lumea reală:**
-- **Momentul wow (secunda din demo):**
+Ideea echipei (aleasă după discuție și după un consiliu de 5 perspective): **stilul altcuiva, conținutul tău**. Omul de marketing vede online un design care îi place. Unealta ia din el doar stilul (tehnica desenului, compoziția, atmosfera, rolurile culorilor) și refacе materialul cu conținutul mărcii lui: mascota lui regenerată în acel stil, culorile din brand guidelines puse pe rolurile culorilor din referință, textele lui. Fără prompturi: AI-ul citește referința și pune doar 3–5 întrebări cu variante. Codul verifică rezultatul.
+
+- **Fraza (de lucru):** Ajutăm omul de marketing să transforme orice design care îi place într-un material pe marca lui, fără designer și fără zece prompturi.
+- **Omul:** omul de marketing dintr-o firmă mică, medie sau mare (de ales o singură persoană pentru demo). Lucrează pe laptop; aprobă și pe telefon.
+- **Durerea (cifra și sursa):** de adus azi: test pe hol cu ChatGPT/Firefly (câte prompturi, câte minute până la un rezultat publicabil, ce iese greșit), ideal cu oameni de marketing reali.
+- **Plătitorul:** ipoteză: firma (abonament), care azi plătește designeri, ilustratori sau ore de agenție.
+- **Diferența față de ChatGPT:** stilul din referință + conținutul din profilul mărcii, într-un design pe straturi editabil (export în Adobe Express); garda deterministă: paleta imaginii generate măsurată față de culorile mărcii, imaginea nouă comparată cu referința (să nu fie aproape identică), text și preț exacte, mențiuni obligatorii, contrast și lizibilitate.
+- **Bucla în lumea reală:** de stabilit.
+- **Momentul wow (secunda din demo):** ~45: mascota concurentului (de ex. o cămilă) în stânga, mascota mărcii (un pinguin) în același stil în dreapta, cu bifele gărzii.
+
+Decizii luate: doar imagini statice; aplicația web + export în Express; marca din formular, brand book PDF după ora 6; designul construit de cod din „anatomia” referinței (AI-ul scrie textele scurte și generează ilustrația); generarea de imagini cu modelul de imagine Gemini (Firefly Services de verificat); captură din ecran și extensie de Chrome (poziția ei în plan: de confirmat).
 
 ## Ideile respinse
 
@@ -146,3 +150,5 @@ Notele 1–5 sunt pe cele 9 întrebări din `docs/JURIU.md`; nota ponderată e c
 | 08:xx | Prezentarea Adobe adăugată: tema exactă, criteriile cu ponderi, contextul CXO/CNP | toate |
 | 08:xx | Verdict: B (rețeta `/design`), cu agentul (`agent.ts`) și bucla (`flow`); de confirmat după alegerea ideii | AI, Problem Solving |
 | 08:xx | Respinsă: aprobarea agenție ↔ client (AI ar fi add-on) | AI-Driven Innovation |
+| 09:xx | Aleasă: „stilul altcuiva, conținutul tău” (referință → stil; mascota, culorile și textele mărcii), verificat de cod | AI-Driven Innovation, Problem Solving, Demo |
+| 09:xx | Consiliul: originalitatea e în gardă și în rezultatul editabil, nu în clonare; extensia doar ca strat subțire; citirea paginii utilă doar pe site-uri, nu pe Meta/Instagram | Technical Excellence |
