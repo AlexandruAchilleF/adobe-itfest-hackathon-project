@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   critiquePage,
   summarySentence,
+  modificationSuggestions,
   type Critique,
   type ElementFacts,
   type PageFacts,
@@ -231,8 +232,8 @@ describe("critica: ordine și limite", () => {
     const highLink = el({ tag: "a", isLink: true, href: "/", text: "click aici", accessibleName: "click aici", box: { x: 0, y: 400, w: 40, h: 20 } });
     const cta = el({ tag: "button", role: "button", text: "Comandă", accessibleName: "Comandă", color: "#f9c0d0", box: { x: 0, y: 600, w: 120, h: 40 } });
     const out = run([tiny, lowLink, highLink, cta], page({ lang: "" }));
-    expect(out.map((c) => c.elementId)).toEqual([cta.id, highLink.id, lowLink.id, tiny.id, null]);
-    expect(out.map((c) => c.level)).toEqual(["important", "de-imbunatatit", "de-imbunatatit", "marunt", "marunt"]);
+    expect(out.map((c) => c.elementId)).toEqual([cta.id, highLink.id, tiny.id, null]);
+    expect(out.map((c) => c.level)).toEqual(["important", "de-imbunatatit", "marunt", "marunt"]);
   });
   it("cel mult o critică pe element: cea mai gravă", () => {
     // contrast slab + text mic + buton fals, pe același element
@@ -244,15 +245,15 @@ describe("critica: ordine și limite", () => {
     // dar vorbește și despre butonul fals, la asistenții AI
     expect(out[0].agent).toMatch(/buton/);
   });
-  it("cel mult 2 critici din aceeași regulă", () => {
+  it("cel mult o critică din aceeași regulă", () => {
     const links = Array.from({ length: 6 }, (_, i) =>
       el({ tag: "a", isLink: true, href: "/", text: "aici", accessibleName: "aici", box: { x: 0, y: 100 + i * 30, w: 40, h: 20 } }),
     );
     const out = run(links);
-    expect(out).toHaveLength(2);
-    expect(out.map((c) => c.elementId)).toEqual([links[0].id, links[1].id]);
+    expect(out).toHaveLength(1);
+    expect(out.map((c) => c.elementId)).toEqual([links[0].id]);
   });
-  it("cel mult 8 critici în total", () => {
+  it("cel mult 5 critici în total", () => {
     const many: ElementFacts[] = [];
     for (let i = 0; i < 2; i++) {
       many.push(el({ color: "#dddddd", text: `gri ${i}` }));
@@ -264,8 +265,9 @@ describe("critica: ordine și limite", () => {
       many.push(el({ tag: "img", isImage: true, text: "", alt: null, box: { x: 0, y: 0, w: 500, h: 300 } }));
     }
     const out = run(many, page({ lang: "", metaDescription: "", jsonLdTypes: [] }));
-    expect(out).toHaveLength(8);
-    expect(new Set(out.map((c) => c.elementId ?? Math.random())).size).toBe(8);
+    expect(out).toHaveLength(5);
+    expect(new Set(out.filter((c) => c.elementId).map((c) => c.elementId)).size).toBe(out.filter((c) => c.elementId).length);
+    expect(new Set(rules(out)).size).toBe(out.length);
   });
   it("elemente fără mărime (ascunse) sunt sărite", () => {
     expect(run([el({ color: "#eeeeee", box: { x: 0, y: 0, w: 0, h: 0 } })])).toEqual([]);
@@ -299,6 +301,8 @@ describe("critica: ton", () => {
     expect([...ids].sort()).toEqual(["buton-fals","contrast-slab","fara-date-structurate","fara-descriere","fara-limba","fara-nume","imagine-fara-descriere","link-vag","mai-multe-titluri","pagina-fara-titlu","text-mic","titlu-nemarcat"]);
     const banned = ["#", ":1", "<", ">", "wcag", "px", "alt", "h1", "aria", "html", "json", "contrast", "undefined", "null", "nan"];
     for (const c of all) {
+      expect(c.body.length, c.ruleId).toBeLessThanOrEqual(100);
+      expect(c.fix, c.ruleId).toMatch(/^Aș /);
       for (const t of [c.title, c.body, c.fix, c.agent]) {
         expect(t.trim().length).toBeGreaterThan(0);
         for (const b of banned) expect(t.toLowerCase(), `${c.ruleId}: ${t}`).not.toContain(b);
@@ -330,23 +334,59 @@ describe("critica: viteză", () => {
     const t0 = performance.now();
     const out = critiquePage(page({ lang: "" }), els, VIEW);
     expect(performance.now() - t0).toBeLessThan(200);
-    expect(out.length).toBeLessThanOrEqual(8);
+    expect(out.length).toBeLessThanOrEqual(5);
   });
 });
 
 describe("fraza de final", () => {
   it("nimic găsit", () => {
-    expect(summarySentence([])).toBe("N-am găsit nimic grav pe pagina asta.");
+    expect(summarySentence([])).toBe("N-am găsit probleme la verificările făcute.");
   });
-  it("câte lucruri și cu ce să înceapă", () => {
+  it("câte observații, fără instrucțiuni", () => {
     const e = el({ tag: "button", role: "button", text: "Comandă acum", accessibleName: "Comandă acum", color: "#f9c0d0" });
     const out = run([e, el({ fontSizePx: 9, text: "mic" })], page({ lang: "" }));
     const s = summarySentence(out);
-    expect(s.startsWith("Am găsit 3 lucruri de reparat. Începe cu")).toBe(true);
-    expect(s).toContain("„Comandă acum”");
+    expect(s).toBe("Am găsit 3 lucruri de îmbunătățit.");
   });
   it("un singur lucru", () => {
     const s = summarySentence(run([], page({ lang: "" })));
-    expect(s.startsWith("Am găsit un lucru de reparat")).toBe(true);
+    expect(s).toBe("Am găsit un lucru de îmbunătățit.");
+  });
+});
+
+
+describe("critica: diversitate și propuneri", () => {
+  it("nu repetă aceeași familie de meniu prin reguli diferite", () => {
+    const first = el({ tag: "div", isButtonLike: true, text: "Acasă", color: "#cccccc" });
+    const sibling = el({ tag: "div", isButtonLike: true, text: "Servicii" });
+    const out = run([first, sibling]);
+    expect(out).toHaveLength(1);
+    expect(out[0].elementId).toBe(first.id);
+  });
+  it("păstrează problema importantă și face loc structurii și descoperirii paginii", () => {
+    const cta = el({ tag: "button", role: "button", text: "Rezervă", color: "#cccccc" });
+    const out = run([
+      cta,
+      el({ tag: "a", isLink: true, text: "aici" }),
+      el({ tag: "div", isButtonLike: true, text: "Meniu" }),
+      el({ fontSizePx: 9 }),
+      el({ isImage: true, text: "", box: { x: 0, y: 100, w: 600, h: 300 } }),
+    ], page({ h1Count: 0, metaDescription: "", jsonLdTypes: [] }));
+    expect(out).toHaveLength(5);
+    expect(out[0].elementId).toBe(cta.id);
+    expect(rules(out)).toEqual(expect.arrayContaining(["pagina-fara-titlu", "fara-descriere", "fara-date-structurate"]));
+  });
+  it("observațiile sunt scurte și descriptive; propunerile sunt ale asistentului", () => {
+    const out = run([el({ tag: "button", text: "", accessibleName: "" })], page({ h1Count: 0, lang: "", metaDescription: "", jsonLdTypes: [] }));
+    for (const c of out) {
+      expect(c.body.length).toBeLessThanOrEqual(100);
+      expect(c.body).not.toMatch(/\b(Cere|Adaugă|Setează|Folosește|Începe)\b/);
+      expect(c.fix).toMatch(/^Aș /);
+    }
+    const proposals = modificationSuggestions([...out, ...out]);
+    expect(proposals).toHaveLength(3);
+    expect(new Set(proposals).size).toBe(3);
+    expect(proposals.every((p) => out.some((c) => c.fix === p))).toBe(true);
+    expect(modificationSuggestions([])).toEqual([]);
   });
 });

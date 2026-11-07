@@ -40,7 +40,7 @@ function walk(dir: string, base = ""): string[] {
 
 describe("manifestul", () => {
   it("cere doar permisiunile folosite", () => {
-    expect(manifest.permissions).toEqual(["activeTab", "scripting"]);
+    expect(manifest.permissions).toEqual(["activeTab", "scripting", "storage"]);
     expect(manifest.host_permissions).toBeUndefined();
     expect(manifest.content_scripts).toBeUndefined();
   });

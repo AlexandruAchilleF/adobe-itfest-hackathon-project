@@ -1,5 +1,5 @@
-// Împachetează src/lib/critique.ts și critiqueAi.ts ca IIFE pentru extensie: chrome-extension/critique.js.
-// Pachetul pune pe globalThis.SpireCritique funcțiile criticii, cu tot cu cele pentru observațiile AI.
+// Împachetează src/lib/critique.ts ca IIFE pentru extensie: chrome-extension/critique.js.
+// Pachetul pune pe globalThis.SpireCritique funcțiile { critiquePage, summarySentence, modificationSuggestions }.
 // Folosește rolldown (vine cu Vite 8), deci extensia rămâne fără build la încărcare.
 //   node scripts/build-critique.mjs           scrie fișierul
 //   node scripts/build-critique.mjs --stdout  doar îl afișează (pentru testul de prospețime)
@@ -10,7 +10,6 @@ import { rolldown } from "rolldown";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SOURCE = resolve(root, "src/lib/critique.ts");
-const SOURCE_AI = resolve(root, "src/lib/critiqueAi.ts");
 const OUT = resolve(root, "chrome-extension/critique.js");
 const HEADER = "// Generat din src/lib/critique.ts; nu-l edita de mână. Rulează: npm run ext:critique\n";
 const ENTRY = "\0spire-critique-entry";
@@ -27,9 +26,10 @@ export async function buildCritiqueBundle() {
         resolveId: (id) => (id === ENTRY ? id : null),
         load: (id) =>
           id === ENTRY
-            ? `import { critiquePage, summarySentence } from ${JSON.stringify(SOURCE)};\n` +
-              `import { acceptAiCritiques, critiqueAiRequest, mergeAiCritiques } from ${JSON.stringify(SOURCE_AI)};\n` +
-              "globalThis.SpireCritique = { critiquePage, summarySentence, critiqueAiRequest, acceptAiCritiques, mergeAiCritiques };\n"
+            ? `import { critiquePage, summarySentence, modificationSuggestions } from ${JSON.stringify(SOURCE)};\n` +
+              `import { acceptAiCritiques, critiqueAiRequest, mergeAiCritiques } from ${JSON.stringify(resolve(root, "src/lib/critiqueAi.ts"))};\n` +
+              `import { briefQuestions } from ${JSON.stringify(resolve(root, "src/lib/gaps.ts"))};\n` +
+              "globalThis.SpireCritique = { critiquePage, summarySentence, modificationSuggestions, briefQuestions, acceptAiCritiques, critiqueAiRequest, mergeAiCritiques };\n"
             : null,
       },
     ],

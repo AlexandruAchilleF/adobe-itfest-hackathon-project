@@ -3,19 +3,21 @@
 import { type ClipboardEvent as ReactClipboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Button, Card, ErrorNote, PageHeader, Spinner } from "../../components/ui";
+import { critiqueWithAi } from "../../lib/critiqueClient";
 import type { Anatomy } from "../../lib/anatomy";
 import { campaigns, type DesignFormat, FORMAT_LABEL, type Kit, kitVerdict, makeKit, saveCampaign } from "../../lib/campaigns";
 import { campaignCandidates } from "../../lib/campaign";
 import { DesignCanvas } from "../../modules/canvas/DesignCanvas";
 import type { Design } from "../../lib/design";
 import { revealDelay, SCAN_TIMEOUT_MS, scanRequest } from "../../lib/extensionPanel";
-import { isFromExtension, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
-import { type Answers, type FormatId, type Question, questionsFor } from "../../lib/gaps";
+import { isFromExtension, type CritiqueBrief, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
+import { type Answers, type FormatId, type Question, briefQuestions, questionsFor } from "../../lib/gaps";
 import { analyzeReference, checkMascot, generateMascot, summarizePage, writeCopy } from "../../lib/spireAi";
 import { illustrationSignature, readFile, toDataUrl } from "../../lib/spireImages";
 import { mascot } from "../../modules/mascot/mascot";
 import { MascotFigure } from "../../modules/mascot/MascotFigure";
 import { useMascotPage } from "../../modules/mascot/page";
+import { CampaignWorkspace } from "./CampaignWorkspace";
 import { CheckList, FormatTabs, useBrand, WhatIsNew } from "./parts";
 
 const ROLE_LABEL: Record<Anatomy["zones"][number]["role"], string> = { headline: "titlu", offer: "ofertă", cta: "buton", body: "text", illustration: "ilustrație", logo: "logo", photo: "fotografie" };
@@ -105,7 +107,7 @@ function QuestionBlock({ q, answers, onAnswer }: { q: Question; answers: Answers
             {isFormats ? FORMAT_LABEL[option as FormatId] : option}
           </button>
         ))}
-        {q.free && <input aria-label={`${q.text} Scrie tu`} placeholder="Sau scrie tu" value={value && !q.options.includes(value) ? value : ""} onChange={(e) => onAnswer({ ...answers, [q.id]: e.target.value })} className="min-w-40 flex-1 rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-ink" />}
+        {q.free && <input maxLength={500} aria-label={`${q.text} Scrie tu`} placeholder="Sau scrie tu" value={value && !q.options.includes(value) ? value : ""} onChange={(e) => onAnswer({ ...answers, [q.id]: e.target.value })} className="min-w-40 flex-1 rounded-lg border border-line bg-white px-3 py-1.5 text-sm text-ink" />}
       </div>
       {q.id === "offer" && (
         <label className="mt-2 flex items-center gap-2 text-sm text-ink-2">
@@ -136,6 +138,9 @@ export function NewCampaignPage() {
   const [reference, setReference] = useState<string | null>(null);
   const [anatomy, setAnatomy] = useState<Anatomy | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
+  const [brief, setBrief] = useState<CritiqueBrief | null>(null);
+  const receivedBrief = useRef(false);
+  const critiqueRequests = useRef(new Set<string>());
   const [kit, setKit] = useState<Kit | null>(null);
   const [format, setFormat] = useState<DesignFormat>("post");
   const [busy, setBusy] = useState<string | null>(null);
@@ -169,7 +174,7 @@ export function NewCampaignPage() {
       const read = await analyzeReference(image.startsWith("data:") ? image : await toDataUrl(image), extra);
       setAnatomy(read);
       // ce are o variantă evidentă vine precompletat și se vede; produsul îl alege omul
-      setAnswers({ offer: questionsFor(read, brandRef.current, {}).find((q) => q.id === "offer")?.options[0], cta: read.suggestions.cta[0], formats: ["post", "story"] });
+      setAnswers((current) => ({ offer: questionsFor(read, brandRef.current, {}).find((q) => q.id === "offer")?.options[0], cta: read.suggestions.cta[0], formats: ["post", "story"], ...current }));
       setSaid(`Am văzut ${read.zones.length} zone. Spune-mi ce promovezi.`);
     } catch (err) {
       setError((err as Error).message);
@@ -193,7 +198,21 @@ export function NewCampaignPage() {
       if (!isFromExtension(event, window)) return;
       const message = parseExtensionMessage(event.data);
       if (!message) return;
-      if (message.type === "spire:page") {
+      if (message.type === "spire:critique-request") {
+        if (critiqueRequests.current.has(message.requestId)) return;
+        critiqueRequests.current.add(message.requestId);
+        void critiqueWithAi(message.input).then(
+          (result) => window.parent.postMessage({ type: "spire:critique-result", requestId: message.requestId, result }, event.origin),
+          () => window.parent.postMessage({ type: "spire:critique-result", requestId: message.requestId, error: "Analiza AI nu este disponibilă." }, event.origin),
+        );
+      } else if (message.type === "spire:brief") {
+        if (receivedBrief.current || new URL(message.brief.source.url).origin !== event.origin) return;
+        receivedBrief.current = true;
+        setBrief(message.brief);
+        setAnswers((current) => ({ ...message.brief.answers, ...current }));
+        page.current = { ...message.brief.source, headings: [], ctas: [], colors: [], fonts: [] };
+        setSaid("Am păstrat brief-ul. Alege o referință pentru campanie.");
+      } else if (message.type === "spire:page") {
         window.clearTimeout(scanTimers.current.timeout);
         setScanFailed(false);
         page.current = message.page;
@@ -230,6 +249,8 @@ export function NewCampaignPage() {
       window.parent.postMessage({ type: "spire:picks", picks }, "*");
     }
     window.addEventListener("message", onMessage);
+    const hostOrigin = new URLSearchParams(window.location.search).get("hostOrigin");
+    try { window.parent.postMessage({ type: "spire:brief-ready" }, new URL(hostOrigin || document.referrer).origin); } catch { window.parent.postMessage({ type: "spire:brief-ready" }, "*"); }
     const timers = scanTimers.current;
     return () => {
       window.removeEventListener("message", onMessage);
@@ -347,7 +368,16 @@ export function NewCampaignPage() {
         </div>
       )}
 
-      {!reference && !embedded && <ReferencePicker onPick={pick} />}
+      {brief && <CampaignWorkspace brief={brief} answers={answers} brand={brand} onAnswersChange={setAnswers} />}
+      {brief && (
+        <Card title="Brief-ul tău" label="Din pagină">
+          <p className="mb-4 text-sm text-muted">{brief.source.title}</p>
+          <div className="space-y-5">
+            {briefQuestions(brief.answers.cta !== undefined ? ["link-vag"] : [], brief.source.title).map((q) => <QuestionBlock key={q.id} q={q} answers={answers} onAnswer={setAnswers} />)}
+          </div>
+        </Card>
+      )}
+      {!reference && (!embedded || brief) && <ReferencePicker onPick={pick} />}
       {reference && anatomy && <WhatISaw reference={reference} anatomy={anatomy} />}
 
       {anatomy && (

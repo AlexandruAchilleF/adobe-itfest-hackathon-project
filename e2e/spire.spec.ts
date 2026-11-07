@@ -1,5 +1,6 @@
 import { existsSync, statSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { MAX_CRITIQUES } from "../src/lib/critique";
 import { critiqueStops } from "../src/lib/landingCritique";
 
 const REFERENCE = "public/samples/spire/referinta.png";
@@ -66,7 +67,7 @@ test("landing: critica și extensia apar după noapte, în ordinea poveștii", a
   expect(at("Ochi de uliu")).toBeLessThan(at("inSPIRĂ"));
   expect(at("inSPIRĂ")).toBeLessThan(at("N-ai designer"));
   await expect(page.locator("#critica")).toContainText("părere despre ierarhie și mesaj");
-  await expect(page.locator("#critica")).toContainText("cel mult 8 observații");
+  await expect(page.locator("#critica")).toContainText(`cel mult ${MAX_CRITIQUES} observații`);
   await expect(page.locator("main")).not.toContainText("audit complet");
 });
 
@@ -131,6 +132,17 @@ async function embedded(page: Page) {
   return frame;
 }
 const IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+async function reloadEmbedded(page: Page) {
+  await page.evaluate(() => new Promise<void>((resolve) => {
+    const iframe = document.querySelector('#spire') as HTMLIFrameElement;
+    const ready = (event: MessageEvent) => {
+      if (event.source !== iframe.contentWindow || event.data?.type !== 'spire:brief-ready') return;
+      window.removeEventListener('message', ready); resolve();
+    };
+    window.addEventListener('message', ready);
+    iframe.contentWindow!.location.reload();
+  }));
+}
 
 test("din extensie: mesajul cu referința deschide analiza", async ({ page }) => {
   const frame = await embedded(page);
@@ -180,4 +192,109 @@ test("landing page-ul spune ce face Spire și duce la campania nouă", async ({ 
   await expect(page.locator("#garda").getByText(/^\d+ din \d+ verificări trec$/)).toBeAttached();
   await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Încearcă acum" }).click();
   await expect(page).toHaveURL(/\/nou$/);
+});
+
+test("brief-ul rămâne editabil după analiză și intră în generare și salvare", async ({ page }) => {
+  const prompts: string[] = [];
+  page.on('request', request => {
+    if (request.url().endsWith('/api/ai')) prompts.push(request.postData() ?? '');
+  });
+  const frame = await embedded(page);
+  const brief = {source:{url:new URL(page.url()).origin+'/',title:'Cupe'},answers:{product:'Cană',audience:'Părinți',goal:'Comenzi',cta:'Comandă'}};
+  await page.evaluate(brief => (document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief}, '*'), brief);
+  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toBeVisible();
+  const audience = frame.getByRole('textbox', {name:'Cui te adresezi? Scrie tu'});
+  await expect(audience).toHaveValue('Părinți');
+  await audience.fill('Profesori');
+  await page.evaluate(brief => (document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief}, '*'), brief);
+  await expect(audience).toHaveValue('Profesori');
+  await frame.getByRole('button',{name:'Folosește exemplul'}).click();
+  await expect(frame.getByText('Ce am văzut')).toBeVisible();
+  await expect(audience).toHaveValue('Profesori');
+  await frame.getByRole('button',{name:'Fă campania',exact:true}).click();
+  await expect(frame.getByRole('button',{name:'Salvează campania'})).toBeVisible();
+  expect(prompts.some(prompt=>prompt.includes('Profesori') && prompt.includes('Comenzi'))).toBe(true);
+  await frame.getByRole('button',{name:'Salvează campania'}).click();
+  await expect(frame.getByRole('link',{name:'Deschide în Campanii'})).toBeVisible();
+  const saved = await page.evaluate(()=>JSON.stringify(localStorage));
+  expect(saved).toContain('Profesori');
+  expect(saved).toContain('Comenzi');
+});
+
+test('panoul fără referrer primește brief doar de la originea gazdei declarate', async ({page}) => {
+  const base=new URL(page.url()).origin;
+  await page.setContent(`<iframe id="spire" referrerpolicy="no-referrer" src="${base}/nou?din=extensie&hostOrigin=${encodeURIComponent(base)}"></iframe>`);
+  const frame=page.frameLocator('#spire');
+  await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
+  const brief={source:{url:base+'/',title:'Fără referrer'},answers:{product:'Cană'}};
+  await frame.locator('body').evaluate((_,brief)=>window.dispatchEvent(new MessageEvent('message',{source:window.parent,origin:'https://evil.test',data:{type:'spire:brief',brief}})),brief);
+  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toHaveCount(0);
+  await page.evaluate(brief=>(document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief},'*'),brief);
+  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toBeVisible();
+});
+
+test('aplicația răspunde o singură dată cu analiza AI mock pentru ID duplicat', async ({page}) => {
+  let calls=0;
+  page.on('request',r=>{if(r.url().endsWith('/api/ai')) calls++;});
+  await embedded(page);
+  const input={page:{url:new URL(page.url()).origin,title:'Cupe',lang:'ro',metaDescription:'',jsonLdTypes:[],h1Count:1,imagesWithoutAlt:0},elements:[],viewport:{w:1280,h:720}};
+  const result=await page.evaluate(input=>new Promise<{mode:string}>(resolve=>{
+    window.addEventListener('message',e=>{if(e.data?.type==='spire:critique-result') resolve(e.data.result);});
+    const win=(document.querySelector('#spire') as HTMLIFrameElement).contentWindow!;
+    win.postMessage({type:'spire:critique-request',requestId:'single',input},'*');
+    win.postMessage({type:'spire:critique-request',requestId:'single',input},'*');
+  }),input);
+  expect(result.mode).toBe('mock');expect(calls).toBe(1);
+});
+
+test('sidebar: constatări, căutări AI, brief păstrat și materiale la cerere', async ({page}) => {
+  const frame=await embedded(page);
+  const brief={source:{url:new URL(page.url()).origin+'/',title:'Magazin'},answers:{product:'Cană'},critique:{mode:'mock',items:[{id:'c1',title:'Produs neclar',observation:'Titlul nu numește produsul.',proposal:'Aș numi cana în titlu.',elementId:null}],searchOptimization:[{title:'Context pentru căutare',query:'cană ceramică',proposal:'Aș explica materialul produsului.',status:'needs-check',evidence:''}]}};
+  const send=()=>page.evaluate(brief=>(document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief},'*'),brief);
+  await send();
+  const workspace=frame.getByTestId('campaign-workspace');
+  await expect(workspace.getByText('Aș numi cana în titlu.')).toBeVisible();
+  await expect(workspace.getByRole('heading',{name:'Vizibilitate în căutările cu AI'})).toBeVisible();
+  await expect(workspace.getByText('De verificat',{exact:true})).toBeVisible();
+  await expect(workspace.getByRole('button',{name:'Generează imagine'})).toBeDisabled();
+  await workspace.getByLabel('Ce vrei să creăm?').fill('O imagine cu o cană pentru profesori');
+  await workspace.getByRole('button',{name:'Păstrează brief-ul'}).click();
+  await expect(workspace.getByRole('status')).toContainText('Păstrat în acest browser');
+  await workspace.getByRole('button',{name:'Mai clarificăm'}).click();
+  await expect(workspace.getByText('Întrebări simulate din contextul brief-ului')).toBeVisible();
+  await workspace.getByRole('button',{name:'Generează imagine'}).click();
+  await expect(workspace.getByText('Rezultat simulat · fără generare de imagine')).toBeVisible();
+  await workspace.getByRole('button',{name:'Pregătește video'}).click();
+  await expect(workspace.getByText('Nu există încă un video de demo pentru acest site.')).toBeVisible();
+  await reloadEmbedded(page);
+  await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
+  await send();
+  await expect(workspace.getByLabel('Ce vrei să creăm?')).toHaveValue('O imagine cu o cană pentru profesori');
+  await expect(workspace.getByText('Rezultat simulat · fără generare de imagine')).toBeVisible();
+  await reloadEmbedded(page);
+  await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
+  brief.answers.product = 'Farfurie';
+  await send();
+  await expect(workspace.getByLabel('Produs sau serviciu',{exact:true})).toHaveValue('Farfurie');
+  await expect(workspace.getByLabel('Ce vrei să creăm?')).toHaveValue('O imagine cu o cană pentru profesori');
+});
+
+test('sidebar: Marina Park redă clipul local cu proveniență de demo', async ({page}) => {
+  const base = new URL(page.url()).origin;
+  await page.setContent(`<iframe id="spire" src="${base}/nou?din=extensie&hostOrigin=${encodeURIComponent('https://www.marinapark.ro')}"></iframe>`);
+  const frame = page.frameLocator('#spire');
+  await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
+  await frame.locator('body').evaluate(() => window.dispatchEvent(new MessageEvent('message',{
+    source: window.parent, origin: 'https://www.marinapark.ro', data: { type: 'spire:brief', brief: {
+      source: {url:'https://www.marinapark.ro/',title:'Marina Park'}, answers: {product:'Cazare'},
+    }},
+  })));
+  const workspace = frame.getByTestId('campaign-workspace');
+  await workspace.getByLabel('Ce vrei să creăm?').fill('Un video de prezentare pentru Marina Park');
+  await workspace.getByRole('button',{name:'Pregătește video'}).click();
+  await expect(workspace.getByText('Video de demo · clip pregătit anterior')).toBeVisible();
+  const video = workspace.locator('video');
+  await expect(video).toHaveAttribute('src','/samples/spire/demo-videos/marina-park.mp4');
+  await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).duration)).toBeGreaterThan(39);
+  expect(await video.evaluate(el => (el as HTMLVideoElement).duration)).toBeLessThan(41);
 });

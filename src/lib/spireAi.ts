@@ -81,7 +81,7 @@ export async function writeCopy(a: Anatomy, b: Brand, ans: Answers, failed: Chec
       `Scrii textele unei postări pentru marca „${b.name}”, în română. Tonul mărcii: ${b.tone}`,
       "Pentru fiecare zonă, un text care încape în maxChars. Titlul are cel mult 8 cuvinte și numește produsul. Fără prețuri, procente sau date: le pune codul separat.",
       problems ? `Încercarea anterioară a picat la verificări: ${problems}. Corectează.` : "",
-      data({ product: ans.product, zones: free.map((z) => ({ zone: z.id, role: z.role, maxChars: z.maxChars })) }),
+      data({ product: ans.product, audience: ans.audience, goal: ans.goal, zones: free.map((z) => ({ zone: z.id, role: z.role, maxChars: z.maxChars })) }),
     ].join("\n"),
     schema: CopyRead,
     mock,

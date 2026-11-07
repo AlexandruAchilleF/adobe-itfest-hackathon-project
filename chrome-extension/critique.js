@@ -44,6 +44,7 @@
 		marunt: 2
 	};
 	const RULE_RANK = {
+		"ai-critique": 12,
 		"fara-nume": 0,
 		"contrast-slab": 1,
 		"buton-fals": 2,
@@ -163,7 +164,7 @@
 		if (e.tag === "button" || e.role === "button" || e.isButtonLike) return `Butonul ${quote(text)}`;
 		return `Textul ${quote(text)}`;
 	}
-	const FAKE_BUTTON_AGENT = "Asistenții AI care comandă sau rezervă în numele clienților nu-și dau seama că e un buton. Cere un buton real, accesibil și din tastatură.";
+	const FAKE_BUTTON_AGENT = "Asistenții AI care comandă sau rezervă în numele clienților nu-și dau seama că e un buton. Aș folosi un buton real, accesibil și din tastatură.";
 	function ruleContrast(e) {
 		const text = clean(e.text);
 		if (!text || e.isImage) return null;
@@ -175,13 +176,13 @@
 		const action = isActionEl(e);
 		const important = action && e.inFirstScreen;
 		const fakeButton = isFakeButton(e);
-		const fix = action ? c.textIsLighter ? "Închide culoarea butonului, ca scrisul să se vadă clar." : "Folosește scris mai închis pe un fundal deschis." : c.textIsLighter ? "Închide fundalul, ca scrisul deschis să se vadă clar." : "Închide culoarea scrisului.";
+		const fix = action ? c.textIsLighter ? "Aș închide fundalul, ca scrisul deschis să se vadă clar." : "Aș închide culoarea scrisului pe fundalul deschis." : c.textIsLighter ? "Aș închide fundalul, ca scrisul deschis să se vadă clar." : "Aș închide culoarea scrisului.";
 		return {
 			el: e,
 			level: important ? "important" : "de-imbunatatit",
 			ruleId: "contrast-slab",
 			title: action ? `${subject(e, text)} abia se vede` : `${subject(e, text)} se citește greu`,
-			body: action ? important ? "E printre primele lucruri pe care le vede omul, dar scrisul se pierde pe fundal. Mulți oameni nu-l vor observa." : "Scrisul se pierde pe fundal. Mulți oameni nu-l vor observa." : "Culoarea scrisului e prea apropiată de cea a fundalului. Pe telefon, în soare, aproape nu se vede.",
+			body: action ? important ? "Scrisul se pierde pe fundal chiar în primul ecran." : "Scrisul se pierde pe fundal." : "Culoarea scrisului e prea apropiată de cea a fundalului.",
 			fix,
 			agent: fakeButton ? FAKE_BUTTON_AGENT : "Asistenții AI care se uită la pagină ca un om, din imagine, pot rata și ei ce abia se vede.",
 			evidence: {
@@ -204,8 +205,8 @@
 			level: e.inFirstScreen ? "important" : "de-imbunatatit",
 			ruleId: "fara-nume",
 			title: isLink ? "Un link n-are nume" : "Un buton n-are nume",
-			body: `Probabil se vede doar o iconiță. Cine folosește un cititor de ecran aude doar „${isLink ? "link" : "buton"}”, fără să afle ce face.`,
-			fix: "Dă-i un nume care spune ce face, de exemplu „Caută”.",
+			body: `Acest ${isLink ? "link" : "buton"} nu are text sau nume accesibil care să spună ce face.`,
+			fix: "Aș adăuga un nume accesibil care descrie acțiunea reală.",
 			agent: `Asistenții AI nu folosesc un ${isLink ? "link" : "buton"} fără nume: nu știu ce face, așa că îl ocolesc.`,
 			evidence: {
 				tag: e.tag,
@@ -221,9 +222,9 @@
 			el: e,
 			level: "de-imbunatatit",
 			ruleId: "buton-fals",
-			title: text ? `${quote(text)} nu e un buton real` : "Un buton nu poate fi folosit din tastatură",
-			body: "Merge cu mouse-ul, dar cine folosește tastatura sau un cititor de ecran nu ajunge la el.",
-			fix: "Cere un buton real, accesibil și din tastatură.",
+			title: text ? `${quote(text)} nu e un buton real` : "Un element apăsabil n-are rol de buton",
+			body: "Elementul pare apăsabil, dar nu are rol de buton sau link.",
+			fix: "Aș folosi un buton real, accesibil și din tastatură.",
 			agent: "Asistenții AI care fac lucruri în numele clienților nu-și dau seama că se poate apăsa, așa că îl ocolesc.",
 			evidence: { tag: e.tag }
 		};
@@ -238,7 +239,7 @@
 			ruleId: "link-vag",
 			title: `${quote(text)} nu spune unde ajungi`,
 			body: "Omul trebuie să ghicească ce găsește dacă apasă.",
-			fix: "Spune unde duce linkul, de exemplu „Vezi prețurile”.",
+			fix: "Aș numi linkul după destinația lui reală.",
 			agent: `Asistenții AI aleg linkurile după ce scrie pe ele. Pe ${quote(text)} nu-l vor alege niciodată.`,
 			evidence: {
 				text: normalize(text),
@@ -256,7 +257,7 @@
 			ruleId: "imagine-fara-descriere",
 			title: "Poza mare n-are descriere",
 			body: "Cine nu vede poza, sau un motor de căutare, nu află ce arată.",
-			fix: "Adaugă o descriere scurtă a imaginii.",
+			fix: "Aș adăuga o descriere scurtă a imaginii, dacă transmite informație.",
 			agent: "Un asistent AI nu poate citi poza, doar descrierea ei. Fără ea, nu știe ce vinzi.",
 			evidence: {
 				w: Math.round(w),
@@ -273,7 +274,7 @@
 			ruleId: "text-mic",
 			title: `${subject(e, text)} e scris prea mic`,
 			body: "Se citește greu, mai ales pe telefon și de către cei care nu mai văd bine.",
-			fix: "Fă-l măcar cât restul textului de pe pagină.",
+			fix: "Aș mări scrisul mic pentru a-l face mai ușor de citit.",
 			agent: "Asistenții AI care se uită la pagină din imagine pot citi greșit un scris atât de mic.",
 			evidence: {
 				fontSizePx: e.fontSizePx,
@@ -289,8 +290,8 @@
 			level: "de-imbunatatit",
 			ruleId: "titlu-nemarcat",
 			title: `${quote(text)} nu e marcat ca titlu`,
-			body: "Pentru ochi e titlu, dar pentru cititoarele de ecran și pentru motoarele de căutare e doar un text mare.",
-			fix: "Cere să fie marcat ca subtitlu al secțiunii.",
+			body: "Textul arată ca un titlu, dar nu este marcat ca atare în structura paginii.",
+			fix: "Aș marca acest text ca titlu al secțiunii.",
 			agent: "Asistenții AI se orientează după titluri. Pe acesta nu-l văd, așa că nu știu unde începe partea asta din pagină.",
 			evidence: { fontSizePx: e.fontSizePx }
 		};
@@ -317,9 +318,9 @@
 				el: best,
 				level: "de-imbunatatit",
 				ruleId: "pagina-fara-titlu",
-				title: best ? `${quote(best.text)} nu e marcat ca titlul paginii` : "Pagina n-are un titlu principal",
-				body: best ? "Arată ca titlul paginii, dar pagina nu are niciun titlu marcat ca principal." : "Nimic nu e marcat ca titlul principal, așa că nu e clar dintr-o privire despre ce e pagina.",
-				fix: best ? "Cere să fie marcat ca titlul paginii." : "Adaugă un titlu principal care spune ce oferi.",
+				title: best ? `Titlul ${quote(best.text)} nu e marcat` : "Pagina n-are un titlu principal",
+				body: best ? "Arată ca titlul paginii, dar pagina nu are niciun titlu marcat ca principal." : "Pagina nu are niciun titlu marcat ca principal.",
+				fix: best ? "Aș marca acest text ca titlu principal al paginii." : "Aș adăuga un titlu principal care spune ce oferă pagina.",
 				agent: "Pentru asistenții AI, titlul principal spune despre ce e pagina. Fără el, nu știu sigur ce oferi.",
 				evidence: {
 					h1Count: 0,
@@ -332,7 +333,7 @@
 			ruleId: "mai-multe-titluri",
 			title: "Pagina are mai multe titluri principale",
 			body: "Mai multe texte sunt marcate ca titlul paginii, așa că nu e clar care e cel adevărat.",
-			fix: "Păstrează un titlu principal; transformă restul în subtitluri.",
+			fix: "Aș păstra un titlu principal și aș marca restul drept subtitluri.",
 			agent: "Asistenții AI nu știu pe care să-l creadă când rezumă pagina.",
 			evidence: { h1Count: h1 }
 		});
@@ -341,8 +342,8 @@
 			level: "de-imbunatatit",
 			ruleId: "fara-descriere",
 			title: "Pagina n-are o descriere",
-			body: "În Google apare ce prinde motorul de căutare din pagină, nu ce ai vrea tu să spui.",
-			fix: "Adaugă o descriere scurtă a ofertei în setările paginii.",
+			body: "Lipsește descrierea scurtă pe care motoarele de căutare o pot folosi în rezultate.",
+			fix: "Aș adăuga o descriere scurtă, fidelă conținutului paginii.",
 			agent: "Asistenții AI citesc descrierea ca să afle repede despre ce e pagina. Fără ea, ghicesc din bucăți.",
 			evidence: { length: 0 }
 		});
@@ -351,8 +352,8 @@
 			level: "de-imbunatatit",
 			ruleId: "fara-date-structurate",
 			title: "Lipsesc datele structurate ale afacerii",
-			body: "Oamenii găsesc informațiile citind pagina, dar ele nu sunt puse și într-o formă standard, pe care o înțeleg calculatoarele.",
-			fix: "Adaugă adresa și programul verificate în format standard. Pot ajuta și căutarea cu AI.",
+			body: "Nu am găsit date structurate pentru motoare de căutare și asistenți AI.",
+			fix: "Aș structura informațiile verificate din pagină pentru căutare și asistenți AI.",
 			agent: "Asistenții AI nu găsesc direct programul, adresa, prețurile. Când cineva întreabă „e deschis acum?”, nu pot răspunde sigur.",
 			evidence: { types: 0 }
 		});
@@ -361,8 +362,8 @@
 			level: "marunt",
 			ruleId: "fara-limba",
 			title: "Pagina nu spune în ce limbă e",
-			body: "Cititoarele de ecran pot citi textul românesc cu accent englezesc, greu de înțeles.",
-			fix: "Setează limba paginii.",
+			body: "Limba paginii nu este declarată; cititoarele de ecran pot pronunța greșit textul.",
+			fix: "Aș declara limba reală a paginii.",
 			agent: "Asistenții AI pot traduce sau rezuma greșit dacă nu știu limba paginii.",
 			evidence: { lang: "" }
 		});
@@ -383,8 +384,8 @@
 		return a.el.box.y - b.el.box.y || a.el.box.x - b.el.box.x || RULE_RANK[a.ruleId] - RULE_RANK[b.ruleId];
 	}
 	/**
-	* Criticile paginii, cel mult 8, ordonate: important, de îmbunătățit, mărunt.
-	* Cel mult una pe element (cea mai gravă) și cel mult 2 din aceeași regulă.
+	* Criticile paginii, cel mult 5, ordonate: important, de îmbunătățit, mărunt.
+	* Cel mult una pe element (cea mai gravă) și cel mult una din aceeași regulă.
 	* `viewport` e păstrat pentru reguli care țin de ecran; acum folosim `inFirstScreen` dat de content.js.
 	*/
 	function critiquePage(page, els, viewport) {
@@ -405,29 +406,57 @@
 			}
 		}
 		const drafts = [...best.values(), ...pageDrafts.filter((d) => !d.el)].sort(compareOrder);
-		const perRule = new Map();
-		const out = [];
-		for (const d of drafts) {
-			if (out.length >= 8) break;
-			const n = perRule.get(d.ruleId) ?? 0;
-			if (n >= 2) continue;
-			perRule.set(d.ruleId, n + 1);
-			const { el, ...rest } = d;
-			out.push({
-				elementId: el ? el.id : null,
-				...rest
-			});
-		}
-		return out;
+		const selected = [];
+		const seenRules = new Set();
+		const seenElements = new Set();
+		const seenFamilies = new Set();
+		const family = (e) => e && isActionEl(e) ? JSON.stringify([
+			e.tag,
+			e.role,
+			e.isButtonLike,
+			e.isLink,
+			e.fontSizePx,
+			e.fontWeight,
+			e.background,
+			Math.round(e.box.h)
+		]) : null;
+		const add = (d) => {
+			const key = family(d.el);
+			if (selected.length >= 5 || seenRules.has(d.ruleId) || d.el && seenElements.has(d.el.id) || key && seenFamilies.has(key)) return;
+			selected.push(d);
+			seenRules.add(d.ruleId);
+			if (d.el) seenElements.add(d.el.id);
+			if (key) seenFamilies.add(key);
+		};
+		const firstElement = drafts.find((d) => d.el && !pageDrafts.includes(d));
+		if (firstElement) add(firstElement);
+		for (const d of pageDrafts.slice().sort(graver)) add(d);
+		for (const d of drafts) add(d);
+		return selected.sort(compareOrder).map(({ el, ...rest }) => ({
+			elementId: el ? el.id : null,
+			...rest
+		}));
 	}
-	const lowerFirst = (s) => s ? s[0].toLocaleLowerCase("ro") + s.slice(1) : s;
-	/** Fraza de final: câte lucruri și cu ce să înceapă. */
+	/** Numărul constatărilor din verificările făcute, fără a pretinde un audit complet. */
 	function summarySentence(crits) {
 		const n = Array.isArray(crits) ? crits.length : 0;
-		if (n === 0) return "N-am găsit nimic grav pe pagina asta.";
-		const first = lowerFirst(crits[0].title);
-		if (n === 1) return `Am găsit un lucru de reparat: ${first}.`;
-		return `Am găsit ${n} ${n % 100 === 0 || n % 100 >= 20 ? "de " : ""}lucruri de reparat. Începe cu ${crits[0].level === "important" ? "cel mai important" : "primul"}: ${first}.`;
+		if (n === 0) return "N-am găsit probleme la verificările făcute.";
+		if (n === 1) return "Am găsit un lucru de îmbunătățit.";
+		return `Am găsit ${n} ${n % 100 === 0 || n % 100 >= 20 ? "de " : ""}lucruri de îmbunătățit.`;
+	}
+	/** Doar propuneri provenite din constatări, în ordinea lor, fără schimbări inventate. */
+	function modificationSuggestions(crits) {
+		const suggestions = [];
+		const seen = new Set();
+		for (const c of Array.isArray(crits) ? crits : []) {
+			const fix = clean(c.fix);
+			const key = normalize(fix);
+			if (!fix || seen.has(key)) continue;
+			seen.add(key);
+			suggestions.push(fix);
+			if (suggestions.length === 3) break;
+		}
+		return suggestions;
 	}
 	const MAX_ELEMENTS = 40;
 	const LIMITS = {
@@ -566,15 +595,64 @@
 			...ai,
 			...current.slice(from)
 		];
-		const keep = Math.max(8, from + ai.length);
+		const keep = Math.max(5, from + ai.length);
 		return merged.slice(0, keep);
+	}
+	// src/lib/gaps.ts
+	/** Brief local: contextul paginii sugerează, omul alege. Fără oferte inventate. */
+	function briefQuestions(ruleIds, pageTitle) {
+		const questions = [
+			{
+				id: "product",
+				text: "Ce produs sau serviciu promovezi?",
+				options: pageTitle.trim() ? [pageTitle.trim().slice(0, 100)] : [],
+				free: true
+			},
+			{
+				id: "audience",
+				text: "Cui te adresezi?",
+				options: ["Clienți noi", "Clienți existenți"],
+				free: true
+			},
+			{
+				id: "goal",
+				text: "Ce vrei să obții?",
+				options: /parc|hotel|cazare|turism|pensiune|park/i.test(pageTitle) ? [
+					"Rezervări",
+					"Cereri de informații",
+					"Vizibilitate"
+				] : [
+					"Comenzi",
+					"Cereri de ofertă",
+					"Vizibilitate"
+				],
+				free: true
+			}
+		];
+		if (ruleIds.some((id) => [
+			"link-vag",
+			"fara-nume",
+			"buton-fals"
+		].includes(id))) questions.push({
+			id: "cta",
+			text: "Ce acțiune vrei pe buton?",
+			options: [
+				"Comandă",
+				"Cere o ofertă",
+				"Vezi produsul"
+			],
+			free: true
+		});
+		return questions;
 	}
 	// \0spire-critique-entry
 	globalThis.SpireCritique = {
 		critiquePage,
 		summarySentence,
-		critiqueAiRequest,
+		modificationSuggestions,
+		briefQuestions,
 		acceptAiCritiques,
+		critiqueAiRequest,
 		mergeAiCritiques
 	};
 })();

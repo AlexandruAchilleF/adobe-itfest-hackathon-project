@@ -13,6 +13,8 @@ import { type Collection, createCollection, type Rec } from "./store";
 const FormatId = z.enum(["post", "story", "hero"]);
 const AnswersSchema = z.object({
   product: z.string().optional(),
+  audience: z.string().optional(),
+  goal: z.string().optional(),
   offer: z.string().optional(),
   price: z.string().optional(),
   deadline: z.string().optional(),
