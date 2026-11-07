@@ -1,4 +1,4 @@
-// Asistent vocal complet: ascultă → AI alege acțiuni → le execută → răspunde cu voce.
+// Asistent vocal: ascultă → AI alege acțiuni → le execută → răspunde în scris (vocea sintetică e oprită implicit).
 //
 //   const agent = useVoiceAgent({ actions, context: () => describeState() });
 //   <button onClick={agent.listen}>🎤</button>   agent.send("text scris")   agent.log
@@ -13,7 +13,7 @@ interface Options {
   persona?: string;
   context?: () => string;
   lang?: string;
-  /** citește răspunsul cu voce tare (default true) */
+  /** citește răspunsul cu voce tare (implicit false: vocea sintetică sună robotic) */
   speakReplies?: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface PendingConfirmation {
   resolve: (answers: boolean[]) => void;
 }
 
-export function useVoiceAgent({ actions, persona, context, lang = "ro-RO", speakReplies = true }: Options) {
+export function useVoiceAgent({ actions, persona, context, lang = "ro-RO", speakReplies = false }: Options) {
   const [log, setLog] = useState<AgentTurn[]>([]);
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
