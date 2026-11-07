@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 import { activeProvider, handleAi, parseJsonLoose } from "../server/ai";
+import { firstInlineImage, handleImage } from "../server/image";
 import { fakeFromSchema, normalizeSchema } from "../server/schema";
 import { AiDesign } from "../src/lib/design";
 
@@ -92,5 +93,53 @@ describe("CORS pentru add-on-uri Adobe Express", async () => {
   it("refuză alte domenii", () => {
     expect(corsHeaders("https://evil.example.com")).toEqual({});
     expect(corsHeaders("https://x.wxp.adobe-addons.com.evil.com")).toEqual({});
+  });
+});
+
+describe("/api/image", () => {
+  const old = { key: process.env.GEMINI_API_KEY, provider: process.env.AI_PROVIDER };
+  afterEach(() => {
+    process.env.GEMINI_API_KEY = old.key ?? "";
+    process.env.AI_PROVIDER = old.provider ?? "";
+  });
+  const part = { mimeType: "image/png", data: "AAAA" };
+  const call = (body: unknown) =>
+    handleImage(new Request("http://x/api/image", { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body), headers: { "content-type": "application/json" } }));
+
+  it("fără cheie întoarce imaginea de rezervă", async () => {
+    process.env.GEMINI_API_KEY = "";
+    const res = await call({ style: part, subject: part, instruction: "x", mock: "/samples/spire/pip-in-stil.png" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ image: "/samples/spire/pip-in-stil.png", model: "mock" });
+  });
+  it("cu AI_PROVIDER=mock nu cheamă Gemini, chiar dacă are cheie", async () => {
+    process.env.GEMINI_API_KEY = "cheie";
+    process.env.AI_PROVIDER = "mock";
+    const res = await call({ style: part, subject: part, instruction: "x", mock: "/m.png" });
+    expect(await res.json()).toMatchObject({ image: "/m.png", model: "mock" });
+  });
+  it("fără imaginea de rezervă, în mock, spune ce lipsește", async () => {
+    process.env.GEMINI_API_KEY = "";
+    expect((await call({ style: part, subject: part, instruction: "x" })).status).toBe(400);
+  });
+  it("respinge JSON-ul stricat", async () => {
+    expect((await call("{nu e json")).status).toBe(400);
+  });
+  it("cu cheie, cere stilul, subiectul și instrucțiunea", async () => {
+    process.env.GEMINI_API_KEY = "cheie";
+    process.env.AI_PROVIDER = "";
+    expect((await call({ style: part, instruction: "x" })).status).toBe(400);
+    expect((await call({ style: part, subject: part })).status).toBe(400);
+  });
+});
+
+describe("firstInlineImage", () => {
+  it("ia prima imagine din răspuns, ca data URL", () => {
+    const parts = [{ text: "uite" }, { inlineData: { mimeType: "image/png", data: "AAA" } }, { inlineData: { mimeType: "image/png", data: "BBB" } }];
+    expect(firstInlineImage([{ content: { parts } }])).toBe("data:image/png;base64,AAA");
+  });
+  it("null când modelul n-a întors imagine", () => {
+    expect(firstInlineImage([{ content: { parts: [{ text: "nu pot" }] } }])).toBeNull();
+    expect(firstInlineImage(undefined)).toBeNull();
   });
 });

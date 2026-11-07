@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-label="Pip desenat în stilul referinței">
+  <rect width="800" height="800" fill="#F6F1E7"/>
+  <g stroke="#0E3A5B" stroke-width="16" stroke-linejoin="round" stroke-linecap="round">
+    <ellipse cx="300" cy="704" rx="86" ry="30" fill="#F25C3B"/>
+    <ellipse cx="500" cy="704" rx="86" ry="30" fill="#F25C3B"/>
+    <path d="M206 400 C126 452 112 552 142 604 C196 580 232 512 240 448 Z" fill="#0E3A5B"/>
+    <path d="M592 400 C660 392 700 352 704 300 C652 292 592 336 560 392 Z" fill="#0E3A5B"/>
+    <ellipse cx="400" cy="432" rx="224" ry="272" fill="#0E3A5B"/>
+    <ellipse cx="400" cy="496" rx="156" ry="196" fill="#FFFFFF"/>
+    <circle cx="324" cy="292" r="48" fill="#FFFFFF"/>
+    <circle cx="476" cy="292" r="48" fill="#FFFFFF"/>
+    <path d="M340 352 L460 352 L400 424 Z" fill="#F25C3B"/>
+    <path d="M664 316 L732 316 L698 428 Z" fill="#F25C3B"/>
+    <circle cx="698" cy="276" r="52" fill="#7CC6D9"/>
+  </g>
+  <circle cx="336" cy="296" r="22" fill="#0E3A5B"/>
+  <circle cx="464" cy="296" r="22" fill="#0E3A5B"/>
+</svg>

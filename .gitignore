@@ -12,3 +12,6 @@ public/mediapipe
 # înregistrări de referință: țineți-le în afara repo-ului (sunt mari)
 docs/referinte/*.mov
 docs/referinte/*.mp4
+
+# rezultatele testului de generare (scripts/spire-image-test.mjs)
+tmp-spire
