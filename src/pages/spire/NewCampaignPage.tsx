@@ -8,6 +8,7 @@ import { campaigns, type DesignFormat, FORMAT_LABEL, type Kit, makeKit, saveCamp
 import { campaignCandidates } from "../../lib/campaign";
 import { DesignCanvas } from "../../modules/canvas/DesignCanvas";
 import type { Design } from "../../lib/design";
+import { revealDelay, SCAN_TIMEOUT_MS, scanRequest } from "../../lib/extensionPanel";
 import { isFromExtension, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
 import { type Answers, type FormatId, type Question, questionsFor } from "../../lib/gaps";
 import { analyzeReference, checkMascot, generateMascot, summarizePage, writeCopy } from "../../lib/spireAi";
@@ -139,7 +140,13 @@ export function NewCampaignPage() {
   const [format, setFormat] = useState<DesignFormat>("post");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [said, setSaid] = useState("Mă uit pe pagină…");
+  const [said, setSaid] = useState("");
+  // scanarea din extensie: începe la clic, se încheie după răspuns (cel puțin SCAN_MIN_MS) sau la timeout
+  const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
+  const [scanFailed, setScanFailed] = useState(false);
+  const scanStart = useRef(0);
+  const scanTimers = useRef<{ timeout?: number; reveal?: number }>({});
   const [savedId, setSavedId] = useState<string | null>(null);
   const page = useRef<PageSummary | null>(null);
   const elements = useRef<PageElement[]>([]);
@@ -187,32 +194,63 @@ export function NewCampaignPage() {
       const message = parseExtensionMessage(event.data);
       if (!message) return;
       if (message.type === "spire:page") {
+        window.clearTimeout(scanTimers.current.timeout);
+        setScanFailed(false);
         page.current = message.page;
         elements.current = message.elements;
-        setSaid("Mă uit pe pagină…");
         void summarizePage(message.page, message.elements)
           .then((read) => {
-            setSaid(read.said);
-            const reasons = new Map(read.picks.map((p) => [p.elementId, p.reason]));
-            const box = message.elements.map((e) => e.box.x + e.box.w);
-            const w = Math.max(1440, ...box);
-            const picks = campaignCandidates(message.elements, { w, h: Math.round(w * 0.625) })
-              .filter((c) => reasons.has(c.elementId))
-              .map((c) => ({ ...c, reason: reasons.get(c.elementId) ?? c.reason }));
-            window.parent.postMessage({ type: "spire:picks", picks }, "*");
+            // lupa stă cel puțin SCAN_MIN_MS de la apăsare, ca animația să se vadă
+            window.clearTimeout(scanTimers.current.reveal);
+            scanTimers.current.reveal = window.setTimeout(() => {
+              setSaid(read.said);
+              setScanning(false);
+              setScanned(true);
+              sendPicks(read);
+            }, revealDelay(scanStart.current, Date.now()));
           })
-          .catch((err) => setError((err as Error).message));
+          .catch((err) => {
+            setError((err as Error).message);
+            setScanning(false);
+          });
       } else if (message.type === "spire:reference") {
         void analyze(message.image, { elements: elements.current.filter((e) => message.elementIds.includes(e.id)) });
       } else {
         void analyze(message.image, { root: message.root });
       }
     };
+    // alegerile pleacă spre extensie, ca să aprindă chenarele
+    function sendPicks(read: { picks: Array<{ elementId: string; reason: string }> }) {
+      const found = elements.current;
+      const reasons = new Map(read.picks.map((p) => [p.elementId, p.reason]));
+      const w = Math.max(1440, ...found.map((e) => e.box.x + e.box.w));
+      const picks = campaignCandidates(found, { w, h: Math.round(w * 0.625) })
+        .filter((c) => reasons.has(c.elementId))
+        .map((c) => ({ ...c, reason: reasons.get(c.elementId) ?? c.reason }));
+      window.parent.postMessage({ type: "spire:picks", picks }, "*");
+    }
     window.addEventListener("message", onMessage);
-    // aplicația e gata abia acum: extensia scanează din nou
-    window.parent.postMessage({ type: "spire:ready" }, "*");
-    return () => window.removeEventListener("message", onMessage);
+    const timers = scanTimers.current;
+    return () => {
+      window.removeEventListener("message", onMessage);
+      window.clearTimeout(timers.timeout);
+      window.clearTimeout(timers.reveal);
+    };
   }, [embedded, analyze]);
+
+  const scan = () => {
+    setError(null);
+    setScanning(true);
+    setSaid("Mă uit pe pagină…");
+    scanStart.current = Date.now();
+    window.parent.postMessage(scanRequest(), "*");
+    window.clearTimeout(scanTimers.current.timeout);
+    scanTimers.current.timeout = window.setTimeout(() => {
+      setScanning(false);
+      setScanFailed(true);
+      setSaid("Nu primesc nimic de la pagină. Închide Spire și deschide-l din nou.");
+    }, SCAN_TIMEOUT_MS);
+  };
 
   const onPaste = (e: ReactClipboardEvent) => {
     const file = [...e.clipboardData.files].find((f) => f.type.startsWith("image/"));
@@ -287,9 +325,14 @@ export function NewCampaignPage() {
   return (
     <div onPaste={onPaste} className={embedded ? "mx-auto max-w-[420px] space-y-4 p-3" : "space-y-5"}>
       {embedded ? (
-        <div className="flex items-start gap-2">
-          <MascotFigure mood={busy ? "thinking" : error ? "worried" : kit ? "happy" : "idle"} size={64} />
-          <p className="card flex-1 p-3 text-[0.92rem] leading-snug text-ink">{busy ?? said}</p>
+        <div className="space-y-3">
+          <div className="flex items-start gap-2">
+            <MascotFigure mood={scanning ? "searching" : scanFailed || error ? "worried" : busy ? "thinking" : kit ? "happy" : "idle"} size={64} />
+            <p className="card flex-1 p-3 text-[0.92rem] leading-snug text-ink">{busy ?? (said || "Sunt Spire. Apasă „Scanează pagina” și mă uit pe site-ul tău.")}</p>
+          </div>
+          <Button variant={scanned ? "secondary" : "primary"} className="w-full" onClick={scan} disabled={scanning || Boolean(busy)} aria-busy={scanning}>
+            {scanned ? "Scanează din nou" : "Scanează pagina"}
+          </Button>
         </div>
       ) : (
         <PageHeader title="Campanie nouă" description="Spire ia stilul din imaginea aleasă și îl pune pe marca ta. Rezultatul e verificat înainte să-l vezi." />
