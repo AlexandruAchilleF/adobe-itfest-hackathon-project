@@ -50,7 +50,8 @@ test("campania făcută în panou se deschide în tab și apare în Campanii", a
   const brief = { source: { url: `${HOST}/`, title: "Site gazdă" }, answers: { product: "Gelato de vară", audience: "Familii", goal: "Vizite", cta: "Vino azi" } };
   await page.evaluate((b) => (document.querySelector("#spire") as HTMLIFrameElement).contentWindow!.postMessage({ type: "spire:brief", brief: b }, "*"), brief);
   await frame.getByRole("button", { name: "Folosește exemplul" }).click();
-  await expect(frame.getByText("Ce am văzut")).toBeVisible();
+  // pe producție, analiza trece prin AI-ul real
+  await expect(frame.getByText("Ce am văzut")).toBeVisible({ timeout: 90_000 });
   await frame.getByRole("button", { name: "Fă campania", exact: true }).click();
 
   const opened = context.waitForEvent("page");
