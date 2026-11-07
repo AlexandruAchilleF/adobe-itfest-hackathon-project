@@ -1,6 +1,6 @@
 // Marca: culorile pe roluri, fonturile, tonul, mențiunile și mascota. Tot ce verifică garda vine de aici.
 // În dreapta, o postare de exemplu compusă cu aceeași funcție ca în kit, care urmărește formularul.
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, ErrorNote, PageHeader } from "../../components/ui";
 import { Brand, type ColorRole, demoBrand } from "../../lib/brand";
 import { brands, brandSample } from "../../lib/campaigns";
@@ -43,14 +43,17 @@ export function BrandPage() {
   const [form, setForm] = useState<Brand>(demoBrand);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  // reîncărcarea la revenirea în tab aduce marca nouă, dar nu calcă peste ce scrii
+  const dirty = useRef(false);
 
   useEffect(() => {
-    if (rec) setForm(rec.data);
+    if (rec && !dirty.current) setForm(rec.data);
   }, [rec]);
 
   useMascotPage({ title: "Marca", context: () => `Marca: ${form.name}, mascota ${form.mascot.name}.` });
 
   const edit = (next: Partial<Brand>) => {
+    dirty.current = true;
     setSaved(false);
     setForm((f) => ({ ...f, ...next }));
   };
@@ -73,6 +76,7 @@ export function BrandPage() {
     setError(null);
     try {
       await update(rec.id, parsed.data);
+      dirty.current = false;
       setSaved(true);
     } catch (err) {
       setError((err as Error).message);

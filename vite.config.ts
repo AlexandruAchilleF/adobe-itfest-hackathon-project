@@ -25,6 +25,8 @@ export default defineConfig(({ mode }) => {
     test: {
       include: ["tests/**/*.test.ts"],
       environment: "node",
+      // testele nu ating baza de date, chiar dacă .env.local are cheile
+      env: { VITE_SUPABASE_URL: "", VITE_SUPABASE_ANON_KEY: "" },
     },
   };
 });

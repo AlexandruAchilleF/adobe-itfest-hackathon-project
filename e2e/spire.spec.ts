@@ -604,3 +604,13 @@ test("scanarea completează brief-ul și păstrează ce a editat omul", async ({
   await expect(frame.getByText(/Am găsit 1/)).toBeVisible();
   await expect(product).toHaveValue("Produs ales de om");
 });
+
+test("marca: revenirea în tab nu șterge ce ai scris", async ({ page }) => {
+  await page.goto("/marca");
+  const name = page.getByLabel("Numele mărcii");
+  await expect(name).not.toHaveValue("");
+  await name.fill("Marcă nesalvată");
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await page.waitForTimeout(300);
+  await expect(name).toHaveValue("Marcă nesalvată");
+});

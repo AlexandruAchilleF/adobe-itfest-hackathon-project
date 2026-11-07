@@ -9,8 +9,13 @@ import { Tag } from "../../components/ui";
 import { StatusDot } from "../../scenario/ui/parts";
 
 export function useBrand() {
-  const { items } = useCollection(brands);
-  return items[0]?.data ?? demoBrand;
+  return useBrandState().brand;
+}
+
+/** Marca și starea încărcării: când baza de date nu răspunde, pagina spune asta, nu lucrează tăcut pe marca de exemplu. */
+export function useBrandState() {
+  const { items, loading, error } = useCollection(brands);
+  return { brand: items[0]?.data ?? demoBrand, loading, error };
 }
 
 export function CheckList({ checks }: { checks: Check[] }) {

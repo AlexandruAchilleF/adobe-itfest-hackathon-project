@@ -1,5 +1,5 @@
 // Date persistente simple (CRUD) cu date de seed — forma câștigătorului ITFest (ResourceMe).
-// Cu Supabase: tabela generică `records` (SQL în README). Fără: localStorage în browser.
+// Cu Supabase: tabela generică `records` (SQL în supabase/records.sql). Fără: localStorage în browser.
 //
 //   const requests = createCollection("cereri", RequestSchema, seed);
 //   const { items, add, update, remove } = useCollection(requests);
@@ -159,6 +159,13 @@ export function refreshCollection(name: string): void {
 }
 
 /** Hook React: lista se reîncarcă automat după add/update/remove din orice componentă. */
+/** Ascultă revenirea în tab: alt tab sau panoul extensiei pot fi schimbat datele între timp. */
+export function reloadWhenBack(target: Pick<EventTarget, "addEventListener" | "removeEventListener">, reload: () => void): () => void {
+  const listener = () => reload();
+  target.addEventListener("focus", listener);
+  return () => target.removeEventListener("focus", listener);
+}
+
 export function useCollection<T>(collection: Collection<T>) {
   const [items, setItems] = useState<Array<Rec<T>>>([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +187,11 @@ export function useCollection<T>(collection: Collection<T>) {
     const listeners = collectionListeners(collection.name);
     const l = () => void reload();
     listeners.add(l);
-    return () => void listeners.delete(l);
+    const stop = typeof window === "undefined" ? undefined : reloadWhenBack(window, l);
+    return () => {
+      listeners.delete(l);
+      stop?.();
+    };
   }, [collection, reload]);
 
   return { items, loading, error, reload, add: collection.add, update: collection.update, remove: collection.remove, reset: collection.reset };
