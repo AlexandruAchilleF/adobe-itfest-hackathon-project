@@ -614,3 +614,8 @@ test("marca: revenirea în tab nu șterge ce ai scris", async ({ page }) => {
   await page.waitForTimeout(300);
   await expect(name).toHaveValue("Marcă nesalvată");
 });
+
+test("Acasă: linkul către extensie descarcă pachetul", async ({ page }) => {
+  await page.goto("/acasa");
+  await expect(page.getByRole("link", { name: "Instalează extensia" })).toHaveAttribute("href", "/spire-extensie.zip");
+});

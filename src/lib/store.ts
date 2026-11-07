@@ -102,7 +102,11 @@ export function createCollection<T>(name: string, schema: z.ZodType<T>, seed: T[
     (seeded ??= (async () => {
       const rows = await backend.list(name);
       if (rows.length === 0) for (const s of seed) await backend.insert(name, schema.parse(s));
-    })());
+    })().catch((err) => {
+      // o cădere trecătoare nu rămâne definitivă: următoarea citire reîncearcă
+      seeded = null;
+      throw err;
+    }));
   const listeners = collectionListeners(name);
   const changed = () => listeners.forEach((l) => l());
   return {

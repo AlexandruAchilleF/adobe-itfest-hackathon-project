@@ -6,6 +6,7 @@ import { ErrorNote } from "../../components/ui";
 import { defineAction } from "../../lib/agent";
 import { recentCampaigns } from "../../lib/campaignList";
 import { campaigns } from "../../lib/campaigns";
+import { installAction } from "../../lib/extensionInstall";
 import { setPendingReference } from "../../lib/pendingReference";
 import { useCollection } from "../../lib/store";
 import { useMascotPage } from "../../modules/mascot/page";
@@ -75,10 +76,19 @@ export function AcasaPage() {
     ],
   });
 
+  const install = installAction();
+
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
       <div className="min-w-0 space-y-6">
         <ReferenceDrop onPick={start} heading="h1" />
+        <p className="text-[0.92rem] text-ink-2" title={install.kind === "download" ? install.hint : undefined}>
+          Vezi ceva care îți place pe net?{" "}
+          <a href={install.href} className="font-medium text-ink underline underline-offset-4">
+            Instalează extensia
+          </a>{" "}
+          și pornești direct de pe pagină.
+        </p>
         <section aria-labelledby="acasa-recente">
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <h2 id="acasa-recente" className="text-base font-semibold text-ink">

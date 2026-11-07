@@ -15,7 +15,8 @@ Prezentarea (de la organizatori): se recomandă un video de circa 3 minute, dura
   - `api/image.ts`: ilustrația generată în stilul referinței.
   - `api/video.ts` și `api/logo.ts`: contracte doar cu mock (`shared/media-contract.ts`, `server/media.ts`), fără furnizor legat. Video e job asincron: `POST` → `jobId`, `GET ?id=` → stare.
 - `src/lib/ai.ts`: `ask({ prompt, schema, files, mock })` → `{ data }` validat cu Zod. Folosește-l pentru orice apel AI.
-- `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`) sau localStorage.
+- `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`, SQL în `supabase/records.sql`) sau localStorage. Panoul extensiei e un iframe pe alt site, deci are alt `localStorage` decât un tab normal: în producție datele trebuie să stea în Supabase. Playwright oprește implicit partiționarea; proba reală e `npm run e2e:prod` (`playwright.prod.config.ts`), în afara lui `npm run check`.
+- Extensia pornește lucrul (decupare, întrebări, previzualizarea kitului), aplicația îl termină (retuș, export, campanii, marcă). Aceeași campanie, două intrări.
 - `src/lib/agent.ts` + `src/lib/useVoiceAgent.ts` + `src/components/ConfirmActions.tsx`: limbaj natural → acțiuni. `kind: "write"` cere confirmarea omului.
 - `src/lib/design.ts` + `src/modules/canvas/`: designul editabil (Fabric.js v7). `src/lib/accessibility.ts`: audit WCAG, lizibilitate, `autoFixDesign`.
 - Design: `docs/DESIGN.md`. Ecranele de lucru: un lucru odată, font Geist, coral doar pe acțiunea principală, stările ca punct + text (`StatusPill`), documentul ca hârtie (`DocPaper`) cu ștampilă după pas. Componente în `src/components/ui.tsx`: `Button`, `Card`, `PageHeader`, `Tag`, `Pill`. `Accent` și `Ribbon` doar pe prima pagină (povestea, `ScenarioHome.tsx`). Fără emoji ca icoane, fără dark mode, fără `font-mono` pentru cifre.

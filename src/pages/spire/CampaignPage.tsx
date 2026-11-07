@@ -119,9 +119,10 @@ function Editor({ id, initial }: { id: string; initial: Campaign }) {
 
 export function CampaignPage() {
   const { id = "" } = useParams<{ id: string }>();
-  const { items, loading } = useCollection(campaigns);
+  const { items, loading, error } = useCollection(campaigns);
   const rec = items.find((r) => r.id === id);
   if (loading) return <p className="text-sm text-muted">Se încarcă…</p>;
+  if (!rec && error) return <ErrorNote error={error} hint="Campaniile nu s-au putut citi. Reîncearcă peste câteva momente." />;
   if (!rec) {
     return (
       <Card>

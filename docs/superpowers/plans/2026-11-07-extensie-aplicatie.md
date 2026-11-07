@@ -179,7 +179,7 @@ test("reloadWhenBack reîncarcă la focus și se oprește după dezabonare", () 
 - [ ] **Step 1: Actualizează testul e2e.** `meniu: două intrări`: butoanele există cu aceste nume, iar „Ia stilul de aici” deschide panoul cu decuparea activă.
 - [ ] **Step 2:** Rulează `npx playwright test --project=extension -g "două intrări"`. Așteptat: FAIL.
 - [ ] **Step 3:** Schimbă meniul. Nota „Trimite la AI o captură…” rămâne sub „Uită-te la pagina mea”. Primul pas după critică rămâne „Continuă cu o campanie”.
-- [ ] **Step 4:** Rulează: PASS. La final `npm run ext:zip`. Verifică: `unzip -p public/spire-extensie.zip config.js | grep APP_URL` arată `https://spire-coral.vercel.app`.
+- [ ] **Step 4:** Rulează: PASS. La final `npm run ext:zip`. Verifică: `unzip -p public/spire-extensie.zip config.js | grep APP_URL` arată `https://adobe-itfest-hackathon-project.vercel.app`.
 - [ ] **Step 5:** `npm run check`, commit, push.
 
 ### Task 7: Acasă și proba de producție (Alexandru)
@@ -196,13 +196,13 @@ test("reloadWhenBack reîncarcă la focus și se oprește după dezabonare", () 
   - `campania făcută în panou se deschide în tab` (nu apare „Campania nu mai există”);
   - `campania apare în /campanii`.
   Fiecare test își șterge rândurile la final.
-- [ ] **Step 3:** Rulează-o pe versiunea veche, fără Supabase: `BASE_URL=https://spire-coral.vercel.app npm run e2e:prod`. Așteptat: FAIL. Asta dovedește că proba vede problema.
+- [ ] **Step 3:** Rulează-o pe versiunea veche, fără Supabase: `BASE_URL=https://adobe-itfest-hackathon-project.vercel.app npm run e2e:prod`. Așteptat: FAIL. Asta dovedește că proba vede problema.
 - [ ] **Step 4:** Actualizează secțiunea de arhitectură din `AGENTS.md` (`store.ts`, rolurile extensiei și ale aplicației, fără coadă). Commit, push.
 
 ### Task 8: Deploy și repetiție (amândoi)
 
 - [ ] **Step 1 (Alexandru):** Din `main` curat: `git archive HEAD | tar -x -C <folder gol>`, apoi `vercel deploy --prod`.
-- [ ] **Step 2 (Alexandru):** `BASE_URL=https://spire-coral.vercel.app npm run e2e:prod`. Așteptat: PASS.
+- [ ] **Step 2 (Alexandru):** `BASE_URL=https://adobe-itfest-hackathon-project.vercel.app npm run e2e:prod`. Așteptat: PASS.
 - [ ] **Step 3 (Alexandru):** Resetează datele din `?dev=1` și deschide o dată aplicația, ca seed-ul să se scrie o singură dată înainte să o folosească altcineva.
 - [ ] **Step 4 (David):** Instalează extensia din zip, într-un profil Chrome curat. Rulează drumul filmat: uliu → „Uită-te la pagina mea” → „Continuă cu o campanie” → decupare pe o referință licențiată → întrebări → kit cu bife → „Deschide în Spire” → retuș și PNG.
 - [ ] **Step 5 (David):** Repetă pe un domeniu nepregătit. Dacă site-ul blochează iframe-ul prin CSP, notează-l și filmează pe altul.
