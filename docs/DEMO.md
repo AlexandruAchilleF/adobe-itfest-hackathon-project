@@ -1,5 +1,7 @@
 # Planul demo-ului: „Alegeți voi referința”
 
+**Renunțat la 7 noiembrie:** nu avem nimic funcțional pe telefon, deci nu mai folosim QR. Demo-ul e video-ul din `docs/DEMO-VIDEO.md`, iar textul pitch-ului e în `docs/PITCH.md`. Documentul rămâne doar ca istoric.
+
 Stare: propunere scrisă la 11:05, nimic implementat. Decide echipa. Estimările sunt aproximative.
 
 **Schimbare la 12:30:** organizatorii recomandă un video de prezentare de circa 3 minute, cu accent pe arhitectură (`docs/PITCH.md`). Într-un video, juriul nu poate alege referința, deci planul de mai jos rămâne valabil doar dacă organizatorii confirmă un moment live; altfel iese. Din el rămân utile indiferent de răspuns urma agentului (piesa 3) și costul pe pas (piesa 2), pentru că pot susține partea de arhitectură din video.

@@ -40,7 +40,7 @@ Deck-ul se construiește singur din scenariu (`docs/DESIGN.md`, „Pitch deck-ul
 - [ ] `architecture`: pașii și rezervele; verificați-le pe cod după îngheț.
 - [ ] `market`: câte organizații au problema și cât plătesc azi, numărat de jos în sus.
 - [ ] `builtToday` și `next`: aceleași ca în `README.md`.
-- [ ] `demoUrl`: adresa de pe Vercel (QR-ul de pe slide-ul de demo).
+- [ ] `demoUrl`: adresa de pe Vercel (în text, pe slide-ul final).
 - [ ] Nicio casetă „De completat” rămasă: treceți prin `/pitch` cu săgețile.
 - [ ] PDF-ul (`P` pe deck) pe stick și pe telefon, ca rezervă.
 

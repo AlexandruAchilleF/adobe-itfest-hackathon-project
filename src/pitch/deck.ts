@@ -10,11 +10,15 @@ export interface Architecture {
   steps: Array<{ owner: "AI" | "cod" | "om"; title: string; text: string }>;
   /** bucla de agent, sub pași */
   loop: string;
+  /** drumul clipului, cu verificarea lui proprie (src/lib/videoPlan.ts) */
+  video: string;
   failures: Array<{ when: string; then: string }>;
 }
 
 /** O cifră de pe net: doar cu sursa ei, verificată pe pagina sursei (nu din rezumate). */
 export interface Fact {
+  /** cifra mare de pe slide, dacă are una */
+  figure?: string;
   text: string;
   source: string;
 }
@@ -24,7 +28,7 @@ export interface PitchConfig {
   team: string[];
   /** apare pe prima slide, sub echipă */
   event: string;
-  /** linkul din QR; gol = adresa de pe care rulează deck-ul (pe Vercel, adresa publică) */
+  /** adresa de pe slide-ul final; gol = adresa de pe care rulează deck-ul */
   demoUrl: string;
   /** cât costă azi problema, cu sursa; apare pe slide-ul problemei cât timp nu avem cifra din interviuri */
   problemFact?: Fact;
@@ -49,22 +53,23 @@ export const PITCH: PitchConfig = {
   event: "ITFest × Adobe · 7 noiembrie 2026",
   demoUrl: "https://adobe-itfest-hackathon-project.vercel.app",
   problemFact: {
+    figure: "500–3.500 lei pe lună",
     text: "Cine nu face singur postările plătește azi 500–1.500 lei pe lună unui freelancer sau 1.500–3.500 lei unei agenții mici.",
     source: "Trifu Media, „Cât costă administrarea social media în România”, 2026",
   },
   payerFacts: [{ text: "O agenție mică cere de la 99 €/lună pentru 8 postări cu design, până la 299 €/lună pentru 20, cu contract de minimum 3 luni.", source: "ESYS Agency, pachetele de social media" }],
-  market: { text: "Circa 930.000 de IMM-uri în România, aproape toate microîntreprinderi.", source: "Comisia Europeană, SME Country Fact Sheet 2025 (date din 2024)" },
+  market: { figure: "930.000", text: "Circa 930.000 de IMM-uri în România, aproape toate microîntreprinderi.", source: "Comisia Europeană, SME Country Fact Sheet 2025 (date din 2024)" },
   builtToday: [
     "Extensia Chrome: uliul peste site, scanarea și critica paginii",
     "Anatomia referinței și întrebările, cu Gemini validat cu Zod",
     "Mascota redesenată în stilul referinței, cu FLUX.2 pe Cloudflare",
     "Compunerea pe straturi, garda deterministă și bucla de agent",
-    "Aplicația: campanii, marca, export PNG, datele în Supabase",
+    "Aplicația: campanii, marca, export PNG, clipul randat în browser, datele în Supabase",
   ],
   next: [
     "Generarea cu Adobe Firefly, sigură pentru uz comercial",
     "Add-on publicat în marketplace-ul Adobe Express",
-    "Clienți-pilot printre firmele mici intervievate",
+    "Primii clienți-pilot, ca să validăm prețul",
     "Conturi și izolare între firme; costul pe rulare, calculat",
   ],
   architecture: {
@@ -76,7 +81,8 @@ export const PITCH: PitchConfig = {
       { owner: "cod", title: "Garda", text: "Preț, Delta E, dHash, contrast, mențiuni." },
       { owner: "om", title: "Omul", text: "Editează, vede garda din nou și descarcă." },
     ],
-    loop: "Bucla de agent: ce pică reparabil la gardă se întoarce la AI, de cel mult două ori.",
+    loop: "Ce pică reparabil la gardă se întoarce la AI, de cel mult două ori",
+    video: "Clipul: Claude scrie scenariul, codul îl verifică, browserul îl randează.",
     failures: [
       { when: "Gemini e supraîncărcat", then: "alt model, după 429, eroare de server sau 20 s" },
       { when: "Ilustrația pică", then: "mascota originală, iar garda o spune" },
@@ -101,13 +107,13 @@ export type Mock = "scan" | "ask" | "kit";
 
 export type Slide =
   | { kind: "cover"; theme: Theme; name: string; headline: string; notThis?: string; says: string; team: Maybe<string[]>; event: string; mark: boolean }
+  | { kind: "guess"; theme: Theme; ribbon: string; title: string; text: string; options: string[] }
   | { kind: "problem"; theme: Theme; ribbon: string; title: string; problem: string; pains: string[]; evidence: Maybe<string | Fact> }
   | { kind: "how"; theme: Theme; ribbon: string; title: string; steps: Array<{ tag: string; title: string; text: string; mock: Mock }> }
   | { kind: "guard"; theme: Theme; ribbon: string; title: string; text: string }
-  | { kind: "beforeAfter"; theme: Theme; ribbon: string; title: string; text: string }
   | { kind: "architecture"; theme: Theme; ribbon: string; title: string; system: Maybe<Architecture> }
   | { kind: "payer"; theme: Theme; ribbon: string; payer: string; evidence: string[]; facts: Fact[]; market: Maybe<Fact> }
-  | { kind: "demo"; theme: Theme; title: string; text: string; url: string }
+  | { kind: "video"; theme: Theme; src: string; missing: string }
   | { kind: "close"; theme: Theme; question: string; answer: string; builtToday: Maybe<string[]>; next: Maybe<string[]>; team: Maybe<string[]>; url: string };
 
 // Textele poveștii, aceleași ca pe landing (src/pages/spire/LandingPage.tsx), ca deck-ul și pagina să spună același lucru.
@@ -122,18 +128,19 @@ const STORY = {
   ] satisfies Array<{ tag: string; title: string; text: string; mock: Mock }>,
   guardTitle: "AI-ul propune.\n*Codul verifică.*",
   guardText: "Înainte să vezi kitul, codul verifică fiecare material: prețul, culorile mărcii, contrastul, cât seamănă cu referința. Ce nu trece se întoarce la AI, de cel mult două ori.",
-  afterTitle: "Stilul altcuiva.\n*Conținutul tău.*",
-  afterText: "Preluăm doar felul în care e desenat. Ilustrația, textele și culorile sunt ale tale, iar codul respinge ce e prea aproape de referință.",
+  guessTitle: "Câte *prompturi?*",
+  guessText: "Ca un chat să facă asta pentru o gelaterie, cu mascota ei și cu prețul corect.",
+  guessOptions: ["1", "5", "10+"],
 };
 
-/** Slide-urile, pe capitolele landing-ului și în ordinea video-ului (docs/PITCH.md: rezultatul → durerea → demo → arhitectura → plătitorul → închiderea). Cerințele brief-ului nu au slide: se văd în demo.. */
+/** Slide-urile, pe capitolele landing-ului și în ordinea textului vorbit (docs/PITCH.md): hook → problema → piața → produsul → arhitectura → garda → video → final. Exemplele sunt machete cu Gelateria Pip; Marina Park apare doar în video. */
 export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
-  const roleLabel = (id: string) => s.roles[id]?.label ?? id;
   const url = p.demoUrl || origin;
   const team = orTodo(p.team, "numele echipei și rolul fiecăruia (PITCH.team)");
 
   return [
     { kind: "cover", theme: "hero", name: s.app.name, headline: s.app.headline ?? s.app.name, notThis: s.app.notThis, says: STORY.says, team, event: p.event, mark: p.coverMark },
+    { kind: "guess", theme: "cream", ribbon: "Ghiciți", title: STORY.guessTitle, text: STORY.guessText, options: STORY.guessOptions },
     {
       kind: "problem",
       theme: "cream",
@@ -143,9 +150,16 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       pains: STORY.pains,
       evidence: orTodo<string | Fact>(s.business.evidence[0] ?? p.problemFact, "cifra spusă de un om real, cu numele lui (scenario.business.evidence)"),
     },
+    {
+      kind: "payer",
+      theme: "cream",
+      ribbon: "Piața",
+      payer: s.business.payer,
+      evidence: s.business.evidence.slice(1),
+      facts: p.payerFacts,
+      market: orTodo(p.market, "cât de mare e piața, cu sursa (PITCH.market)"),
+    },
     { kind: "how", theme: "cream", ribbon: "Cum funcționează", title: "Se uită, întreabă *și face kitul.*", steps: STORY.steps },
-    { kind: "guard", theme: "cream", ribbon: "Garda", title: STORY.guardTitle, text: STORY.guardText },
-    { kind: "beforeAfter", theme: "night", ribbon: "Înainte și după", title: STORY.afterTitle, text: STORY.afterText },
     {
       kind: "architecture",
       theme: "dawn",
@@ -153,22 +167,8 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       title: "AI-ul propune, *codul verifică,* omul aprobă.",
       system: orTodo(p.architecture, "drumul prin sistem și ce se întâmplă când pică ceva (PITCH.architecture)"),
     },
-    {
-      kind: "payer",
-      theme: "cream",
-      ribbon: "Cine plătește",
-      payer: s.business.payer,
-      evidence: s.business.evidence.slice(1),
-      facts: p.payerFacts,
-      market: orTodo(p.market, "cât de mare e piața, cu sursa (PITCH.market)"),
-    },
-    {
-      kind: "demo",
-      theme: "sky",
-      title: "Încercați *voi.*",
-      text: `Scanați codul cu telefonul și intrați ca ${roleLabel(s.flow.requester).toLowerCase()}.`,
-      url,
-    },
+    { kind: "guard", theme: "cream", ribbon: "Garda", title: STORY.guardTitle, text: STORY.guardText },
+    { kind: "video", theme: "night", src: "/pitch/demo.mp4", missing: "Video-ul nu e încă aici: public/pitch/demo.mp4" },
     {
       kind: "close",
       theme: "dusk",
@@ -180,6 +180,27 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       url,
     },
   ];
+}
+
+/** Unde suntem în deck: slide-ul și câți pași sunt aprinși pe el. */
+export interface Position {
+  slide: number;
+  reveal: number;
+}
+
+/** Câte stări are un slide la clicker: arhitectura aprinde pașii pe rând, apoi bucla și rezervele. */
+export function revealCount(s: Slide): number {
+  return s.kind === "architecture" && !isTodo(s.system) ? s.system.steps.length + 1 : 1;
+}
+
+/** Clicul următor sau anterior: întâi pașii slide-ului, apoi slide-ul vecin. La capete nu se mișcă. */
+export function move(deck: Slide[], pos: Position, direction: 1 | -1): Position {
+  if (direction === 1) {
+    if (pos.reveal < revealCount(deck[pos.slide])) return { ...pos, reveal: pos.reveal + 1 };
+    return pos.slide < deck.length - 1 ? { slide: pos.slide + 1, reveal: 1 } : pos;
+  }
+  if (pos.reveal > 1) return { ...pos, reveal: pos.reveal - 1 };
+  return pos.slide > 0 ? { slide: pos.slide - 1, reveal: revealCount(deck[pos.slide - 1]) } : pos;
 }
 
 /** Ce mai e de completat înainte de pitch, cu numele câmpului. */

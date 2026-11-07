@@ -1,125 +1,97 @@
 # Prezentarea Spire: pitch-ul live, video-ul demo, întrebările
 
-Formatul final: 2 minute de pitch live, apoi 1 minut de video demo. Ce e între `[paranteze]` se completează cu o cifră măsurată sau se scoate. Nu inventăm nimic. Criteriile: `docs/JURIU.md`.
+Formatul: 2 minute de pitch live, apoi video-ul demo de ~1:10, fără sunet și fără subtitrări, cu noi vorbind peste el. Nu inventăm nimic. Criteriile: `docs/JURIU.md`. Filmarea: `docs/DEMO-VIDEO.md`.
 
-## Formatul: 2 minute live, apoi 1 minut de video
+## Formatul
 
 - **Pitch-ul live, 2:00:** hook cu sala, problema și banii, arhitectura. Vorbim pe deck (`/pitch`), cu clickerul.
-- **Video-ul demo, 1:00:** un singur drum prin produs, fără arhitectură (am spus-o live). Rulează din deck, pe slide-ul lui, ca să nu schimbăm aplicația pe proiector.
-- **Împărțirea:** David deschide (hook, problema, piața) și închide; Alexandru ține arhitectura și costul. Două predări, nu mai multe.
+- **Video-ul demo, ~1:10:** Marina Park, pe slide-ul 8. Rulează din deck, ca să nu schimbăm aplicația pe proiector.
+- **Exemplele:** în pitch rămân machetele cu Gelateria Pip; în video apare Marina Park, un business real. Le legăm cu o singură frază, la trecerea spre video.
+- **Fără QR:** Spire lucrează prin extensia de Chrome și nu avem nimic funcțional pe telefon. Adresa rămâne în text pe slide-ul final.
+- **Împărțirea:** David deschide (hook, problema, piața) și ține video-ul; Alexandru ține arhitectura și garda. Două predări, nu mai multe.
 - **Ținta:** circa 290 de cuvinte vorbite în 2 minute. Dacă depășim la repetiție, tăiem frazele marcate cu ✂, nu vorbim mai repede.
 
-Ce mută fiecare bucată (`docs/JURIU.md`): hook-ul și problema → 1 Omul, 2 Durerea; piața și costul → 3 Costul și plătitorul (bonusul +10); arhitectura și garda → 4 Diferența, 8 Integrările, 9 Fiabilitatea (65% din notă împreună cu Problem Solving); video-ul → 6 Demo-ul.
+Ce mută fiecare bucată (`docs/JURIU.md`): hook-ul și problema → 1 Omul, 2 Durerea; piața → 3 Costul și plătitorul (bonusul +10); arhitectura și garda → 4 Diferența, 8 Integrările, 9 Fiabilitatea (65% din notă împreună cu Problem Solving); video-ul → 1 Omul, 6 Demo-ul.
 
-## Ce trebuie făcut înainte
+## Ce este făcut de noi și ce face Spire
+
+Spunem asta deschis, pe scenă și la întrebări:
+
+- **Afișul Marina Park** (`demo-videos/afis-marina-park.png`) și **clipul Marina Park** (`demo-videos/marina-park.mp4`) sunt create de noi, pe 7 noiembrie 2026, cu fotografiile și textele de pe marinapark.ro.
+- **Video-ul demo** arată aplicația reală și extensia reală. Afișul intră în el printr-o campanie salvată, iar clipul se pune peste pagină la montaj.
+- **Aplicația** are propriul drum de generare: analiza, ilustrația, compunerea, garda și clipul randat în browser. Machetele din deck sunt exemple cu Gelateria Pip.
+
+## Ce mai trebuie făcut
 
 | Ordinea | Ce | Cine | De ce |
 |---|---|---|---|
-| 1 | **Testul cu chatul, cronometrat:** aceeași referință și fișa Gelateriei Pip, în ChatGPT sau Gemini, până iese o postare publicabilă sau 10 minute. Notăm prompturile, minutele și ce a ieșit greșit; păstrăm captura | oricine | Cifra [Y] din hook. Fără ea, fraza cu „noi am încercat” iese |
-| 2 | **Costul pe rulare:** `src/lib/cost.ts`, funcție pură cu test: tokenii Gemini + imaginile FLUX.2 (1–3, după buclă), la prețurile oficiale de pe paginile Google și Cloudflare, cu data | Alexandru | Cifra [X] de pe slide-ul de cost; bonusul +10. Fără ea, slide-ul spune „nu l-am măsurat încă” |
-| 3 | Deck-ul, după secțiunea de mai jos | Alexandru | |
-| 4 | Captura video-ului, pe producție, cu cheia reală | David | |
-| 5 | Două repetiții cu ceasul, apoi una în fața unui om din afară | amândoi | |
+| 1 | Filmarea și montajul: `public/pitch/demo.mp4`, după `docs/PROMPT-DEMO-VIDEO.md` | David | Slide-ul 8 spune că lipsește până atunci |
+| 2 | O rulare de la cap la coadă cu cheile reale, pe producție | Alexandru | Testele automate rulează fără chei AI |
+| 3 | Două repetiții cu ceasul, peste video, apoi una în fața unui om din afară | amândoi | |
 
 ## Pitch-ul live, 2 minute
 
-### 0:00–0:15 · Hook, cu sala (slide-ul „Ghiciți”) · David
-
-Pe ecran: doar referința, postarea cu ceai rece și cămila, ca pe un site.
+### 0:00–0:15 · Hook, cu sala (slide-ul 2, „Ghiciți”) · David
 
 > Ridicați mâna: cine a văzut pe net un design și și-a zis „vreau și eu așa ceva, pe marca mea”? [pauză, mâinile sus]
 > Acum ghiciți: câte prompturi îi trebuie unui chat ca să facă asta pentru o gelaterie, cu mascota ei și cu prețul corect? Unul? Cinci? Zece? [mâinile la fiecare]
 
-Reținem ce a votat sala: revenim la ea la final. Interacțiunea ține 10 secunde, nu mai mult; dacă sala e tăcută, mergem mai departe după prima întrebare.
+Reținem ce a votat sala: revenim la ea înainte de video. Interacțiunea ține 10 secunde; dacă sala e tăcută, mergem mai departe după prima întrebare.
 
-### 0:15–0:30 · Problema și cât costă azi (slide-ul „Problema”) · David
+### 0:15–0:25 · Problema și cât costă azi (slide-ul 3) · David
 
-> Noi am încercat: [Y] prompturi, [Z] minute, și tot a ieșit cu altă mascotă și alt preț. ✂
-> Așa că o firmă mică plătește azi 500 până la 3.500 de lei pe lună unui freelancer sau unei agenții, doar ca postările să arate a ei.
+> Fără designer, o firmă mică plătește azi între 500 și 3.500 de lei pe lună unui freelancer sau unei agenții, doar ca postările să arate a ei.
 
-### 0:30–0:45 · Piața și cine plătește (slide-ul „Piața”) · David
+### 0:25–0:45 · Piața și cine plătește (slide-ul 4) · David
 
-> În România sunt circa 930.000 de IMM-uri, aproape toate microîntreprinderi, adică fără designer. Plătitorul e firma, cu un abonament mai mic decât un singur pachet de agenție. Prețul nu l-am validat încă: îl testăm cu primii clienți-pilot.
+> În România sunt circa 930.000 de IMM-uri, aproape toate microîntreprinderi. Ipoteza noastră: plătește firma, cu un abonament mai mic decât un pachet de agenție, care pornește de la 99 de euro pe lună. Prețul nu l-am validat încă și nici costul pe rulare nu l-am măsurat. Îl testăm cu primii clienți-pilot.
 
-Nu spunem un preț inventat. Dacă avem până atunci o cifră din interviuri, intră aici.
-
-### 0:45–0:55 · Ce face Spire (slide-ul „Cum funcționează”) · David → Alexandru
+### 0:45–0:55 · Ce face Spire (slide-ul 5) · David → Alexandru
 
 > Spire e o extensie de Chrome. Se uită la pagina pe care ești, te întreabă trei lucruri și îți face kitul pe marca ta. Fără prompt. Alexandru vă arată cum.
 
-### 0:55–1:35 · Arhitectura (slide-urile „Arhitectura” și „Garda”) · Alexandru
+### 0:55–1:25 · Arhitectura (slide-ul 6) · Alexandru
 
-Pe slide-ul de arhitectură, fiecare clic aprinde pasul despre care vorbim.
+Slide-ul pornește cu Extensia aprinsă. Fiecare clic aprinde pasul următor, iar ultimul aprinde bucla, clipul și rezervele. Sunt șapte stări, deci șase clicuri până la imaginea completă.
 
 > Avem o singură regulă: AI-ul propune, codul verifică, omul aprobă.
 > Extensia citește pagina doar când apeși, cu permisiunea activeTab. Gemini scoate anatomia referinței: zonele, rolurile culorilor. Nu-l credem pe cuvânt: răspunsul trece printr-o schemă Zod. FLUX.2, pe Cloudflare, redesenează mascota în stilul referinței.
-> Apoi intră codul. Compune designul pe straturi editabile și îl trece prin gardă: prețul se compară ca valoare și monedă, culorile cu Delta E, iar o amprentă dHash respinge copia. Ce pică se întoarce la AI, de cel mult două ori.
-> Și când pică ceva: dacă Gemini e supraîncărcat, trecem pe alt model după 20 de secunde; dacă pică ilustrația, kitul iese cu mascota originală, iar garda o spune. ✂
+> Apoi intră codul: compune designul pe straturi editabile și îl trece prin gardă, iar omul are ultimul cuvânt.
 
-Fiecare frază e o decizie cu motivul ei, nu o listă de tehnologii. Cifrele (două încercări, 20 de secunde, pragurile) se verifică în cod înainte de repetiție: `src/lib/agentLoop.ts`, `server/providers/gemini.ts`, `THRESHOLDS` din `src/lib/guard.ts`.
+### 1:25–1:50 · Garda (slide-ul 7) · Alexandru
 
-### 1:35–1:50 · Cost și valoare (slide-ul „Cost și valoare”) · Alexandru
+> Garda compară prețul ca valoare și monedă, culorile cu Delta E, iar o amprentă dHash respinge copia. Ce pică se întoarce la AI, de cel mult două ori.
+> Dacă Gemini e supraîncărcat, trecem pe alt model; dacă pică ilustrația, kitul iese cu mascota originală, iar garda o spune. ✂
 
-> O rulare ne costă [X], calculat din prețurile publice ale Gemini și Cloudflare. Un pachet de agenție pornește de la 99 de euro pe lună pentru 8 postări. Pasul următor: Firefly ca generator, sigur pentru uz comercial, și Spire ca add-on în Adobe Express.
+Fiecare frază e o decizie cu motivul ei. Cifrele se verifică în cod înainte de repetiție: `src/lib/agentLoop.ts`, `server/providers/gemini.ts`, `THRESHOLDS` din `src/lib/guard.ts`.
 
-Fără `cost.ts`: „Costul pe rulare nu l-am măsurat încă; e dominat de imagini, iar bucla generează cel mult trei.” Nu dăm o cifră din burtă.
+### 1:50–2:00 · Trecerea la video (tot pe slide-ul 7) · David
 
-### 1:50–2:00 · Trecerea la video (slide-ul „Acum, filmul”) · David
+> Ați ghicit [ce a votat sala]. Gelateria a fost exemplul nostru. Acum, un business real: Marina Park, din Vama Veche.
 
-> Ați ghicit [ce a votat sala] prompturi. Uitați-vă câte scrie Spire. Și scanați codul: puteți încerca în timp ce rulează.
+Clic: pornește video-ul.
 
-Clic: pornește video-ul de pe slide.
+### Peste video (slide-ul 8) · David
 
-### După video: slide-ul de final
+Video-ul n-are sunet și nici subtitrări. Frazele și momentele lor sunt în `docs/PROMPT-DEMO-VIDEO.md`; secundele exacte ies în `docs/demo/repere.md` după montaj. Fraza care nu lipsește, când apare afișul: „Afișul și clipul pentru Marina Park le-am făcut noi.”
 
-„N-ai designer azi? Spire e aici.”, cu ce am construit azi, ce urmează, echipa și adresa. Stă pe ecran la întrebări.
+### După video: slide-ul 9
 
-## Cum actualizăm deck-ul
+„N-ai designer azi? Spire e aici.”, cu ce am construit azi, ce urmează, echipa și adresa în text. Stă pe ecran la întrebări.
 
-Ordinea nouă, cu timpul pe fiecare slide:
+## Deck-ul
 
-| # | Slide | Timp | Ce se schimbă |
+| # | Slide | Timp | Ce arată |
 |---|---|---|---|
-| 0 | Coperta | înainte de start | Rămâne ca acum. Stă pe ecran cât urcăm; nu intră în cele 2 minute |
-| 1 | **Ghiciți** (nou) | 0:00 | Referința mare, într-o fereastră de browser, și întrebarea „Câte prompturi, pentru o gelaterie cu mascota ei?”, cu trei pastile: 1 · 5 · 10+. Fără răspuns pe slide |
-| 2 | Problema | 0:15 | Cifra de cost (500–3.500 lei) devine elementul mare; durerile rămân dedesubt. [Y] prompturi, dacă o avem, intră lângă ea |
-| 3 | **Piața** (fostul „Cine plătește”) | 0:30 | Mutat înainte; „930.000” mare, cu sursa; plătitorul și ipoteza de preț dedesubt |
-| 4 | Cum funcționează | 0:45 | Rămâne ca acum |
-| 5 | Arhitectura | 0:55 | **Clic cu clic:** fiecare clic aprinde pasul următor (extensia → analiza → ilustrația → compunerea → garda → omul); bucla și rezervele apar la ultimul clic |
-| 6 | Garda | 1:15 | Rămâne ca acum (macheta prinde prețul și îl corectează) |
-| 7 | **Cost și valoare** (nou) | 1:35 | Stânga: costul pe rulare (din `cost.ts`, sau „nemăsurat încă”); dreapta: pachetul de agenție, 99 €/lună pentru 8 postări, cu sursa; jos: Firefly și add-on-ul Express |
-| 8 | **Acum, filmul** (fostul „Încercați voi”) | 1:50 | Titlul nou, QR-ul rămâne |
-| 9 | **Video-ul** (nou) | 2:00 | Slide pe tot ecranul cu `public/pitch/demo.mp4`; pornește la intrarea pe slide, cu sunet, fără controale. Dacă fișierul lipsește, slide-ul spune asta, nu rămâne negru |
-| 10 | Finalul | după video | Rămâne ca acum |
-
-Scoatem „Înainte și după”: rezultatul se vede în video, iar referința e deja pe slide-ul 1.
-
-Plus, pentru repetiții: **notițele vorbitorului** în `deck.ts` (textul de mai sus, pe fiecare slide) și o **vedere de prezentator** (`/pitch?prezentator=1`): slide-ul curent, următorul, notițele și un ceas de 2:00 care se înroșește după timp. Doar dacă rămâne timp după celelalte; ceasul de pe telefon face aceeași treabă.
-
-## Video-ul demo, 1 minut
-
-Un singur drum, pe producție, cu cheia reală: site-ul de demo → kitul Gelateriei Pip → garda → exportul. Fără arhitectură și fără critica paginii; nu încap într-un minut.
-
-| Timp | Pe ecran | Text pe ecran (subtitrare) | Voce (opțional) |
-|---|---|---|---|
-| 0:00–0:06 | Site-ul de demo deschis; clic pe iconița Spire; uliul apare peste pagină | „Un site care îți place.” | „Sunt pe un site care îmi place.” |
-| 0:06–0:16 | Scanarea: chenarele se aprind pe hero, ofertă, mascotă; clic pe „Fă o campanie” | „Spire citește pagina. Fără prompt.” | „Spire nu primește un prompt. Se uită la pagină.” |
-| 0:16–0:26 | Cele trei întrebări, răspunse cu câte un clic | „Trei întrebări. Restul vine din marcă.” | „Mă întreabă doar oferta, îndemnul și formatele.” |
-| 0:26–0:34 | Generarea, accelerată, cu eticheta „×[N]” în colț | „Accelerat ×[N]. În realitate: [S] secunde.” | — |
-| **0:34–0:40** | **Kitul apare: postarea și story-ul, cu Pip în stilul referinței, și bifele gărzii** | „Pe marca ta.” | Două secunde de liniște |
-| 0:40–0:50 | Schimbăm prețul pe un strat → bifa se face roșie → îl corectăm → verde | „Asta nu e AI. E cod.” | „Prețul trebuie să fie cel aprobat. Codul verifică, omul decide.” |
-| 0:50–0:55 | Descărcarea PNG; fișierul apare | „Gata de postat.” | — |
-| 0:55–1:00 | Cadrul final: logo-ul cu uliu, adresa și QR-ul | „adobe-itfest-hackathon-project.vercel.app” | — |
-
-**Reguli:**
-- Montajul poate tăia și accelera, dar nu arată ce nu există. Accelerarea are etichetă, iar [N] și [S] sunt măsurate la captură.
-- Subtitrările sunt obligatorii (sonorul din sală e necunoscut); vocea e un bonus. Dacă vocea nu iese curată, rămân doar subtitrările și o muzică discretă.
-- Momentul wow (kitul cu bifele) apare înainte de secunda 40.
-- Dacă vreun cadru vine din modul demo, scrie asta pe el.
-
-**Captura:** Chrome curat, fără alte extensii vizibile, zoom 110%, notificările oprite, `?dev=0`, fereastra la 1920×1080, cu Cmd+Shift+5 sau QuickTime. Facem 2–3 rulări întregi și montăm din cea mai curată; nu lipim bucăți din rulări diferite pe același pas (s-ar schimba kitul între cadre).
-
-**Exportul:** MP4, 1080p, H.264, sub 50 MB, salvat ca `public/pitch/demo.mp4` (merge în deck) și separat pe laptop, stick, telefon și un link nelistat.
+| 1 | Coperta | înainte de start | Stă pe ecran cât urcăm; nu intră în cele 2 minute |
+| 2 | Ghiciți | 0:00 | Referința și trei variante: 1, 5, 10+ |
+| 3 | Problema | 0:15 | 500–3.500 lei pe lună, cu sursa, și durerile |
+| 4 | Piața | 0:25 | 930.000, cu sursa; plătitorul ca ipoteză; pachetul de agenție |
+| 5 | Cum funcționează | 0:45 | Machetele cu Gelateria Pip |
+| 6 | Arhitectura | 0:55 | Pașii clic cu clic, apoi bucla, clipul și rezervele |
+| 7 | Garda | 1:25 | Macheta prinde prețul și îl corectează |
+| 8 | Video-ul | 2:00 | `public/pitch/demo.mp4`, pe tot ecranul, fără sunet. Dacă fișierul lipsește, slide-ul spune asta |
+| 9 | Finalul | după video | Ce am construit, ce urmează, echipa, adresa |
 
 ## Cum arătăm că am înțeles
 
@@ -130,18 +102,9 @@ Fiecare fragment tehnic spune **o decizie și de ce**, nu o listă de tehnologii
 - Ce nu poate explica nimeni iese din pitch.
 - Testul: fiecare ia un fișier din tabel, la întâmplare, și îl explică celuilalt în 30 de secunde.
 
-## Producția video-ului
-
-- **Captura:** toată fereastra, cu Cmd+Shift+5 sau QuickTime, la 1080p. Butonul `⏺ Rec` din panoul echipei e bun pentru cadre scurte, dar pe ecran prinde doar sunetul tab-ului, nu microfonul.
-- **Vocea:** separat, în liniște, cu căști cu microfon, după captură. Se taie imaginea pe voce, nu invers.
-- **Codul pe ecran:** font mare, 3–5 linii evidențiate. Un fișier întreg, derulat, nu se poate citi.
-- **Subtitrări** pentru termenii tehnici: sonorul din sală e necunoscut.
-- **Locuri pentru MP4:** laptop, stick, telefon, link nelistat. Încercați-l o dată pe proiector, cu sunet, dacă se poate.
-- **Pe ecran:** fără notificări, fără chei în `.env` vizibile, fără panoul echipei (`?dev=0`).
-
 ## Varianta de 30 de secunde (pe hol, la mentori)
 
-> Omul de marketing vede un design care îi place și vrea ceva la fel, pe marca lui, azi. În chat îi ia [Y] minute și tot iese greșit. Spire apare peste site, se uită la design, pune două-trei întrebări și face kitul de campanie cu mascota și culorile mărcii. Codul verifică prețul, culorile și contrastul, iar omul aprobă. Fiecare rulare costă câțiva cenți.
+> Omul de marketing vede un design care îi place și vrea ceva la fel, pe marca lui, azi. În chat iese altă mascotă și alt preț. Spire apare peste site, se uită la design, pune două-trei întrebări și face kitul de campanie cu mascota și culorile mărcii. Codul verifică prețul, culorile și contrastul, iar omul aprobă.
 
 Pentru varianta de 5 minute: arhitectura rămâne întreagă; adăugați toate întrebările din demo și un slide cu ce a prins garda în rulările reale.
 
@@ -225,6 +188,9 @@ Din `THRESHOLDS` (`src/lib/guard.ts`). Le-am ales noi; nu sunt calibrate pe un s
 **16. „Ce se întâmplă dacă pagina scanată conține instrucțiuni pentru model?”**
 Ce vine din pagină intră ca date, între delimitatori, iar prompturile le scrie codul (`src/lib/spireAi.ts`). Răspunsul trece prin schemă, nu are acces la nicio acțiune, iar garda și omul rămân după el. Nu spunem că e imposibil, spunem ce poate strica: cel mult un rezultat prost, pe care omul îl vede înainte de export.
 
+**17. „Merge tot ce arătați? Afișul și clipul din video le-a generat Spire?”**
+Da, aplicația și extensia merg: de la citirea paginii la gardă și export, iar `npm run check` le trece prin testele end-to-end. Afișul și clipul Marina Park sunt create de noi, nu generate în timpul filmării; le folosim ca să arătăm cum arată o campanie pentru un business real. *[Spuneți asta doar după rularea cu cheile reale de la „Ce mai trebuie făcut”.]*
+
 **Regula:** când nu știți, spuneți „nu am măsurat asta încă”. La ingineri, „nu știu, dar uite cum aș măsura” câștigă în fața unui răspuns inventat. Oricine din echipă explică orice fișier din demo; ce nu poate explica nimeni iese din demo.
 
 ## Rezerve
@@ -233,7 +199,7 @@ Video-ul e prima variantă. Rândurile de după primul contează dacă prezentă
 
 | Dacă | Atunci |
 |---|---|
-| Video-ul nu pornește sau nu se aude | Altă copie (stick, telefon, link); apoi pitch-ul live, pe același text, cu slide-urile |
+| Video-ul nu pornește | Altă copie (stick, telefon, link); apoi pitch-ul live, pe același text, cu slide-urile |
 | Extensia nu se încarcă pe site | Pagina `/nou` cu încărcare de imagine; spuneți ce lipsește |
 | Rețeaua pică | Hotspot; apoi `npm run dev` local cu Mod demo, spus ca atare |
 | Gemini e lent | Rularea generată mai devreme, spus cu voce tare |
@@ -246,5 +212,5 @@ Video-ul e prima variantă. Rândurile de după primul contează dacă prezentă
 
 1. **Înainte de voce, cu ceasul:** tot textul, fără oprire. Tăiați ce a depășit, nu vorbiți mai repede.
 2. **Cu un om din afară, pe video-ul montat:** întrebați-l ce face produsul, pentru cine și ce garantează codul. Dacă nu poate spune, refaceți fragmentul.
-3. **Întrebări:** câte un răspuns de 20 de secunde la toate cele 16, spus de fiecare, nu doar de cel care a scris partea aceea.
+3. **Întrebări:** câte un răspuns de 20 de secunde la toate cele 17, spus de fiecare, nu doar de cel care a scris partea aceea.
 4. **Cu pană, doar dacă prezentăm și live:** cineva oprește rețeaua la secunda 50. Exersați trecerea pe rezervă.

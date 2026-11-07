@@ -2,16 +2,15 @@
 // hârtia crem cu aripi, machetele animate, noaptea, zorii lila și apusul; titluri cu un cuvânt în serif
 // coral, panglici. Imaginile sunt cele din public/landing/. Textele vin din scenariu și din
 // PITCH (src/pitch/deck.ts). Slide-ul are 1600×900 și se scalează la ecran.
-//   ← → / Space / clicker: slide-ul următor · F: ecran complet · P: PDF (o slide pe pagină)
+//   ← → / Space / clicker: pasul sau slide-ul următor (arhitectura se aprinde pas cu pas) · F: ecran complet · P: PDF (o slide pe pagină)
 //   /pitch#4 deschide direct slide-ul 4.
 
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Accent, Ribbon } from "../components/ui";
 import { HawkMark } from "../pitch/HawkMark";
-import { buildDeck, isTodo, type Fact, type Maybe, type Mock, PITCH, type Slide, type Theme } from "../pitch/deck";
-import { qrDataUrl } from "../lib/share";
+import { buildDeck, isTodo, type Fact, type Maybe, type Mock, move, PITCH, type Position, type Slide, type Theme } from "../pitch/deck";
 import { useTypewriter } from "../lib/motion";
-import { AfterMock, AskMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./spire/LandingMockups";
+import { AskMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./spire/LandingMockups";
 import { scenario } from "../scenario/config";
 
 const W = 1600;
@@ -34,11 +33,12 @@ function startIndex() {
 }
 
 export function PitchPage() {
-  const [i, setI] = useState(startIndex);
+  const [pos, setPos] = useState<Position>(() => ({ slide: startIndex(), reveal: 1 }));
+  const i = pos.slide;
   const [scale, setScale] = useState(1);
   const data = useLandingData();
 
-  const go = useCallback((d: number) => setI((x) => Math.min(DECK.length - 1, Math.max(0, x + d))), []);
+  const go = useCallback((d: 1 | -1) => setPos((x) => move(DECK, x, d)), []);
 
   useEffect(() => {
     document.title = `${scenario.app.name} · pitch`;
@@ -53,7 +53,7 @@ export function PitchPage() {
   }, [i]);
 
   useEffect(() => {
-    const onHash = () => setI(startIndex());
+    const onHash = () => setPos((x) => (x.slide === startIndex() ? x : { slide: startIndex(), reveal: 1 }));
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
@@ -62,8 +62,8 @@ export function PitchPage() {
     const onKey = (e: KeyboardEvent) => {
       if (["ArrowRight", "PageDown", " ", "Enter"].includes(e.key)) go(1);
       else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) go(-1);
-      else if (e.key === "Home") setI(0);
-      else if (e.key === "End") setI(DECK.length - 1);
+      else if (e.key === "Home") setPos({ slide: 0, reveal: 1 });
+      else if (e.key === "End") setPos({ slide: DECK.length - 1, reveal: 1 });
       else if (e.key === "f" || e.key === "F") void (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
       else if (e.key === "p" || e.key === "P") window.print();
       else return;
@@ -87,9 +87,9 @@ export function PitchPage() {
           <section key={n} className={`pitch-slide ${BG[s.theme].className} ${n === i ? "" : "hidden"}`} aria-hidden={n !== i} data-testid={`slide-${n + 1}`}>
             {BG[s.theme].img && !(s.kind === "cover" && s.mark) && <img src={BG[s.theme].img} alt="" className={`absolute inset-0 h-full w-full object-cover ${s.theme === "hero" ? "pitch-hero-img" : ""}`} />}
             <div key={n === i ? "on" : "off"} className="pitch-in relative flex h-full flex-col">
-              <SlideBody s={s} active={n === i} data={data} />
+              <SlideBody s={s} active={n === i} reveal={n === i ? pos.reveal : Infinity} data={data} />
             </div>
-            <Footer theme={s.theme} n={n} />
+            {s.kind !== "video" && <Footer theme={s.theme} n={n} />}
           </section>
         ))}
       </div>
@@ -126,19 +126,26 @@ function Show<T>({ v, dark, children }: { v: Maybe<T>; dark?: boolean; children:
   return isTodo(v) ? <Todo text={v.todo} dark={dark} /> : <>{children(v)}</>;
 }
 
-/** Textele lungi din scenariu (problema, plătitorul) coboară o treaptă, ca să încapă fără să fie tăiate. */
-const fitText = (text: string) => (text.length > 150 ? "text-[46px]" : text.length > 90 ? "text-[56px]" : "text-[64px]");
-
-function Qr({ url }: { url: string }) {
-  const [src, setSrc] = useState<string | null>(null);
+/** Video-ul demo, pe tot ecranul, fără sunet: echipa vorbește peste el. Pornește de la început când intri pe slide. */
+function DemoVideo({ src, missing, active }: { src: string; missing: string; active: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    let alive = true;
-    void qrDataUrl(url, 760).then((d) => alive && setSrc(d));
-    return () => {
-      alive = false;
-    };
-  }, [url]);
-  return <div className="land-frame h-[400px] w-[400px] p-7">{src && <img src={src} alt={`Cod QR pentru ${url}`} className="h-full w-full" />}</div>;
+    const video = ref.current;
+    if (!video) return;
+    if (active) {
+      video.currentTime = 0;
+      void video.play().catch(() => undefined);
+    } else video.pause();
+  }, [active]);
+  if (failed) {
+    return (
+      <div className="flex h-full items-center justify-center px-[100px]" data-testid="pitch-video-missing">
+        <p className="text-center text-[40px] font-medium text-white">{missing}</p>
+      </div>
+    );
+  }
+  return <video ref={ref} src={src} muted playsInline preload="auto" onError={() => setFailed(true)} className="h-full w-full bg-night object-contain" data-testid="pitch-video" />;
 }
 
 const H2 = "leading-[1.04] font-semibold tracking-[-0.04em] whitespace-pre-line";
@@ -206,10 +213,30 @@ function Cover({ s, active }: { s: Extract<Slide, { kind: "cover" }>; active: bo
   );
 }
 
-function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: LandingData }) {
+function SlideBody({ s, active, reveal, data }: { s: Slide; active: boolean; reveal: number; data: LandingData }) {
   switch (s.kind) {
     case "cover":
       return <Cover s={s} active={active} />;
+
+    case "guess":
+      return (
+        <div className={`${PAD} flex-row items-center gap-20 pt-[56px]`}>
+          <div className="w-[560px] shrink-0">
+            <ReferenceMock alt="Referința: o postare pentru ceai rece, cu o cămilă" />
+          </div>
+          <div className="flex-1">
+            <Head ribbon={s.ribbon} title={s.title} center={false} size={104} />
+            <p className={`${LEAD} mt-8 text-[36px]`}>{s.text}</p>
+            <ul className="mt-12 flex gap-6">
+              {s.options.map((o) => (
+                <li key={o} className="land-frame flex h-[120px] w-[170px] items-center justify-center text-[60px] font-semibold tracking-[-0.03em] text-ink">
+                  {o}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      );
 
     case "problem":
       return (
@@ -220,13 +247,13 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
             <Head ribbon={s.ribbon} title={s.title} size={64} />
             <p className={`${LEAD} mx-auto mt-6 max-w-[1000px] text-center text-[28px]`}>{s.problem}</p>
           </div>
-          <div className="relative mt-10 grid grid-cols-3 gap-7">
+          <div className="relative mt-7 grid grid-cols-3 gap-7">
             {s.pains.map((p, n) => (
-              <div key={p} className="land-sky-card flex flex-col items-center justify-center gap-5 px-8 text-center" style={{ minHeight: 210 }}>
-                <svg width="52" height="52" viewBox="0 0 38 38" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-ink" aria-hidden>
+              <div key={p} className="land-sky-card flex flex-col items-center justify-center gap-3 px-8 text-center" style={{ minHeight: 150 }}>
+                <svg width="40" height="40" viewBox="0 0 38 38" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="text-ink" aria-hidden>
                   {PAIN_ICONS[n % PAIN_ICONS.length]}
                 </svg>
-                <p className="text-[30px] leading-tight font-semibold tracking-[-0.02em] text-ink">{p}</p>
+                <p className="text-[26px] leading-tight font-semibold tracking-[-0.02em] text-ink">{p}</p>
               </div>
             ))}
           </div>
@@ -236,7 +263,7 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
                 typeof e === "string" ? (
                   <p className="accent-serif text-[36px] leading-snug">„{e}”</p>
                 ) : (
-                  <FactLine fact={e} className="mx-auto max-w-[1100px] text-[30px]" />
+                  <FactLine fact={e} className="mx-auto max-w-[1200px] text-[24px]" />
                 )
               }
             </Show>
@@ -284,77 +311,57 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
         </div>
       );
 
-    case "beforeAfter":
-      return (
-        <div className={`${PAD} flex-row items-center gap-14`}>
-          <div className="w-[500px] shrink-0">
-            <Head ribbon={s.ribbon} title={s.title} center={false} dark size={72} />
-            <p className="mt-7 text-[27px] leading-snug text-white/80">{s.text}</p>
-          </div>
-          <div className="land-stage grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-5 p-7">
-            <figure>
-              <div className="mx-auto w-[330px]">
-                <ReferenceMock alt="Referința: o postare pentru ceai rece, cu o cămilă" />
-              </div>
-              <figcaption className="mt-3 text-center text-[19px] text-ink-2">Referința văzută pe un site</figcaption>
-            </figure>
-            <svg width="44" height="26" viewBox="0 0 40 24" className="text-coral" aria-hidden>
-              <path d="M2 12h34M26 3l10 9-10 9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <figure>
-              <div className="mx-auto w-[330px]">
-                <AfterMock data={data} />
-              </div>
-              <figcaption className="mt-3 text-center text-[19px] text-ink-2">Mascota, pe marca ta</figcaption>
-            </figure>
-          </div>
-        </div>
-      );
-
     case "architecture":
       return (
-        <div className={`${PAD} pt-[60px] pb-[100px]`}>
-          <Head ribbon={s.ribbon} title={s.title} size={58} />
-          <div className="my-auto pt-6">
+        <div className={`${PAD} pt-[52px] pb-[92px]`}>
+          <Head ribbon={s.ribbon} title={s.title} size={54} />
+          <div className="my-auto pt-4">
             <Show v={s.system}>
-              {(a) => (
-                <>
-                  <ol className="grid grid-cols-6 gap-3">
-                    {a.steps.map((step, n) => (
-                      <li key={step.title} className="relative">
-                        <div className="land-frame flex h-full flex-col px-5 py-5">
-                          <span className="flex items-center gap-2 text-[18px] font-medium tracking-[0.06em] text-muted uppercase">
-                            <span className={`h-3 w-3 rounded-full ${OWNER_DOT[step.owner]}`} aria-hidden />
-                            {step.owner}
+              {(a) => {
+                const lit = (step: number) => (reveal >= step ? "pitch-reveal" : "pitch-reveal pitch-dim");
+                const rest = lit(a.steps.length + 1);
+                return (
+                  <>
+                    <ol className="grid grid-cols-6 gap-3">
+                      {a.steps.map((step, n) => (
+                        <li key={step.title} className={`relative ${lit(n + 1)}`}>
+                          <div className="land-frame flex h-full flex-col px-5 py-5">
+                            <span className="flex items-center gap-2 text-[18px] font-medium tracking-[0.06em] text-muted uppercase">
+                              <span className={`h-3 w-3 rounded-full ${OWNER_DOT[step.owner]}`} aria-hidden />
+                              {step.owner}
+                            </span>
+                            <p className="mt-3 text-[27px] font-semibold tracking-[-0.02em] text-ink">{step.title}</p>
+                            <p className="mt-2 text-[20px] leading-snug text-ink-2">{step.text}</p>
+                          </div>
+                          {n < a.steps.length - 1 && (
+                            <svg width="18" height="14" viewBox="0 0 40 24" className="absolute top-1/2 right-[-15px] z-10 -translate-y-1/2 text-coral" aria-hidden>
+                              <path d="M2 12h34M26 3l10 9-10 9" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    <div className={`relative h-[78px] ${rest}`}>
+                      <svg viewBox="0 0 1400 78" className="absolute inset-0 h-full w-full text-coral" aria-hidden>
+                        <path d="M1053 2V34H582V8M572 18l10-12 10 12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <p className="absolute top-[40px] left-[817px] -translate-x-1/2 text-[21px] font-medium whitespace-nowrap text-ink">{a.loop}</p>
+                    </div>
+                    <p className={`mt-3 text-center text-[23px] font-medium text-ink ${rest}`}>{a.video}</p>
+                    <ul className={`mt-5 grid grid-cols-3 gap-8 ${rest}`}>
+                      {a.failures.map((f) => (
+                        <li key={f.when} className="text-[21px] leading-snug text-ink-2">
+                          <span className="flex items-center gap-2.5 font-medium text-ink">
+                            <span className="h-3 w-3 rounded-full bg-warn-dot" aria-hidden />
+                            {f.when}
                           </span>
-                          <p className="mt-3 text-[27px] font-semibold tracking-[-0.02em] text-ink">{step.title}</p>
-                          <p className="mt-2 text-[20px] leading-snug text-ink-2">{step.text}</p>
-                        </div>
-                        {n < a.steps.length - 1 && (
-                          <svg width="18" height="14" viewBox="0 0 40 24" className="absolute top-1/2 right-[-15px] z-10 -translate-y-1/2 text-coral" aria-hidden>
-                            <path d="M2 12h34M26 3l10 9-10 9" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="story-prompt mt-6 flex items-center gap-3 px-6 py-4 text-[24px] font-medium text-ink">
-                    <img src="/landing/hawk-mark.svg" alt="" className="h-6 w-6" />
-                    {a.loop}
-                  </p>
-                  <ul className="mt-6 grid grid-cols-3 gap-8">
-                    {a.failures.map((f) => (
-                      <li key={f.when} className="text-[22px] leading-snug text-ink-2">
-                        <span className="flex items-center gap-2.5 font-medium text-ink">
-                          <span className="h-3 w-3 rounded-full bg-warn-dot" aria-hidden />
-                          {f.when}
-                        </span>
-                        {f.then}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
+                          {f.then}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                );
+              }}
             </Show>
           </div>
         </div>
@@ -367,36 +374,36 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
           <div className="relative">
             <Ribbon>{s.ribbon}</Ribbon>
           </div>
-          <p className={`${H2} relative mt-8 max-w-[1200px] text-ink ${fitText(s.payer)}`}>{s.payer}</p>
+          <div className="relative mt-8 max-w-[1200px]">
+            <Show v={s.market}>
+              {(m) => (
+                <>
+                  {m.figure && (
+                    <p className="text-[176px] leading-none">
+                      <span className="accent-serif">{m.figure}</span>
+                    </p>
+                  )}
+                  <FactLine fact={m} big className="mt-4 text-[36px]" />
+                </>
+              )}
+            </Show>
+          </div>
           <div className="relative mt-auto max-w-[1150px] space-y-5">
+            <p className="text-[32px] leading-snug font-semibold tracking-[-0.02em] text-ink">{s.payer}</p>
             {s.evidence.map((e) => (
               <p key={e} className="accent-serif text-[34px] leading-snug">
                 „{e}”
               </p>
             ))}
             {s.facts.map((f) => (
-              <FactLine key={f.text} fact={f} className="text-[30px]" />
+              <FactLine key={f.text} fact={f} className="text-[26px]" />
             ))}
-            <Show v={s.market}>{(m) => <FactLine fact={m} className="text-[30px]" />}</Show>
           </div>
         </div>
       );
 
-    case "demo":
-      return (
-        <div className={`${PAD} flex-row items-center justify-between gap-16 pt-[96px]`}>
-          <div className="max-w-[820px]">
-            <h2 className="text-[124px] leading-none font-semibold tracking-[-0.045em] text-ink">
-              <Accent text={s.title} />
-            </h2>
-            <p className={`${LEAD} mt-9 text-[34px]`}>{s.text}</p>
-          </div>
-          <div className="shrink-0 text-center">
-            <Qr url={s.url} />
-            <p className="mt-5 inline-block rounded-lg bg-white/85 px-4 py-1.5 text-[24px] font-medium text-ink">{s.url.replace(/^https?:\/\//, "")}</p>
-          </div>
-        </div>
-      );
+    case "video":
+      return <DemoVideo src={s.src} missing={s.missing} active={active} />;
 
     case "close":
       return (
@@ -425,9 +432,14 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
 }
 
 /** O cifră de pe net, cu sursa sub ea: pe slide nu apare nicio cifră fără sursă. */
-function FactLine({ fact, className = "" }: { fact: Fact; className?: string }) {
+function FactLine({ fact, className = "", big = false }: { fact: Fact; className?: string; big?: boolean }) {
   return (
     <div className={className}>
+      {fact.figure && !big && (
+        <p className="mb-2 text-[68px] leading-none">
+          <span className="accent-serif">{fact.figure}</span>
+        </p>
+      )}
       <p className="leading-snug font-medium text-ink">{fact.text}</p>
       <p className="mt-1 text-[20px] text-ink-2">Sursa: {fact.source}</p>
     </div>
