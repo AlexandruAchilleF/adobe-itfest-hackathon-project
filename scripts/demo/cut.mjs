@@ -10,8 +10,9 @@ const ROOT = process.cwd();
 // `DEMO_VARIANT=viteza-reala`: fișiere separate, fără nicio accelerare la montaj.
 const REAL_SPEED = process.env.DEMO_VARIANT === "viteza-reala";
 const SUFFIX = REAL_SPEED ? "-viteza-reala" : "";
-const RUN = JSON.parse(readFileSync(join(ROOT, `docs/demo/demo-run${SUFFIX}.json`), "utf8"));
-const OUT = join(ROOT, `public/pitch/demo${SUFFIX}.mp4`);
+const OUT_DIR = process.env.DEMO_OUT_DIR;
+const RUN = JSON.parse(readFileSync(OUT_DIR ? join(OUT_DIR, "demo-run.json") : join(ROOT, `docs/demo/demo-run${SUFFIX}.json`), "utf8"));
+const OUT = OUT_DIR ? join(OUT_DIR, "demo.mp4") : join(ROOT, `public/pitch/demo${SUFFIX}.mp4`);
 const WORK = join(ROOT, "test-results-demo/cut");
 const FADE = 0.4;
 const MAX_WAIT = 2;
@@ -155,7 +156,7 @@ const rows = scenes.map((scene, i) => {
   return `| ${scene.id} | ${clock(start)} | ${(end - start).toFixed(1)} s | ${VOICE[scene.id]}${faster.length ? ` <br>_${faster.join("; ")}_` : ""} |`;
 });
 writeFileSync(
-  join(ROOT, `docs/demo/repere${SUFFIX}.md`),
+  OUT_DIR ? join(OUT_DIR, "repere.md") : join(ROOT, `docs/demo/repere${SUFFIX}.md`),
   `# Reperele video-ului demo
 
 Din montajul de pe ${new Date().toISOString().slice(0, 10)}. Video-ul n-are sunet: echipa vorbește peste el, în sală. Durată: ${clock(total)} (${total.toFixed(1)} s). Rulare cu \`${RUN.provider}\`, ${RUN.aiCalls.length} apeluri AI.${RUN.provider === "mock" ? " **Critica și scanarea din film sunt simulate (mock); pe ecran scrie „Analiză simulată”.**" : ""}

@@ -28,10 +28,14 @@ const BIRD_SPEED = 0.35;
 /** `DEMO_VARIANT=viteza-reala`: extensia la viteza ei, cu pauze în care se văd animațiile uliului; rezultatul stă în fișiere separate. */
 const REAL_SPEED = process.env.DEMO_VARIANT === "viteza-reala";
 const STOP_HOLD_MS = REAL_SPEED ? 1800 : 450;
+/** `DEMO_SCALE=1.25`: pagina e randată mai mare de browser, nu mărită la montaj. Video-ul rămâne 1920×1080. */
+const SCALE = Number(process.env.DEMO_SCALE) || 1;
+const VIEW = { width: Math.round(1920 / SCALE), height: Math.round(1080 / SCALE) };
 
 const ROOT = process.cwd();
 const RAW = join(ROOT, "test-results-demo");
-const RUN_JSON = join(ROOT, REAL_SPEED ? "docs/demo/demo-run-viteza-reala.json" : "docs/demo/demo-run.json");
+// `DEMO_OUT_DIR`: probele stau în afara repo-ului și nu ating filmul din deck.
+const RUN_JSON = process.env.DEMO_OUT_DIR ? join(process.env.DEMO_OUT_DIR, "demo-run.json") : join(ROOT, REAL_SPEED ? "docs/demo/demo-run-viteza-reala.json" : "docs/demo/demo-run.json");
 const FORBIDDEN_ALWAYS = /AI indisponibil|Nu am putut|N-am reușit|Campania nu mai există|Nu primesc nimic|Afiș pregătit pentru demo|Scenariu simulat|Demo simulat/;
 const FORBIDDEN_REAL = /Analiză simulată|Rezultat simulat|Verificări locale/;
 
@@ -96,8 +100,8 @@ async function launch(dirs: string[]): Promise<{ context: BrowserContext; sw: Wo
   const context = await chromium.launchPersistentContext(profile, {
     channel: "chromium",
     headless: false,
-    viewport: { width: 1920, height: 1080 },
-    deviceScaleFactor: 1,
+    viewport: VIEW,
+    deviceScaleFactor: SCALE,
     acceptDownloads: true,
     recordVideo: { dir: RAW, size: { width: 1920, height: 1080 } },
     args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`, "--disable-features=Translate,LocalNetworkAccessChecks", "--autoplay-policy=no-user-gesture-required", "--hide-crash-restore-bubble"],
@@ -344,7 +348,7 @@ test("filmarea video-ului demo", async () => {
     await pause(1200);
     const root = sitePage.locator("#spire-root");
     const siteBird = root.getByRole("button", { name: "Spire, deschide meniul" });
-    await mouse.hover({ x: 1180, y: 300, width: 30, height: 30 });
+    await mouse.hover({ x: VIEW.width * 0.61, y: VIEW.height * 0.28, width: 30, height: 30 });
     await scene(1, "site", async () => {
       await inject(sitePage, `${LIVE_SITE}/*`);
       const bird = await birdLanded(sitePage);
@@ -480,8 +484,7 @@ test("filmarea video-ului demo", async () => {
     await pause(400);
     await scene(6, "cautare", async () => {
       await demo(searchPage).wipe("in");
-      const vw = 1920;
-      await mouse.hover({ x: vw * 0.3, y: 500, width: 240, height: 220 });
+      await mouse.hover({ x: VIEW.width * 0.3, y: VIEW.height * 0.46, width: 240, height: 220 });
       const r = await rectOf(posterImg);
       await mouse.hover({ x: r.x - 90, y: r.y + r.height * 0.45, width: 60, height: 60 });
       await demo(searchPage).spotlight(r, 1700);
@@ -515,7 +518,7 @@ test("filmarea video-ului demo", async () => {
       const result = searchRoot.getByRole("img", { name: "Afișul rezultat" });
       await wait("captura selecției", () => result.waitFor({ state: "visible", timeout: 20_000 }));
       await pause(300);
-      await mouse.hover({ x: 1300, y: 900, width: 40, height: 40 });
+      await mouse.hover({ x: VIEW.width * 0.68, y: VIEW.height * 0.83, width: 40, height: 40 });
       const shown = await rectOf(result);
       await demo(searchPage).spotlight(shown, 1000);
       await mouse.idle(1000);

@@ -1,5 +1,5 @@
 {
-  "recordedAt": "2026-11-07T18:14:36.378Z",
+  "recordedAt": "2026-11-07T18:29:49.374Z",
   "provider": "mock",
   "realSpeed": true,
   "seed": 1107,
@@ -14,7 +14,8 @@
     "Extensia rulează la viteza ei, iar montajul nu accelerează nimic. Doar în copia filmării, uliul intră de pe marginea ecranului și pleacă după 250 ms, nu după 4–8 s.",
     "Fără zoom, la cererea echipei: accentul îl pun spotlight-ul și inelele.",
     "Întrebările de brief din balonul uliului sunt ascunse cu un stil pus de filmare în shadow root; logica lor rulează neschimbată.",
-    "Descărcarea clipului e încetinită la 5.0 MB/s din CDP, ca bara reală să se vadă."
+    "Descărcarea clipului e încetinită la 5.0 MB/s din CDP, ca bara reală să se vadă.",
+    "Pagina e randată de browser la scara 1,25 (fereastră 1536×864, deviceScaleFactor 1,25), fără zoom digital; video-ul rămâne 1920×1080."
   ],
   "skipped": [],
   "critique": [
@@ -62,27 +63,27 @@
   "tabs": [
     {
       "id": "deschidere",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@3567d372ff03a209ac1b5b313ea00dda.webm",
-      "durationMs": 173600,
-      "lastSceneEndMs": 29589
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@9ea65ad257b5c4430c670520cf9b43c8.webm",
+      "durationMs": 148040,
+      "lastSceneEndMs": 4253
     },
     {
       "id": "site",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@95e283811b91940ff1730bc8edb82260.webm",
-      "durationMs": 144360,
-      "lastSceneEndMs": 107411
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@e0aebe49ec2506f3828adc687cc347f2.webm",
+      "durationMs": 144400,
+      "lastSceneEndMs": 108555
     },
     {
       "id": "cautare",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@8f42801ad6c0b150acd088cacafabcb5.webm",
-      "durationMs": 36600,
-      "lastSceneEndMs": 20546
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@a8099dd27faea5bf55930ffd1772e759.webm",
+      "durationMs": 36160,
+      "lastSceneEndMs": 20774
     },
     {
       "id": "campanie",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@459b475a6df557037a757da132971a28.webm",
-      "durationMs": 15440,
-      "lastSceneEndMs": 15439
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@bd8e5e7d10db1e0fcffa10637741e0b9.webm",
+      "durationMs": 15760,
+      "lastSceneEndMs": 15759
     }
   ],
   "scenes": [
@@ -90,9 +91,9 @@
       "id": 0,
       "tab": "deschidere",
       "wipeIn": false,
-      "start": 26584,
-      "end": 29589,
-      "realMs": 3006,
+      "start": 1242,
+      "end": 4253,
+      "realMs": 3011,
       "marks": {},
       "waits": []
     },
@@ -100,9 +101,9 @@
       "id": 1,
       "tab": "site",
       "wipeIn": false,
-      "start": 8308,
-      "end": 13392,
-      "realMs": 5085,
+      "start": 8888,
+      "end": 14071,
+      "realMs": 5183,
       "marks": {},
       "waits": []
     },
@@ -110,15 +111,15 @@
       "id": 2,
       "tab": "site",
       "wipeIn": false,
-      "start": 13393,
-      "end": 40969,
-      "realMs": 27577,
+      "start": 14071,
+      "end": 41761,
+      "realMs": 27689,
       "marks": {},
       "waits": [
         {
           "label": "Spire analizează pagina",
-          "start": 13393,
-          "end": 19219
+          "start": 14071,
+          "end": 19901
         }
       ]
     },
@@ -126,11 +127,11 @@
       "id": 3,
       "tab": "site",
       "wipeIn": false,
-      "start": 40969,
-      "end": 49993,
-      "realMs": 9024,
+      "start": 41761,
+      "end": 51056,
+      "realMs": 9295,
       "marks": {
-        "ajustari": 43758
+        "ajustari": 44662
       },
       "waits": []
     },
@@ -138,20 +139,20 @@
       "id": 4,
       "tab": "site",
       "wipeIn": false,
-      "start": 50001,
-      "end": 58675,
-      "realMs": 8675,
+      "start": 51059,
+      "end": 59239,
+      "realMs": 8180,
       "marks": {},
       "waits": [
         {
           "label": "panoul Spire se încarcă",
-          "start": 51986,
-          "end": 52236
+          "start": 52877,
+          "end": 52973
         },
         {
           "label": "Spire citește pagina",
-          "start": 53887,
-          "end": 55678
+          "start": 54316,
+          "end": 56100
         }
       ]
     },
@@ -159,11 +160,11 @@
       "id": 5,
       "tab": "site",
       "wipeIn": false,
-      "start": 58675,
-      "end": 107411,
-      "realMs": 48736,
+      "start": 59239,
+      "end": 108555,
+      "realMs": 49316,
       "marks": {
-        "clip": 65076
+        "clip": 65976
       },
       "waits": []
     },
@@ -171,9 +172,9 @@
       "id": 6,
       "tab": "cautare",
       "wipeIn": true,
-      "start": 1620,
-      "end": 5511,
-      "realMs": 3892,
+      "start": 1561,
+      "end": 5289,
+      "realMs": 3728,
       "marks": {},
       "waits": []
     },
@@ -181,9 +182,9 @@
       "id": 7,
       "tab": "cautare",
       "wipeIn": false,
-      "start": 5511,
-      "end": 12626,
-      "realMs": 7114,
+      "start": 5289,
+      "end": 12880,
+      "realMs": 7591,
       "marks": {},
       "waits": []
     },
@@ -191,15 +192,15 @@
       "id": 8,
       "tab": "cautare",
       "wipeIn": false,
-      "start": 12626,
-      "end": 20546,
-      "realMs": 7920,
+      "start": 12880,
+      "end": 20774,
+      "realMs": 7894,
       "marks": {},
       "waits": [
         {
           "label": "captura selecției",
-          "start": 12626,
-          "end": 12967
+          "start": 12881,
+          "end": 13214
         }
       ]
     },
@@ -207,15 +208,15 @@
       "id": 9,
       "tab": "campanie",
       "wipeIn": false,
-      "start": 3405,
-      "end": 12430,
-      "realMs": 9025,
+      "start": 3603,
+      "end": 12746,
+      "realMs": 9144,
       "marks": {},
       "waits": [
         {
           "label": "pagina campaniei se încarcă",
-          "start": 4950,
-          "end": 5772
+          "start": 5240,
+          "end": 6228
         }
       ]
     },
@@ -223,9 +224,9 @@
       "id": 10,
       "tab": "campanie",
       "wipeIn": false,
-      "start": 12435,
-      "end": 15439,
-      "realMs": 3004,
+      "start": 12751,
+      "end": 15759,
+      "realMs": 3008,
       "marks": {},
       "waits": []
     }

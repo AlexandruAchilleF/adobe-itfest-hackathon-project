@@ -39,7 +39,7 @@
     #demo-director .split figure.left { transform: translateX(-560px); }
     #demo-director .split figure.right { transform: translateX(560px); }
     #demo-director .split.on figure { transform: none; opacity: 1; }
-    #demo-director .split img { display: block; height: 900px; border-radius: 14px; box-shadow: 0 24px 80px rgb(0 0 0 / .6); }
+    #demo-director .split img { display: block; height: min(900px, 84vh); border-radius: 14px; box-shadow: 0 24px 80px rgb(0 0 0 / .6); }
     @keyframes demo-ripple { from { transform: scale(.25); opacity: 1; } to { transform: scale(1); opacity: 0; } }
     @keyframes demo-ring { 0% { transform: scale(1.04); opacity: 0; } 35% { transform: scale(1); opacity: 1; } 70% { transform: scale(1.012); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
   `;
