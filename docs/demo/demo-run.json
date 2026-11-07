@@ -1,11 +1,11 @@
 {
-  "recordedAt": "2026-11-07T17:49:22.664Z",
+  "recordedAt": "2026-11-07T18:00:47.539Z",
   "provider": "mock",
   "seed": 1107,
   "clip": {
     "src": "/samples/spire/demo-videos/marina-park.mp4",
-    "from": 28,
-    "ms": 6000
+    "from": 20,
+    "ms": 20000
   },
   "brandNote": "Marca Marina Park a fost dată doar browserului filmării (context.route pe citirea spire:marca); în baza comună prima marcă era alta. Baza nu a fost atinsă.",
   "filmNotes": [
@@ -29,7 +29,7 @@
     },
     {
       "level": "De îmbunătățit",
-      "title": "„Benven” nu e marcat ca titlu",
+      "title": "„Benvenu” nu e marcat ca titlu",
       "body": "Textul arată ca un titlu, dar nu este marcat ca atare în structura paginii."
     },
     {
@@ -61,27 +61,27 @@
   "tabs": [
     {
       "id": "deschidere",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@6468c381b48a8ba14029b20b5aa2eb1e.webm",
-      "durationMs": 126320,
-      "lastSceneEndMs": 34454
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@84c3f1caf27c8ef341b77ce573b6012a.webm",
+      "durationMs": 110680,
+      "lastSceneEndMs": 3743
     },
     {
       "id": "site",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@f9b404cce789fbd926304a2ac3f67d12.webm",
-      "durationMs": 92560,
-      "lastSceneEndMs": 58352
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@be64e61a91027eda227898e9cecb3980.webm",
+      "durationMs": 108280,
+      "lastSceneEndMs": 74807
     },
     {
       "id": "cautare",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@3a3a38303b5767ae4ee556506145f234.webm",
-      "durationMs": 34520,
-      "lastSceneEndMs": 19693
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@607cbe794bb5e9b9e7714ca3d79ccb62.webm",
+      "durationMs": 33880,
+      "lastSceneEndMs": 18985
     },
     {
       "id": "campanie",
-      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@a079f47bb467d7aa392d74e6b80d04e3.webm",
-      "durationMs": 15120,
-      "lastSceneEndMs": 15120
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@b2730257df3749a74aa41ec6b76dc971.webm",
+      "durationMs": 15440,
+      "lastSceneEndMs": 15439
     }
   ],
   "scenes": [
@@ -89,8 +89,8 @@
       "id": 0,
       "tab": "deschidere",
       "wipeIn": false,
-      "start": 31448,
-      "end": 34454,
+      "start": 738,
+      "end": 3743,
       "realMs": 3006,
       "marks": {},
       "waits": []
@@ -99,9 +99,9 @@
       "id": 1,
       "tab": "site",
       "wipeIn": false,
-      "start": 8453,
-      "end": 12169,
-      "realMs": 3716,
+      "start": 9540,
+      "end": 13340,
+      "realMs": 3800,
       "marks": {},
       "waits": []
     },
@@ -109,15 +109,15 @@
       "id": 2,
       "tab": "site",
       "wipeIn": false,
-      "start": 12169,
-      "end": 26407,
-      "realMs": 14238,
+      "start": 13340,
+      "end": 28183,
+      "realMs": 14842,
       "marks": {},
       "waits": [
         {
           "label": "Spire analizează pagina",
-          "start": 12170,
-          "end": 14981
+          "start": 13341,
+          "end": 16651
         }
       ]
     },
@@ -125,11 +125,11 @@
       "id": 3,
       "tab": "site",
       "wipeIn": false,
-      "start": 26407,
-      "end": 35319,
-      "realMs": 8912,
+      "start": 28183,
+      "end": 37141,
+      "realMs": 8958,
       "marks": {
-        "ajustari": 29226
+        "ajustari": 31004
       },
       "waits": []
     },
@@ -137,20 +137,20 @@
       "id": 4,
       "tab": "site",
       "wipeIn": false,
-      "start": 35322,
-      "end": 44601,
-      "realMs": 9280,
+      "start": 37153,
+      "end": 46474,
+      "realMs": 9321,
       "marks": {},
       "waits": [
         {
           "label": "panoul Spire se încarcă",
-          "start": 37728,
-          "end": 37788
+          "start": 39700,
+          "end": 39778
         },
         {
           "label": "Spire citește pagina",
-          "start": 39665,
-          "end": 41576
+          "start": 41660,
+          "end": 43446
         }
       ]
     },
@@ -158,11 +158,11 @@
       "id": 5,
       "tab": "site",
       "wipeIn": false,
-      "start": 44601,
-      "end": 58352,
-      "realMs": 13751,
+      "start": 46474,
+      "end": 74807,
+      "realMs": 28333,
       "marks": {
-        "clip": 49983
+        "clip": 52302
       },
       "waits": []
     },
@@ -170,9 +170,9 @@
       "id": 6,
       "tab": "cautare",
       "wipeIn": true,
-      "start": 1612,
-      "end": 5509,
-      "realMs": 3897,
+      "start": 1552,
+      "end": 5503,
+      "realMs": 3951,
       "marks": {},
       "waits": []
     },
@@ -180,9 +180,9 @@
       "id": 7,
       "tab": "cautare",
       "wipeIn": false,
-      "start": 5510,
-      "end": 11236,
-      "realMs": 5727,
+      "start": 5503,
+      "end": 11227,
+      "realMs": 5723,
       "marks": {},
       "waits": []
     },
@@ -190,15 +190,15 @@
       "id": 8,
       "tab": "cautare",
       "wipeIn": false,
-      "start": 11236,
-      "end": 19693,
-      "realMs": 8457,
+      "start": 11227,
+      "end": 18985,
+      "realMs": 7759,
       "marks": {},
       "waits": [
         {
           "label": "captura selecției",
-          "start": 11237,
-          "end": 12043
+          "start": 11227,
+          "end": 11414
         }
       ]
     },
@@ -206,15 +206,15 @@
       "id": 9,
       "tab": "campanie",
       "wipeIn": false,
-      "start": 3236,
-      "end": 12111,
-      "realMs": 8875,
+      "start": 3543,
+      "end": 12433,
+      "realMs": 8890,
       "marks": {},
       "waits": [
         {
           "label": "pagina campaniei se încarcă",
-          "start": 4784,
-          "end": 5578
+          "start": 5086,
+          "end": 5891
         }
       ]
     },
@@ -222,8 +222,8 @@
       "id": 10,
       "tab": "campanie",
       "wipeIn": false,
-      "start": 12116,
-      "end": 15120,
+      "start": 12435,
+      "end": 15439,
       "realMs": 3004,
       "marks": {},
       "waits": []

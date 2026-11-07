@@ -1,6 +1,6 @@
 # Video-ul demo: Marina Park, filmat cu Playwright
 
-Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 1:22, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 1:22 în loc de 1:20. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
+Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 1:36, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 1:36 în loc de 1:20, fiindcă echipa a păstrat 20 s din clip. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
 
 ## Povestea, într-o frază
 
@@ -12,7 +12,7 @@ Drumul: **site → critică → aplicarea ajustărilor → scanare → video din
 
 ## Formatul
 
-**Un singur video, 1:22**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
+**Un singur video, 1:36**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
 
 ## Regulile filmării
 

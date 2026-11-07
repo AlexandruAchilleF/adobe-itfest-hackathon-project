@@ -17,8 +17,8 @@ const LIVE_SITE = "https://www.marinapark.ro";
 const OPENING_PHOTO = `${LIVE_SITE}/wp-content/uploads/2022/01/IMG_20210501_222151-scaled.jpg`;
 const PUBLIC_ADDRESS = "adobe-itfest-hackathon-project.vercel.app";
 const CLIP = `${APP}/samples/spire/demo-videos/marina-park.mp4`;
-const CLIP_FROM = 28; // „Cald. Vama.”, apoi numele Marina Park
-const CLIP_MS = 6000;
+const CLIP_FROM = 20; // ultimele 20 s din 40: foișorul, hamacele, marea și numele Marina Park la final
+const CLIP_MS = 20_000;
 const POSTER = `${APP}/samples/spire/demo-videos/afis-marina-park.png`;
 const REFERENCE = `${APP}/samples/spire/marina-park/referinta-camping.png`;
 /** Descărcarea clipului durează câteva milisecunde pe localhost; rețeaua încetinită face bara reală vizibilă. */
@@ -604,6 +604,7 @@ test("filmarea video-ului demo", async () => {
           clip: { src: CLIP.replace(APP, ""), from: CLIP_FROM, ms: CLIP_MS },
           brandNote: "Marca Marina Park a fost dată doar browserului filmării (context.route pe citirea spire:marca); în baza comună prima marcă era alta. Baza nu a fost atinsă.",
           filmNotes: [
+            ...(real ? [] : ["Filmat cu mock, la cererea echipei: Gemini a fost supraîncărcat pe 7 noiembrie (3 încercări, 502; gemini-3.8-flash n-a răspuns în 40 s, gemini-3.5-flash a dat 503). Critica și scanarea sunt simulate, iar pe ecran scrie „Analiză simulată”."]),
             `Copia extensiei are zborul uliului la ×${(1 / BIRD_SPEED).toFixed(2)} (__spireTestSpeed = ${BIRD_SPEED}) și intrarea de pe marginea ecranului. Nu e accelerare de montaj.`,
             "Fără zoom, la cererea echipei: accentul îl pun spotlight-ul și inelele.",
             "Întrebările de brief din balonul uliului sunt ascunse cu un stil pus de filmare în shadow root; logica lor rulează neschimbată.",
