@@ -7,7 +7,7 @@ import { ProviderError } from "./providers/types.js";
 
 const MAX_BODY_BYTES = 4 * 1024 * 1024; // Vercel acceptă max ~4.5 MB pe request
 
-export const imageModel = (): string => process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+export const imageModel = (): string => process.env.GEMINI_IMAGE_MODEL || "gemini-nano-banana-2.1";
 
 interface ImageRequest {
   style?: AiAttachment;
