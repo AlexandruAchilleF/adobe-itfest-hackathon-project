@@ -26,7 +26,7 @@ Ce rezultă de aici:
 
 ## Formatul prezentării (de la organizatori, 7 noiembrie)
 
-Organizatorii recomandă un **videoclip de prezentare**, de **circa 3 minute** (durata nu e fixată), în care se vorbește **mult despre arhitectură și partea tehnică**, ca să se vadă că echipa a înțeles ce a construit. Textul și programul: `docs/PITCH.md`.
+**2 minute de pitch live**, apoi **1 minut de video demo**. Organizatorii cer să se vorbească **mult despre arhitectură și partea tehnică**, ca să se vadă că echipa a înțeles ce a construit. Textul și programul: `docs/PITCH.md`.
 
 Ponderile de mai sus nu s-au schimbat. Se schimbă cum le apărăm: un video îngrijit nu ține loc de Technical Excellence, iar arhitectura e aproape jumătate din timp.
 
@@ -47,7 +47,7 @@ Numerele 1–7 rămân aceleași ca înainte (codul le citează după număr); 8
 | 3 | **Costul și plătitorul** | Cât costă o rulare și cât aduce? Cine plătește? | codul calculează costul (AI, SMS, API-uri) și valoarea (vânzări, ore economisite) din cifre reale, iar plătitorul plătește deja pentru problemă |
 | 4 | **Diferența** | Fără AI, mai există produsul? Și ce face în plus față de un prompt în ChatGPT? | AI-ul analizează, decide sau creează partea centrală, **și** codul adaugă ce un chat nu are: date proprii sau live, protecția mărcii verificată de cod, o acțiune în lumea reală, mai mulți oameni conectați, aprobarea omului |
 | 5 | **Bucla** | Se închide bucla în lumea reală? | materialul ajunge la un client real și rezultatul se întoarce în aplicație (confirmat, măsurat), cu o cale pentru „n-a mers” |
-| 6 | **Demo-ul** | Se vede în circa 3 minute de video, pe un singur drum, intuitiv? | momentul wow apare în primul minut, montajul nu arată ce nu există (accelerarea are etichetă) și juriul poate încerca singur (QR, telefon) |
+| 6 | **Demo-ul** | Se vede în video-ul de 1 minut, pe un singur drum, intuitiv? | momentul wow apare în primul minut, montajul nu arată ce nu există (accelerarea are etichetă) și juriul poate încerca singur (QR, telefon) |
 | 7 | **Brief-ul** | E marketing „reimagined”, „next generation”? | fiecare cerință din `docs/BRIEF.md` are o bifă și un moment în demo |
 | 8 | **Integrările** | Ce API-uri și servicii externe folosim, și ce ar pierde produsul fără fiecare? | fiecare integrare din demo schimbă rezultatul (Adobe Express, PDF Embed, AI, date live, SMS/email) și are o cale de rezervă dacă pică |
 | 9 | **Fiabilitatea** | Arhitectura ține? Merge și când AI-ul, rețeaua sau o cheie pică? Și se vede în video că am înțeles-o? | logică pură testată, AI cu schemă validată și mock, verificări deterministe lângă AI, `npm run check` verde, oricine din echipă explică orice fișier, iar video-ul spune decizii și motivele lor, nu o listă de tehnologii |

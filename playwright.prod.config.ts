@@ -9,7 +9,7 @@ const off = /localhost/.test(baseURL) ? "Translate,LocalNetworkAccessChecks" : "
 
 export default defineConfig({
   testDir: "e2e",
-  testMatch: ["productie.spec.ts"],
+  testMatch: ["productie.spec.ts", "integrare.spec.ts"],
   timeout: 180_000,
   workers: 1,
   reporter: [["list"]],

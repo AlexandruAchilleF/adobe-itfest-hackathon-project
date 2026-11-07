@@ -2,7 +2,7 @@
 
 Spire, proiectul nostru de la hackathon (12 ore, juriu Adobe): Vite + React 19 + TypeScript + Tailwind v4, funcții serverless în `api/` (Vercel).
 UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`. Spec: `docs/superpowers/specs/2026-11-07-spire-stil-pe-marca-design.md`. Demo și pitch: `docs/DEMO.md`, `docs/PITCH.md`. Înainte de pitch, `/juriu`.
-Prezentarea (de la organizatori): se recomandă un video de circa 3 minute, durata nu e fixată, cu mult accent pe arhitectură și partea tehnică, ca să se vadă că echipa a înțeles ce a construit. Textul și programul: `docs/PITCH.md`.
+Prezentarea: 2 minute de pitch live (hook cu sala, business, arhitectură), apoi 1 minut de video demo. Organizatorii cer mult accent pe arhitectură și partea tehnică, ca să se vadă că echipa a înțeles ce a construit. Textul, deck-ul și video-ul: `docs/PITCH.md`.
 
 ## Înainte de orice schimbare
 - Citește `docs/BRIEF.md`: brief-ul Adobe, ideea aleasă, cerințele și deciziile. Codul servește fraza de acolo și bifează cerințele din tabel.
