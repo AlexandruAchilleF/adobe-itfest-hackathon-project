@@ -269,6 +269,7 @@
 }
 
 /* Strâns: ascuns, dar încărcat (visibility nu descarcă iframe-ul și nu se lovește la clic). */
+.spire-panel[hidden] {display:none}
 .spire-panel.spire-panel-collapsed {
   visibility: hidden;
 }
@@ -366,16 +367,16 @@
 .spire-menu,.spire-bubble {position:fixed;pointer-events:auto;z-index:4;background:#fff;border:1px solid #e3e5ea;border-radius:16px;padding:16px;box-shadow:0 8px 28px #1f2a4420;font:14px/1.45 Geist,system-ui,sans-serif;color:#1f2a44}
 .spire-menu {width:220px;display:grid;gap:8px}
 .spire-bubble {width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}
-.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}
+.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}\n.spire-bubble [hidden] {display:none!important}
 .spire-menu button,.spire-bubble button {border:1px solid #e3e5ea;border-radius:9px;background:#fff;color:#1f2a44;padding:8px 10px;cursor:pointer;font:500 13px/1.3 Geist,system-ui,sans-serif}
 .spire-menu .spire-primary,.spire-bubble .spire-primary {background:#F25C3B;color:white;border-color:#F25C3B}
+.spire-question {display:grid;gap:5px;margin-top:12px}.spire-question input {width:100%;padding:8px;border:1px solid #e3e5ea;border-radius:8px;font:14px Geist,system-ui,sans-serif}.spire-options {display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.spire-bubble ul {padding-left:18px}
 .spire-bubble h2 {font:600 17px/1.3 Geist,system-ui,sans-serif;margin:8px 0}
 .spire-bubble p {margin:8px 0;overflow-wrap:anywhere}
 .spire-level {font-weight:500}
 .spire-level:before {content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#b08834;margin-right:8px}
 .spire-level[data-level="important"]:before {background:#F25C3B}
 .spire-level[data-level="marunt"]:before {background:#8b94a6}
-.spire-note {margin:0;max-width:210px;font-size:12px;line-height:1.35;color:#5f6775}
 .spire-row {display:flex;gap:8px;align-items:center;margin-top:12px}
 .spire-row span {flex:1}
 .spire-crit-outline {position:fixed;border:2px solid #F25C3B;border-radius:6px;background:#F25C3B0A;pointer-events:none}
@@ -446,13 +447,21 @@
   panel.appendChild(iframe);
 
   // Panoul și iframe-ul se atașează doar la alegerea campaniei.
-  function openCampaign() {
-    stopCritique();
+  var appReady = false, campaignOpened = false;
+  var latestCritique = null;
+  function ensureApp(forCritique) {
     if (!panel.isConnected) {
-      iframe.src = config.APP_URL + "/nou?din=extensie";
+      panel.hidden = true;
+      iframe.src = config.APP_URL + "/nou?din=extensie&hostOrigin=" + encodeURIComponent(location.origin) + (forCritique ? "&critique=1" : "");
       shadow.appendChild(panel);
     }
+  }
+  function openCampaign() {
+    stopCritique();
+    campaignOpened = true;
+    ensureApp(); panel.hidden = false;
     setCollapsed(false);
+    if (appReady) sendBrief();
   }
 
   var tab = document.createElement("button");
@@ -601,7 +610,7 @@
   function scheduleRoam() {
     clearTimeout(roamTimer);
     roamTimer=setTimeout(async function () {
-      if (mode === "roam" && menu.hidden && bubble.hidden && host.style.display !== "none" && !panel.isConnected) {
+      if (mode === "roam" && menu.hidden && bubble.hidden && host.style.display !== "none" && (!panel.isConnected || panel.hidden)) {
         var targets=[], walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT), n, count=0;
         while ((n=walker.nextNode()) && count++<500) {
           if(n===host || host.contains(n)) continue;
@@ -612,7 +621,7 @@
         var target=targets[Math.floor(Math.random()*targets.length)];
         var token=run;
         await takeoff();
-        if(token===run && mode==="roam" && menu.hidden && bubble.hidden && host.style.display!=="none" && !panel.isConnected) {
+        if(token===run && mode==="roam" && menu.hidden && bubble.hidden && host.style.display!=="none" && (!panel.isConnected || panel.hidden)) {
           if(await fly(target?perchOn(target):{x:80+Math.random()*(innerWidth-160),y:120+Math.random()*(innerHeight-180)},1800,.2)) await land();
         }
       }
@@ -665,10 +674,10 @@
       if(!text && !fake && tag!=="img" && role!=="img" && role!=="button" && role!=="link") continue;
       var id="crit-"+elements.length; critiqueElements.set(id,current);
       var size=parseFloat(cs.fontSize), weight=parseInt(cs.fontWeight,10)||400;
-      elements.push({id:id,tag:tag,role:role,text:text,accessibleName:name,fontSizePx:size,fontWeight:weight,color:cs.color,background:effectiveBackground(current),
+      elements.push({id:id,tag:tag.slice(0,50),role:role.slice(0,100),text:text,accessibleName:name,fontSizePx:size,fontWeight:weight,color:cs.color,background:effectiveBackground(current),
         box:{x:r.left,y:r.top,w:r.width,h:r.height},inFirstScreen:r.bottom>0 && r.right>0 && r.top<innerHeight && r.left<innerWidth,
-        isLink:role==="link",href:tag==="a"?current.href:null,isButtonLike:fake,isImage:tag==="img" || role==="img",
-        alt:current.getAttribute("alt"),isHeadingLike:!/^h[1-6]$/.test(tag) && role!=="heading" && (size>=20 || (size>=18 && weight>=700))});
+        isLink:role==="link",href:tag==="a"?current.href.slice(0,2000):null,isButtonLike:fake,isImage:tag==="img" || role==="img",
+        alt:current.getAttribute("alt")===null?null:current.getAttribute("alt").slice(0,1000),isHeadingLike:!/^h[1-6]$/.test(tag) && role!=="heading" && (size>=20 || (size>=18 && weight>=700))});
     }
     var types=[];
     function jsonTypes(value,depth) {
@@ -682,7 +691,7 @@
     });
     bird.dataset.analyzed=String(elements.length);
     var meta=document.querySelector('meta[name="description"]');
-    return {page:{url:location.href,title:document.title,lang:document.documentElement.lang,metaDescription:meta?meta.content:"",jsonLdTypes:types,h1Count:h1,imagesWithoutAlt:missing},elements:elements};
+    return {page:{url:location.href,title:document.title.slice(0,300),lang:document.documentElement.lang.slice(0,100),metaDescription:meta?meta.content.slice(0,2000):"",jsonLdTypes:types.slice(0,100).map(function(t){return t.slice(0,100);}),h1Count:h1,imagesWithoutAlt:missing},elements:elements};
   }
   var outline=document.createElement("div"); outline.className="spire-crit-outline"; outline.hidden=true; boxes.appendChild(outline);
   var outlined=null;
@@ -694,6 +703,7 @@
   window.addEventListener("scroll",updateOutline,true);
   window.addEventListener("resize",function(){updateOutline();pos=clampPoint(pos);place(pos.x,pos.y);});
   function stopCritique() {
+    cancelAiCritique();
     tour++; run++; mode="roam"; outlined=null; outline.hidden=true; bubble.hidden=true;
     if(resumeBubble) resumeBubble();
     wings("perched");
@@ -701,19 +711,173 @@
   function line(parent, tag, text, cls) {
     var el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;parent.appendChild(el);return el;
   }
+  // Răspunsurile aparțin extensiei, separat pentru fiecare origine a site-ului.
+  var memoryKey = "spire:brief:" + location.origin;
+  var briefAnswers = {}, answerInputs = {}, memoryVersion = 0;
+  var memoryError = "";
+  var memoryReady = readMemory();
+  function cleanAnswers(value) {
+    var out = {};
+    ["product", "audience", "goal", "cta"].forEach(function (key) {
+      if (value && typeof value[key] === "string" && value[key].length <= 500) out[key] = value[key];
+    });
+    return out;
+  }
+  async function readMemory() {
+    var version = memoryVersion;
+    try {
+      var stored = await chrome.storage.local.get(memoryKey);
+      if (version === memoryVersion) briefAnswers = cleanAnswers(stored[memoryKey]);
+    } catch (_) { memoryError = "Nu pot citi răspunsurile păstrate."; }
+  }
+  function currentAnswers() {
+    Object.keys(answerInputs).forEach(function (key) { briefAnswers[key] = answerInputs[key].value.slice(0, 500); });
+    return cleanAnswers(briefAnswers);
+  }
+  function sendBrief() {
+    if (!campaignOpened || !appReady || !iframe.contentWindow || !/^https?:$/.test(location.protocol)) return;
+    iframe.contentWindow.postMessage({ type: "spire:brief", brief: {
+      source: { url: location.href, title: document.title.slice(0, 300) }, answers: currentAnswers(), critique: latestCritique || undefined
+    } }, config.APP_ORIGIN);
+  }
+  async function showBrief(crits, title) {
+    await memoryReady;
+    if (bubble.hidden || bubble.dataset.summary !== "true") return;
+    var proposals = globalThis.SpireCritique.modificationSuggestions(crits);
+    if (proposals.length) {
+      var changes = document.createElement("details");
+      line(changes, "summary", "Aș modifica…");
+      var list = document.createElement("ul");
+      proposals.forEach(function (text) { line(list, "li", text); }); changes.appendChild(list); bubble.appendChild(changes);
+    }
+    line(bubble, "h2", "Pentru campania ta");
+    var questions = globalThis.SpireCritique.briefQuestions(crits.map(function (c) { return c.evidence && ["primary-action", "navigation"].includes(c.evidence.category) ? "link-vag" : c.ruleId; }), title);
+    var questionIndex = 0;
+    var conversation = document.createElement("div"); bubble.appendChild(conversation);
+    var finalActions = document.createElement("div");
+    function revealAnswer(target) {
+      positionPopup(bubble);
+      bubble.scrollTop += Math.max(0, target.getBoundingClientRect().bottom - bubble.getBoundingClientRect().bottom + 16);
+    }
+    function renderQuestion() {
+      conversation.replaceChildren(); answerInputs = {};
+      questions.slice(0, questionIndex).forEach(function (q) {
+        var answer = line(conversation, "p", "", "spire-answer");
+        line(answer, "strong", q.text + " "); line(answer, "span", briefAnswers[q.id] || "");
+      });
+      finalActions.hidden = questionIndex < questions.length;
+      if (questionIndex >= questions.length) { revealAnswer(finalActions); return; }
+      var q = questions[questionIndex];
+      line(conversation, "p", "Întrebarea " + (questionIndex + 1) + " din " + questions.length);
+      var label = document.createElement("label"); label.className = "spire-question";
+      line(label, "span", q.text);
+      var input = document.createElement("input"); input.type = "text"; input.maxLength = 500;
+      input.value = briefAnswers[q.id] || ""; input.setAttribute("aria-label", q.text);
+      answerInputs[q.id] = input; label.appendChild(input); conversation.appendChild(label);
+      function advance() {
+        if (!input.value.trim()) return;
+        memoryVersion++; briefAnswers[q.id] = input.value.trim(); questionIndex++; renderQuestion();
+      }
+      if (q.options.length) {
+        var options = document.createElement("div"); options.className = "spire-options";
+        q.options.forEach(function (option) { button(options, option, function () { input.value = option; advance(); }); });
+        conversation.appendChild(options);
+      }
+      var next = button(conversation, "Continuă", advance, true);
+      next.disabled = !input.value.trim();
+      input.addEventListener("input", function () { memoryVersion++; briefAnswers[q.id] = input.value; next.disabled = !input.value.trim(); });
+      input.addEventListener("keydown", function (event) { if (event.key === "Enter") { event.preventDefault(); advance(); } });
+      input.focus({ preventScroll: true }); revealAnswer(conversation);
+    }
+    var note = line(bubble, "p", memoryError); note.setAttribute("role", "status");
+    button(finalActions, "Păstrează răspunsurile", async function () {
+      var answers = currentAnswers();
+      try { await chrome.storage.local.set({ [memoryKey]: answers }); note.textContent = "Răspunsuri păstrate."; }
+      catch (_) { note.textContent = "Nu am putut păstra răspunsurile. Încearcă din nou."; }
+    });
+    button(bubble, "Uită răspunsurile", async function () {
+      try {
+        await chrome.storage.local.remove(memoryKey); memoryVersion++; briefAnswers = {};
+        questionIndex = 0; renderQuestion();
+        note.textContent = "Răspunsuri uitate.";
+      } catch (_) { note.textContent = "Nu am putut uita răspunsurile. Încearcă din nou."; }
+    });
+    button(finalActions, "Modifică răspunsurile", function () { questionIndex = 0; renderQuestion(); });
+    button(finalActions, "Continuă cu o campanie", function () { currentAnswers(); openCampaign(); }, true);
+    bubble.appendChild(finalActions); renderQuestion();
+    positionPopup(bubble);
+  }
+  var critiqueProvenance = "";
+  var activeAiCritique = null;
+  function cancelAiCritique() {
+    if (!activeAiCritique) return;
+    clearTimeout(activeAiCritique.timer); clearTimeout(activeAiCritique.readyTimer);
+    activeAiCritique.resolve({ cancelled: true }); activeAiCritique = null;
+  }
+  var aiCapturing = false;
+  async function critiqueScreenshot() {
+    if (aiCapturing) return undefined;
+    aiCapturing = true;
+    try {
+      setLayerHidden(true); await twoFrames();
+      var src = await captureTab();
+      setLayerHidden(false);
+      var image = await loadImage(src), canvas = document.createElement("canvas");
+      var ratio = Math.min(1, 960 / Math.max(image.naturalWidth, image.naturalHeight));
+      canvas.width = Math.round(image.naturalWidth * ratio); canvas.height = Math.round(image.naturalHeight * ratio);
+      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      var jpeg = canvas.toDataURL("image/jpeg", .75);
+      return jpeg.length <= 2000000 ? jpeg : undefined;
+    } catch (_) { return undefined; }
+    finally { aiCapturing = false; setLayerHidden(false); }
+  }
+  function requestAiCritique(facts, token) {
+    return new Promise(function (resolve) {
+      var request = { requestId: "crit-" + Date.now() + "-" + token, resolve: resolve, sent: false };
+      activeAiCritique = request;
+      request.timer = setTimeout(function () { finish({ error: true }); }, 50000 * (globalThis.__spireTestAiTimeoutScale || 1));
+      function finish(value) {
+        if (activeAiCritique !== request) return;
+        clearTimeout(request.timer); clearTimeout(request.readyTimer); activeAiCritique = null; value.screenshot = request.screenshot; resolve(value);
+      }
+      request.finish = finish;
+      request.input = { page: facts.page, elements: facts.elements, viewport: { w: innerWidth, h: innerHeight } };
+      request.send = function () {
+        if (activeAiCritique !== request || request.sent || !appReady || !request.captureDone) return;
+        request.sent = true; clearTimeout(request.readyTimer);
+        iframe.contentWindow.postMessage({ type: "spire:critique-request", requestId: request.requestId, input: request.input }, config.APP_ORIGIN);
+      };
+      ensureApp(true);
+      request.readyTimer = setTimeout(function () { if (!appReady) finish({ error: true }); }, 8000 * (globalThis.__spireTestAiTimeoutScale || 1));
+      void critiqueScreenshot().then(function (image) {
+        if (image) request.input.screenshot = image;
+        request.screenshot = image;
+        request.captureDone = true; request.send();
+      });
+      request.send();
+    });
+  }
+  function validAiResult(result) {
+    if (!result || !["ai", "mock"].includes(result.mode) || !Array.isArray(result.critiques) || result.critiques.length > 5) return false;
+    return result.critiques.every(function (c) {
+      return c && typeof c.ruleId === "string" &&
+        ["important", "de-imbunatatit", "marunt"].includes(c.level) &&
+        (c.elementId === null || critiqueElements.has(c.elementId)) &&
+        ["title", "body", "fix"].every(function (key) { return typeof c[key] === "string" && c[key].length <= 600; });
+    });
+  }
   function showBubble(c,index,total,summary) {
     bubble.replaceChildren(); bubble.hidden=false;
     if(summary) {
-      bubble.dataset.summary="true";line(bubble,"h2","Am terminat");line(bubble,"p",summary);positionPopup(bubble);
+      bubble.dataset.summary="true";line(bubble,"div",critiqueProvenance,"spire-provenance");line(bubble,"h2","Am terminat");line(bubble,"p",summary);positionPopup(bubble);
       return Promise.resolve();
     }
     delete bubble.dataset.summary;
+    line(bubble,"div",critiqueProvenance,"spire-provenance");
     var labels={"important":"Important","de-imbunatatit":"De îmbunătățit","marunt":"Mărunt"};
-    var origin=c.ruleId!=="parere-ai"?"":c.evidence.sursa==="demo"?" · exemplu demo":" · părere AI";
-    var level=line(bubble,"div",labels[c.level]+origin,"spire-level");
+    var level=line(bubble,"div",labels[c.level],"spire-level");
     level.dataset.level=c.level;
-    // Regulile au balonul scurt; la părerea AI, explicația e chiar observația.
-    line(bubble,"h2",c.title);if(c.ruleId==="parere-ai")line(bubble,"p",c.body);line(bubble,"p",c.fix);
+    line(bubble,"h2",c.title);line(bubble,"p",c.body);
     var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);line(row,"span",(index+1)+" din "+total);
     return new Promise(function(resolve){
       var done=false;
@@ -722,43 +886,29 @@
       var timer=setTimeout(next,8000*speed);resumeBubble=next;positionPopup(bubble);
     });
   }
-  // Câte așteptăm observațiile AI înainte să pornim turul; dacă vin mai târziu, intră din mers.
-  var AI_HEAD_START_MS = 6000, AI_GIVE_UP_MS = 30000;
-  // Lista de critici verificate; null dacă AI-ul n-a putut răspunde. Nu eșuează niciodată.
-  async function askCritiqueAi(facts, crits) {
-    try {
-      setLayerHidden(true);
-      await Promise.race([twoFrames(), wait(300)]);
-      var image=await captureTab();
-      setLayerHidden(false);
-      var request=globalThis.SpireCritique.critiqueAiRequest(facts,crits);
-      var reply=await Promise.race([chrome.runtime.sendMessage({type:"critique-ai",request:request,image:image}),new Promise(function(r){setTimeout(r,AI_GIVE_UP_MS);})]);
-      if(!reply || reply.ok!==true) return null;
-      var found=globalThis.SpireCritique.acceptAiCritiques(reply.data,facts);
-      if(reply.model==="mock") found.forEach(function(c){c.evidence.sursa="demo";});
-      return found;
-    } catch (_) {
-      setLayerHidden(false);
-      return null;
-    }
-  }
   async function critique() {
     stopCritique();mode="crit";var id=tour;pose("searching");await wait(1200);
     if(id!==tour)return;
-    var facts=readFacts(), crits=globalThis.SpireCritique.critiquePage(facts.page,facts.elements,{w:innerWidth,h:innerHeight});
-    // Observațiile despre pagină vin după parcurgerea elementelor.
-    crits=crits.filter(function(c){return c.elementId!==null;}).concat(crits.filter(function(c){return c.elementId===null;}));
-    // Regulile sunt gata; AI-ul răspunde când poate. `next` e prima critică încă neînceput.
-    var next=0, aiSettled=false, aiFailed=false;
-    var ai=askCritiqueAi(facts,crits).then(function(found){
-      aiSettled=true;aiFailed=found===null;
-      if(id===tour && found) crits=globalThis.SpireCritique.mergeAiCritiques(crits,found,next);
-    });
-    pose("thinking");await Promise.race([ai,wait(AI_HEAD_START_MS)]);
-    while(next<crits.length || !aiSettled) {
+    var facts=readFacts();
+    bubble.replaceChildren(); bubble.hidden=false; line(bubble,"p","Analizez pagina…"); button(bubble,"Oprește",stopCritique); positionPopup(bubble);
+    var result=await requestAiCritique(facts,id);
+    if(id!==tour || result.cancelled)return;
+    var crits;
+    if(result.error) {
+      critiqueProvenance="Verificări locale · AI indisponibil";
+      crits=globalThis.SpireCritique.critiquePage(facts.page,facts.elements,{w:innerWidth,h:innerHeight});
+    } else {
+      critiqueProvenance=result.mode==="mock"?"Analiză simulată":"Analiză AI";
+      crits=result.critiques;
+    }
+    await memoryReady;
+    if (id !== tour) return;
+    briefAnswers = globalThis.SpireCritique.fillBriefGaps(briefAnswers, Object.assign({}, globalThis.SpireCritique.briefSeed(facts.page, facts.elements), cleanAnswers(result.suggestedAnswers)));
+    latestCritique = { mode: result.error ? "fallback" : result.mode,
+      items: crits.map(function(c,index){return {id:"change-"+index,title:c.title.slice(0,100),observation:c.body.slice(0,120),proposal:c.fix.slice(0,180),elementId:c.elementId};}),
+      screenshot: result.screenshot, searchOptimization: Array.isArray(result.searchOptimization) ? result.searchOptimization.slice(0,3) : [] };
+    for(var i=0;i<crits.length;i++) {
       if(id!==tour)return;
-      if(next>=crits.length) {pose("thinking");await ai;continue;}
-      var i=next++;
       bubble.hidden=true;outline.hidden=true;outlined=null;
       var c=crits[i], target=critiqueElements.get(c.elementId);
       if(target && target.isConnected) {
@@ -779,7 +929,8 @@
     }
     if(id!==tour)return;
     outlined=null;outline.hidden=true;pose(crits.some(function(c){return c.level==="important";})?"happy":"celebrate");
-    showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits)+(aiFailed?" Părerea AI n-a ajuns, așa că am folosit doar verificările automate.":"")); mode="roam";
+    showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits));
+    showBrief(crits, facts.page.title); mode="roam";
   }
   pose("idle");place(pos.x,pos.y);scheduleRoam();
 
@@ -1437,7 +1588,20 @@
     if (event.source !== iframe.contentWindow) return;
     var data = event.data;
     if (!data || typeof data !== "object" || typeof data.type !== "string") return;
-    if (data.type === "spire:scan") {
+    if (data.type === "spire:brief-ready") {
+      appReady = true;
+      if (activeAiCritique) activeAiCritique.send();
+      void memoryReady.then(sendBrief);
+    } else if (data.type === "spire:critique-result") {
+      if (!activeAiCritique || data.requestId !== activeAiCritique.requestId || !activeAiCritique.sent) return;
+      if (data.error || !validAiResult(data.result)) activeAiCritique.finish({ error: true });
+      else activeAiCritique.finish(data.result);
+    } else if (data.type === "spire:brief-suggested") {
+      void memoryReady.then(function () {
+        currentAnswers();
+        briefAnswers = globalThis.SpireCritique.fillBriefGaps(briefAnswers, cleanAnswers(data.answers));
+      });
+    } else if (data.type === "spire:scan") {
       requestScan();
     } else if (data.type === "spire:picks") {
       drawPicks(data.picks);

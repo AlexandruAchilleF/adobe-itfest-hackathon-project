@@ -11,12 +11,14 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 
 ## Adresa aplicației (deploy)
 
+
 `config.js` rămâne pe `http://localhost:5173`, pentru dezvoltare. Pachetul de descărcare are adresa publică: `npm run ext:zip` copiază extensia într-un folder temporar, pune în copie `APP_URL = "https://spire-coral.vercel.app"` și scrie `public/spire-extensie.zip`, fără README și fără teste. ZIP-ul se comite; `tests/extensionPackage.test.ts` pică dacă rămâne în urma sursei.
 
 ## Permisiuni și de ce
 
 - `activeTab`: acces temporar la fila pe care ai apăsat iconița, doar după clic.
 - `scripting`: injectarea stratului Spire în acea filă.
+- `storage`: răspunsuri păstrate explicit, separat pe originea site-ului.
 - Fără `host_permissions` și fără scripturi declarate: nimic nu rulează pe site-uri până nu apeși iconița. `overlay.css` e resursă accesibilă din pagină (nu dă acces la site-uri).
 
 ## Fișierele
@@ -25,7 +27,6 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 - `config.js`: `APP_URL` și `APP_ORIGIN`, pe `globalThis.SPIRE_CONFIG`; script clasic, folosit în fundal și în pagină.
 - `background.js`: la clic injectează, în ordine, config.js, mascot-poses.js, critique.js, content.js (`injectSpire(tabId)`).
 - `content.js`: stratul din pagină, în shadow root (chenare de scanare, iframe).
-- `icons/`: iconițele PNG de 16, 32, 48 și 128 px, generate din `public/landing/hawk-mark.svg` cu `npm run ext:icons`.
 - `overlay.css`: referința stilurilor panoului și chenarelor; copia din content.js se aplică împreună cu stilurile uliului prin adoptedStyleSheets în shadow root, fără CSS extern. La modificarea panoului, ține copia sincronizată.
 
 ## Testul
@@ -34,31 +35,11 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 
 ## Critica pe pagină
 
-Clic pe iconiță arată uliul, fără să încarce aplicația. Uliul se plimbă și aterizează pe
-elemente; clic pe el deschide meniul. „Critică pagina” verifică pagina local, cere o părere AI, apoi te
-duce pe rând la elementele cu probleme. Balonul arată problema și un remediu scurt.
-Căutarea cu AI este menționată doar la recomandarea privind datele structurate.
-„Următorul” avansează imediat;
-altfel avansează după aproximativ 8 secunde. „Oprește” întrerupe turul.
-Escape închide meniul. Un nou clic pe iconița extensiei ascunde sau arată stratul.
-„Fă o campanie” deschide panoul existent cu aplicația la `/nou?din=extensie`.
+Clic pe iconiță arată uliul fără panou. „Critică pagina” citește cel mult 200 de elemente într-o parcurgere plafonată, pregătește opțional o captură JPEG curată (maximum 960 px) și cere o singură analiză prin aplicația configurată și endpoint-ul AI existent. Iframe-ul de transport rămâne ascuns până alegi campania. Așteptarea este plafonată: circa 2 secunde pentru aplicație, 10 pentru AI și cel mult 13 în total. Nu se configurează chei în extensie.
 
-Critica are două surse. Regulile (`src/lib/critique.ts`) sunt deterministe, rulează local și dau
-cifrele. Peste ele, `src/lib/critiqueAi.ts` cere de la `/api/ai` (`APP_URL` din `config.js`) cel mult
-3 observații despre ierarhie și mesaj. La clic pe „Critică pagina”, serverul primește o captură a
-ecranului și textele din ea. Se păstrează doar observațiile legate de un element de pe ecran, fără
-cifre care nu apar în pagină, iar balonul le marchează „părere AI”. Dacă AI-ul nu răspunde în 6 s,
-turul pornește cu regulile și observațiile intră din mers; dacă pică, rămân regulile, iar rezumatul spune asta.
-Citește cel mult 200 de
-elemente dintr-o parcurgere plafonată la 5000 de noduri și arată cel mult 8 observații.
-Nu pretinde o evaluare completă de design sau un audit de accesibilitate.
-Fundalurile cu imagini ori transparență parțială sunt omise din verificarea de contrast.
+Turul arată cel mult cinci observații succinte; propunerile la condițional apar la final. „Următorul” avansează, „Oprește” anulează și ignoră răspunsurile întârziate. Rezultatul mock este etichetat „Analiză simulată”. Dacă aplicația/AI nu răspunde sau CSP blochează iframe-ul, turul folosește „Verificări locale · AI indisponibil”. Nu pretinde un audit complet sau verificări de interacțiune.
 
-Compatibilitate: pagini HTTP(S) obișnuite; Chrome nu permite injectarea pe pagini
-interne (`chrome://`), Chrome Web Store sau vizualizatorul PDF. Stilurile locale sunt
-în foi construite în shadow root (`adoptedStyleSheets`), astfel încât critica rămâne
-independentă de CSP și de iframe. Un site cu `frame-src` restrictiv poate bloca panoul
-campaniei. Respectă preferința sistemului pentru mișcare redusă.
+Compatibilitate: pagini HTTP(S) obișnuite; Chrome blochează injectarea pe pagini interne, Chrome Web Store și vizualizatorul PDF. Stilurile locale din shadow root rămân independente de CSP. Un `frame-src` restrictiv poate împiedica AI și campania; verificările locale continuă. Preferința de mișcare redusă este respectată.
 
 ### Regenerarea desenelor și regulilor
 
@@ -77,3 +58,15 @@ Doar copia primește permisiuni pentru fixture și `globalThis.__spireTestSpeed 
 înaintea scriptului: duratele zborului, plimbării și balonului sunt accelerate.
 Testul instrumentează numai copia pentru a citi faptele extrase. Extensia distribuită
 folosește duratele normale și nu expune aceste fapte în DOM.
+
+După critică, Spire propune cel mult trei modificări și întreabă ce promovezi, cui te adresezi și ce vrei să obții; pentru acțiuni neclare cere și textul butonului. „Păstrează răspunsurile” le salvează explicit în stocarea extensiei (`chrome.storage.local`), separat pe originea site-ului. „Uită răspunsurile” le șterge. Răspunsurile rămân editabile, iar erorile de stocare sunt afișate. Nu sunt scrise în localStorage-ul site-ului.
+
+„Continuă cu o campanie” deschide aplicația configurată. Brief-ul (URL, titlu și răspunsuri) pleacă numai după `spire:brief-ready` de la iframe-ul aplicației, cu sursa și originea verificate. Aplicația validează limitele, arată câmpurile editabile și le folosește la generare și salvare; analiza unei referințe le păstrează. Campania pornește numai la „Fă campania”; deschiderea panoului nu scanează automat pagina.
+
+## Sidebar-ul campaniei
+
+După întrebări, „Continuă cu o campanie” arată propunerile detaliate și secțiunea de vizibilitate în căutările cu AI. Descrierea omului, răspunsurile și clarificările intră în snapshotul fiecărui material. Draftul și coada rămân în browser, separat pe site; un reload nu repetă automat generarea.
+
+„Generează imagine” și „Propune logo” folosesc `/api/image`. Rezultatele mock sunt marcate ca simulate. „Pregătește video” folosește un clip de demo mapat explicit pe domeniu; nu pretinde generare video live. Pentru `marinapark.ro`, clipul este local, la `public/samples/spire/demo-videos/marina-park.mp4` (40 s), preluat din portofoliul echipei Exedria. Domeniile fără clip configurat primesc o stare de indisponibilitate, nu un material inventat.
+
+Adaptorul aplicației pentru critică și recomandări de căutare este `src/lib/critiqueClient.ts`. Contractele pure ale engine-ului și gateway-ul din service worker rămân compatibile în `src/lib/critiqueAi.ts` și `background.js`; turul și campania folosesc transportul corelat al aplicației, fără un al doilea apel AI.

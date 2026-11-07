@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Critique, ElementFacts, PageFacts } from "../src/lib/critique";
+import { MAX_CRITIQUES, type Critique, type ElementFacts, type PageFacts } from "../src/lib/critique";
 import { acceptAiCritiques, critiqueAiRequest, MAX_AI_CRITIQUES, mergeAiCritiques } from "../src/lib/critiqueAi";
 
 const page: PageFacts = { url: "https://gelateria.ro/", title: "Gelateria Uliu", lang: "ro", metaDescription: "", jsonLdTypes: [], h1Count: 1, imagesWithoutAlt: 0 };
@@ -92,7 +92,7 @@ describe("mergeAiCritiques", () => {
     const out = titles(mergeAiCritiques(eight, [ai], 8));
     expect(out).toEqual([...titles(eight), "AI"]);
     const early = titles(mergeAiCritiques(eight, [ai], 2));
-    expect(early).toHaveLength(8);
+    expect(early).toHaveLength(MAX_CRITIQUES);
     expect(early.slice(0, 3)).toEqual(["R0", "R1", "AI"]);
     expect(early).not.toContain("R7");
   });

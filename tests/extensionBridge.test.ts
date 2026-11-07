@@ -48,8 +48,8 @@ describe("parseExtensionMessage", () => {
 
 describe("isFromExtension", () => {
   const parent = {} as Window;
-  const win = (search: string) => ({ parent, location: { search } }) as unknown as Window;
-  const event = (source: unknown) => ({ source }) as MessageEvent;
+  const win = (search: string) => ({ parent, location: { search }, document: { referrer: "https://site.test/" } }) as unknown as Window;
+  const event = (source: unknown) => ({ source, origin: "https://site.test" }) as MessageEvent;
 
   it("adevărat doar de la fereastra părinte, cu din=extensie", () => {
     expect(isFromExtension(event(parent), win("?din=extensie"))).toBe(true);

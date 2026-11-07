@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import vm from "node:vm";
 import { describe, expect, it } from "vitest";
-import { critiquePage, summarySentence, type ElementFacts, type PageFacts } from "../src/lib/critique";
+import { critiquePage, summarySentence, modificationSuggestions, type ElementFacts, type PageFacts } from "../src/lib/critique";
 
 const root = resolve(__dirname, "..");
 const bundlePath = resolve(root, "chrome-extension/critique.js");
@@ -32,9 +32,11 @@ describe("pachetul criticii pentru extensie", () => {
     const api = vm.runInContext("globalThis.SpireCritique", ctx) as {
       critiquePage: typeof critiquePage;
       summarySentence: typeof summarySentence;
+      modificationSuggestions: typeof modificationSuggestions;
     };
     expect(typeof api.critiquePage).toBe("function");
     expect(typeof api.summarySentence).toBe("function");
+    expect(typeof api.modificationSuggestions).toBe("function");
 
     const page: PageFacts = {
       url: "https://exemplu.ro/",
@@ -72,6 +74,7 @@ describe("pachetul criticii pentru extensie", () => {
     // obiectele vin din alt context: le comparăm prin JSON
     expect(JSON.parse(JSON.stringify(fromBundle))).toEqual(fromTs);
     expect(api.summarySentence(fromBundle)).toBe(summarySentence(fromTs));
+    expect(JSON.parse(JSON.stringify(api.modificationSuggestions(fromBundle)))).toEqual(modificationSuggestions(fromTs));
   });
 
   it("expune și partea de AI a criticii", () => {
