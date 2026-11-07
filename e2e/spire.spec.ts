@@ -478,25 +478,24 @@ test("marca: postarea de exemplu urmărește formularul, iar butoanele sunt în 
 test("brief-ul rămâne editabil după analiză și intră în generare și salvare", async ({ page }) => {
   const prompts: string[] = [];
   page.on('request', request => {
-    if (request.url().endsWith('/api/ai')) prompts.push(request.postData() ?? '');
+    if (request.url().endsWith('/api/image') || request.url().endsWith('/api/ai')) prompts.push(request.postData() ?? '');
   });
   const frame = await embedded(page);
   const brief = {source:{url:new URL(page.url()).origin+'/',title:'Cupe'},answers:{product:'Cană',audience:'Părinți',goal:'Comenzi',cta:'Comandă'}};
   await page.evaluate(brief => (document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief}, '*'), brief);
-  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toBeVisible();
-  const audience = frame.getByRole('textbox', {name:'Cui te adresezi? Scrie tu'});
+  await expect(frame.getByRole('heading',{name:'Brief-ul campaniei'})).toBeVisible();
+  const workspace = frame.getByTestId('campaign-workspace');
+  const audience = workspace.getByLabel('Public',{exact:true});
   await expect(audience).toHaveValue('Părinți');
   await audience.fill('Profesori');
   await page.evaluate(brief => (document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief}, '*'), brief);
   await expect(audience).toHaveValue('Profesori');
-  await frame.getByRole('button',{name:'Folosește exemplul'}).click();
-  await expect(frame.getByText('Ce am văzut')).toBeVisible();
-  await expect(audience).toHaveValue('Profesori');
-  await frame.getByRole('button',{name:'Fă campania',exact:true}).click();
-  await expect(frame.getByRole('button',{name:'Salvează campania'})).toBeVisible();
+  // în panou nu mai e drumul pe referință: materialele pornesc din brief
+  await expect(frame.getByRole('button',{name:'Folosește exemplul'})).toHaveCount(0);
+  await workspace.getByLabel('Ce vrei să creăm?').fill('O imagine cu o cană');
+  await workspace.getByRole('button',{name:'Generează imagine'}).click();
+  await expect(workspace.getByText('Rezultat simulat · fără generare de imagine')).toBeVisible();
   expect(prompts.some(prompt=>prompt.includes('Profesori') && prompt.includes('Comenzi'))).toBe(true);
-  await frame.getByRole('button',{name:'Salvează campania'}).click();
-  await expect(frame.getByRole('link',{name:'Deschide în Campanii'})).toBeVisible();
   const saved = await page.evaluate(()=>JSON.stringify(localStorage));
   expect(saved).toContain('Profesori');
   expect(saved).toContain('Comenzi');
@@ -509,9 +508,9 @@ test('panoul fără referrer primește brief doar de la originea gazdei declarat
   await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
   const brief={source:{url:base+'/',title:'Fără referrer'},answers:{product:'Cană'}};
   await frame.locator('body').evaluate((_,brief)=>window.dispatchEvent(new MessageEvent('message',{source:window.parent,origin:'https://evil.test',data:{type:'spire:brief',brief}})),brief);
-  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toHaveCount(0);
+  await expect(frame.getByRole('heading',{name:'Brief-ul campaniei'})).toHaveCount(0);
   await page.evaluate(brief=>(document.querySelector('#spire') as HTMLIFrameElement).contentWindow!.postMessage({type:'spire:brief',brief},'*'),brief);
-  await expect(frame.getByRole('heading',{name:'Brief-ul tău'})).toBeVisible();
+  await expect(frame.getByRole('heading',{name:'Brief-ul campaniei'})).toBeVisible();
 });
 
 test('aplicația răspunde o singură dată cu analiza AI mock pentru ID duplicat', async ({page}) => {
@@ -568,7 +567,8 @@ test('sidebar: constatări, căutări AI, brief păstrat și materiale la cerere
   await expect(workspace.getByLabel('Ce vrei să creăm?')).toHaveValue('O imagine cu o cană pentru profesori');
 });
 
-test('sidebar: Marina Park redă clipul local cu proveniență de demo', async ({page}) => {
+test('sidebar: Marina Park redă clipul local după randare, cu ecran complet', async ({page}) => {
+  await page.addInitScript(() => { (window as unknown as {__spireVideoMs:number}).__spireVideoMs = 1500; });
   const base = new URL(page.url()).origin;
   await page.setContent(`<iframe id="spire" src="${base}/nou?din=extensie&hostOrigin=${encodeURIComponent('https://www.marinapark.ro')}"></iframe>`);
   const frame = page.frameLocator('#spire');
@@ -581,7 +581,8 @@ test('sidebar: Marina Park redă clipul local cu proveniență de demo', async (
   const workspace = frame.getByTestId('campaign-workspace');
   await workspace.getByLabel('Ce vrei să creăm?').fill('Un video de prezentare pentru Marina Park');
   await workspace.getByRole('button',{name:'Pregătește video'}).click();
-  await expect(workspace.getByText('Video de demo · clip pregătit anterior')).toBeVisible();
+  await expect(workspace.getByRole('status',{name:/%/})).toBeVisible();
+  await expect(workspace.getByRole('button',{name:'Ecran complet'})).toBeVisible();
   const video = workspace.locator('video');
   await expect(video).toHaveAttribute('src','/samples/spire/demo-videos/marina-park.mp4');
   await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).duration)).toBeGreaterThan(39);

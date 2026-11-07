@@ -135,6 +135,16 @@ const STREAKS = [
   [61, 64.8],
 ];
 
+/** Confetti în culorile site-ului: [x, y, latura, rotație, auriu]. */
+const CONFETTI: Array<[number, number, number, number, boolean]> = [
+  [16, 78, 4, 20, true],
+  [96, 80, 4, -15, false],
+  [38, 14, 3.4, 0, false],
+  [84, 12, 3.4, 30, true],
+  [22, 40, 3, 45, false],
+  [98, 44, 3, -30, true],
+];
+
 /** Cât de sus sunt aripile: bucuria le ridică, îngrijorarea le lasă în jos. */
 const WING_ANGLE: Record<MascotMood, number> = { idle: 0, listening: 0, thinking: -2, searching: -4, happy: -8, worried: 12, celebrate: -20 };
 /** Ochii spre lateral; stângul e mai mare, fiindcă e mai aproape. */
@@ -170,11 +180,13 @@ export function MascotFigure({
   const bank = mood === "worried" ? "rotate(3 60 60)" : "rotate(-5 60 60)";
 
   return (
-    <svg viewBox="0 0 120 120" width={size} height={size} className={anim} role="img" aria-label={`${MASCOT_NAME}, mascota`}>
+    <svg viewBox="0 0 120 120" width={size} height={size} className={`${anim} mascot-live`} role="img" aria-label={`${MASCOT_NAME}, mascota`}>
       <g transform={`translate(-1 10) ${bank}`}>
         {/* coada, în spate */}
-        <path d={TAIL} fill={darker(color)} />
-        <path d={TAIL} fill={color} transform="translate(61.8 63) scale(0.9 0.84) translate(-61.8 -63)" />
+        <g className="mascot-tail">
+          <path d={TAIL} fill={darker(color)} />
+          <path d={TAIL} fill={color} transform="translate(61.8 63) scale(0.9 0.84) translate(-61.8 -63)" />
+        </g>
 
         {/* aripile deschise, doar în zbor. `mascot-wing` stă pe un <g> interior: o animație CSS pe
             `transform` ar înlocui atributul `transform` (unghiul din stare); fără animație nu face nimic */}
@@ -183,7 +195,7 @@ export function MascotFigure({
             {/* aripa din dreapta: mai departe, oglindită și scurtată în perspectivă, în umbră */}
             <g transform="translate(73 1) scale(-0.74 0.96) translate(-51 0)">
               <g transform={`rotate(${a} 51 50)`}>
-                <g className="mascot-wing">
+                <g className="mascot-wing mascot-wing-far">
                   <Wing shade />
                 </g>
               </g>
@@ -212,6 +224,8 @@ export function MascotFigure({
 
         {/* capul: creștet turtit, gușa crem, ciocul încovoiat */}
         <g transform={headTilt}>
+          {/* `mascot-head` pe un <g> interior: mișcarea din CSS nu înlocuiește înclinarea din stare */}
+          <g className="mascot-head">
           <path d="M50 38.4 C49.8 31.6 54.6 28 62 28 C69.4 28 74.2 31.6 74 38.4 C73.6 43.4 71.2 46.8 67.6 48.8 L62 52.4 L56.4 48.8 C52.8 46.8 50.4 43.4 50 38.4 Z" fill={C.ink} />
           <path d="M51.6 34.4 C52.8 30.8 56.6 28.6 62 28.6 C58 30 55.2 32 53.8 35 Z" fill={C.rim} />
           <path d="M52.4 42.4 C55.4 41.6 58 42 60 43.6 L62 44 L64 43.6 C66 42 68.6 41.6 71.6 42.4 C71 45.6 68.8 48 66.4 49.4 L62 52.4 L57.6 49.4 C55.2 48 53 45.6 52.4 42.4 Z" fill={C.cream} />
@@ -248,6 +262,7 @@ export function MascotFigure({
           <path d="M60.2 41 C60 43.6 60.6 46 61.6 47.8 C60.2 46.6 59.4 44 59.8 41 Z" fill={C.beakLight} />
           <path d="M60.9 39.2 a0.5 0.4 0 1 0 0.1 0 M63 39.2 a0.5 0.4 0 1 0 0.1 0" fill={C.goldDeep} />
           {mood === "worried" && <path d="M58 28.6 L57 24.4 L60 27.2 L61.2 23.4 L62.6 28 Z" fill={C.ink} />}
+          </g>
         </g>
 
         {/* lupa ținută în aripă: trece prin fața ochilor, stânga-dreapta (mascot-search în index.css) */}
@@ -278,11 +293,14 @@ export function MascotFigure({
         )}
         {/* confetti, în culorile site-ului */}
         {mood === "celebrate" && (
-          <g>
-            <rect x="16" y="78" width="4" height="4" fill={C.gold} transform="rotate(20 18 80)" />
-            <rect x="96" y="80" width="4" height="4" fill={color} transform="rotate(-15 98 82)" />
-            <rect x="38" y="14" width="3.4" height="3.4" fill={color} />
-            <rect x="84" y="12" width="3.4" height="3.4" fill={C.gold} transform="rotate(30 86 14)" />
+          <g className="mascot-confetti">
+            {/* fiecare bucată pe un <g> propriu: explozia din CSS (.mascot-bit:nth-child) nu atinge rotația ei.
+                Fără style inline: în extensie, CSP-ul unor site-uri l-ar bloca */}
+            {CONFETTI.map(([x, y, w, rot, gold], i) => (
+              <g key={i} className="mascot-bit">
+                <rect x={x} y={y} width={w} height={w} rx={0.6} fill={gold ? C.gold : color} transform={`rotate(${rot} ${x + w / 2} ${y + w / 2})`} />
+              </g>
+            ))}
           </g>
         )}
       </g>

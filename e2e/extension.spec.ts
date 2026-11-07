@@ -245,8 +245,8 @@ test("după injectare, Spire apare peste pagină: shadow root cu iframe la /nou?
   expect(src).toContain("/nou?din=extensie");
   expect(src?.startsWith(APP_URL)).toBe(true);
 
-  // overlay.css s-a încărcat în shadow root (resursă web_accessible): panoul are 420 px.
-  await expect(root.locator(".spire-panel")).toHaveCSS("width", "420px");
+  // overlay.css s-a încărcat în shadow root (resursă web_accessible): panoul are 480 px.
+  await expect(root.locator(".spire-panel")).toHaveCSS("width", "480px");
 
   // Pagina gazdă rămâne întreagă: titlul și butonul ei sunt tot acolo.
   await expect(page.getByRole("link", { name: "Comandă acum" })).toBeVisible();
@@ -527,7 +527,7 @@ test("Strânge, apoi clic real pe chenarul mascotei: decupajul mascotei, JPEG, c
   // Stratul nu prinde clicuri în afara chenarelor: sub (20, 650) e tot pagina.
   expect(await hitAt(page, 20, 650)).not.toBe("spire-root");
 
-  // Mascota stă sub panoul de 420 px: un clic real acolo nimerește panoul.
+  // Mascota stă sub panoul de 480 px: un clic real acolo nimerește panoul.
   const svg = (await page.locator("svg.mascot").boundingBox()) as Box;
   const mx = svg.x + svg.width / 2;
   const my = svg.y + svg.height / 2;
@@ -583,80 +583,27 @@ test("Strânge, apoi clic real pe chenarul mascotei: decupajul mascotei, JPEG, c
   await page.close();
 });
 
-test("Decupează: dreptunghiul tras cu mouse-ul ajunge în aplicație; Esc anulează, cele mici se ignoră", async () => {
+test("Inspire din bara panoului: selecția se face pe pagină, demo-ul apare în panou", async () => {
   const page = await openFixture();
   expect(await inject()).toBe(true);
-  const frame = await appFrame(page);
-  await spirePage(frame);
+  await appFrame(page);
   const root = page.locator("#spire-root");
-  const crop = root.locator(".spire-crop");
-  const button = root.getByRole("button", { name: "Decupează" });
-
-  // Fără mod de decupaj, stratul nu prinde clicuri.
-  await expect(crop).toBeHidden();
-
-  // Esc anulează.
-  await button.click();
-  await expect(crop).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(crop).toBeHidden();
-
-  // Un dreptunghi mai mic de 20×20 nu trimite nimic; modul rămâne deschis.
-  await button.click();
-  await drag(page, [100, 150], [110, 158]);
-  await page.waitForTimeout(500);
-  expect(await referenceCount(frame)).toBe(0);
-  await expect(crop).toBeVisible();
-
+  await expect(root.getByRole("button", { name: "Decupează" })).toHaveCount(0);
+  await root.getByRole("button", { name: "Inspire: recreează o zonă din pagină" }).click();
+  // cât selectezi, panoul nu acoperă pagina
+  await expect(root.locator(".spire-crop")).toBeVisible();
+  await expect(root.locator(".spire-panel")).toBeHidden();
   await drag(page, [100, 150], [500, 450]);
-  const ref = await reference(frame);
-  expect(parseExtensionMessage(ref)?.type).toBe("spire:reference");
-  await expect(crop).toBeHidden();
-  const dpr = await page.evaluate(() => window.devicePixelRatio);
-  const info = await imageInfo(frame, ref.image);
-  near(info.w, 400 * dpr);
-  near(info.h, 300 * dpr);
-
-  // elementIds: elementele scanate aflate în mare parte în dreptunghi (aici titlul, nu mascota).
-  const msg = await spirePage(frame);
-  const known = new Set(msg.elements.map((e) => e.id));
-  for (const id of ref.elementIds) expect(known.has(id)).toBe(true);
-  expect(ref.elementIds).toContain(msg.elements.find((e) => e.tag === "h1")?.id);
-  expect(ref.elementIds).not.toContain(msg.elements.find((e) => e.tag === "svg")?.id);
+  await expect(root.locator(".spire-crop")).toBeHidden();
+  // rezultatul (sau eroarea, fără AI în test) stă în panou, în locul aplicației
+  await expect(root.locator(".spire-panel .spire-inspire")).toBeVisible();
+  await expect(root.locator(".spire-panel .spire-frame")).toBeHidden();
+  await root.getByRole("button", { name: "Închide demo-ul" }).click();
+  await expect(root.locator(".spire-inspire")).toBeHidden();
   await page.close();
 });
 
-test("captura nu conține stratul Spire: sub panou și sub decupaj e culoarea paginii", async () => {
-  const page = await openFixture();
-  expect(await inject()).toBe(true);
-  const frame = await appFrame(page);
-  await spirePage(frame);
-  const root = page.locator("#spire-root");
-  await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
-
-  // Un fond simplu (#FFF4D6) sub hero, de la x=700 (pagina) până la x=1250 (sub panoul alb, care
-  // începe la 860). Dreptunghiul începe pe pagină; mouse-ul trece apoi peste panou.
-  await root.getByRole("button", { name: "Decupează" }).click();
-  await drag(page, [700, 590], [1250, 700]);
-  const ref = await reference(frame);
-  const dpr = await page.evaluate(() => window.devicePixelRatio);
-  // (750, 640) e sub stratul de decupaj (umbrit); (1100, 640) e sub panou (alb, #ffffff).
-  const info = await imageInfo(frame, ref.image, [
-    [Math.round(50 * dpr), Math.round(50 * dpr)],
-    [Math.round(400 * dpr), Math.round(50 * dpr)],
-  ]);
-  for (const [r, g, b] of info.pixels) {
-    near(r, 0xff, 8);
-    near(g, 0xf4, 8);
-    near(b, 0xd6, 8);
-  }
-  // Și stratul e la loc după captură.
-  await expect(root.locator(".spire-panel")).toBeVisible();
-  await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
-  await page.close();
-});
-
-test("cu deviceScaleFactor 2, decupajul are de două ori mai mulți pixeli, dar tot cel mult 1080", async () => {
+test("cu deviceScaleFactor 2, referința din chenar are de două ori mai mulți pixeli", async () => {
   // deviceScaleFactor din Playwright e doar emulare (Emulation.setDeviceMetricsOverride): pagina vede
   // devicePixelRatio 2, dar captureVisibleTab dă tot o imagine 1x. Un ecran 2x adevărat vine din
   // --force-device-scale-factor=2; deviceScaleFactor: 2 rămâne ca emularea să nu-l readucă la 1.
@@ -681,18 +628,6 @@ test("cu deviceScaleFactor 2, decupajul are de două ori mai mulți pixeli, dar 
     near(info.w, cta.width * 2, 4);
     near(info.h, cta.height * 2, 4);
 
-    // Un dreptunghi de 600×300 px CSS are 1200×600 px în captură: se micșorează la 1080×540.
-    await frame.evaluate(() => {
-      (window as unknown as { __spireReference: unknown }).__spireReference = null;
-    });
-    await page.waitForTimeout(600); // captureVisibleTab: cel mult 2 capturi pe secundă
-    await root.getByRole("button", { name: "Decupează" }).click();
-    await drag(page, [80, 100], [680, 400]);
-    await expect.poll(() => referenceCount(frame)).toBe(2);
-    const big = await frame.evaluate(() => (window as unknown as { __spireReference: Reference }).__spireReference);
-    const bigInfo = await imageInfo(frame, big.image);
-    expect(bigInfo.w).toBe(1080);
-    near(bigInfo.h, 540, 2);
     await page.close();
   } finally {
     await hi.context.close();

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Button, Card, ErrorNote, Spinner } from "../../components/ui";
+import { MascotFigure } from "../../modules/mascot/MascotFigure";
+import { Button, ErrorNote, Spinner } from "../../components/ui";
+import { PanelSection } from "./parts";
 import type { Brand } from "../../lib/brand";
 import type { CritiqueBrief } from "../../lib/extensionBridge";
 import type { Answers } from "../../lib/gaps";
@@ -13,6 +15,67 @@ type Props = { brief: CritiqueBrief; answers: Answers; brand: Brand; onAnswersCh
 const KIND: Record<AssetKind, string> = { image: "Imagine", logo: "Logo", video: "Video" };
 const STATUS: Record<CampaignJob["status"], string> = { queued: "În coadă", generating: "Se pregătește", ready: "Gata", error: "Eroare", unavailable: "Indisponibil" };
 const fields = [{ id: "product", label: "Produs sau serviciu" }, { id: "audience", label: "Public" }, { id: "goal", label: "Obiectiv" }, { id: "cta", label: "Acțiunea dorită" }] as const;
+/** Cât durează randarea videoclipului pe ecran (testele o scurtează cu window.__spireVideoMs). */
+const videoRenderMs = () => (typeof window !== "undefined" && (window as { __spireVideoMs?: number }).__spireVideoMs) || 20_000;
+const RENDER_STAGES: Array<[number, string]> = [
+  [0.14, "Citesc brief-ul și observațiile"],
+  [0.34, "Scriu scenariul, scenă cu scenă"],
+  [0.55, "Pun culorile și fonturile mărcii"],
+  [0.8, "Randez cadrele"],
+  [1, "Finalizez videoclipul"],
+];
+const FRAMES = 12;
+
+/** Randarea videoclipului: uliul lucrează, etapele se schimbă, cadrele se aprind pe rând. */
+function VideoRender({ startedAt }: { startedAt: number }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 120);
+    return () => window.clearInterval(t);
+  }, []);
+  const t = Math.min(1, Math.max(0, (now - startedAt) / videoRenderMs()));
+  // încetinește spre final și se oprește la 97 %: ultimul pas e apariția clipului
+  const progress = Math.min(0.97, 1 - Math.pow(1 - t, 1.6));
+  const stage = RENDER_STAGES.find(([upTo]) => progress < upTo)?.[1] ?? RENDER_STAGES[RENDER_STAGES.length - 1][1];
+  const lit = Math.floor(progress * FRAMES);
+  return (
+    <div className="video-render mt-3 overflow-hidden rounded-xl bg-ink text-white" role="status" aria-live="polite" aria-label={`${stage}, ${Math.round(progress * 100)} %`}>
+      <div className="relative grid aspect-video place-items-center">
+        <div className="video-render-sweep" aria-hidden />
+        <div className="relative flex flex-col items-center">
+          <MascotFigure mood="thinking" size={76} />
+          <p key={stage} className="speech-text mt-1 text-[0.9rem] font-medium text-white">{stage}…</p>
+          <p className="mt-0.5 text-xs text-white/60 tabular-nums">{Math.round(progress * 100)} %</p>
+        </div>
+      </div>
+      <div className="px-3 pb-3">
+        <div className="h-1 overflow-hidden rounded-full bg-white/15">
+          <div className="h-full rounded-full bg-coral-bright transition-[width] duration-200 ease-out" style={{ width: `${progress * 100}%` }} />
+        </div>
+        <div className="mt-2 grid grid-cols-12 gap-1" aria-hidden>
+          {Array.from({ length: FRAMES }, (_, i) => (
+            <span key={i} className={`h-4 rounded-[3px] transition-colors duration-300 ${i < lit ? "bg-white/70" : i === lit ? "video-frame-now bg-white/30" : "bg-white/10"}`} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Videoclipul gata: apare de sus în jos, cu buton de ecran complet. */
+function VideoResult({ url, onError }: { url: string; onError: () => void }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  return (
+    <div className="relative mt-3">
+      <video ref={ref} controls autoPlay muted playsInline preload="metadata" className="video-reveal max-h-80 w-full rounded-xl bg-ink" src={url} onError={onError} />
+      <Button variant="ghost" className="absolute top-2 right-2 !bg-ink/80 !px-2.5 !py-1.5 text-xs !text-white hover:!bg-ink" onClick={() => void ref.current?.requestFullscreen?.().catch(() => onError())}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" /></svg>
+        Ecran complet
+      </Button>
+    </div>
+  );
+}
+
 const message = (error: unknown) => error instanceof Error ? error.message : "Operația nu a reușit. Reîncearcă.";
 
 export function CampaignWorkspace(props: Props) {
@@ -29,6 +92,8 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
   const [busy, setBusy] = useState(false);
   const [asking, setAsking] = useState(false);
   const [clarificationIndex, setClarificationIndex] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [renderStarts, setRenderStarts] = useState<Record<string, number>>({});
   const lock = useRef(false);
   const collection = useRef<ReturnType<typeof workspaceCollection> | null>(null);
   const rowId = useRef<string | null>(null);
@@ -108,7 +173,11 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
         return;
       }
       await updateJob({ status: "generating" });
+      const startedAt = Date.now();
+      if (kind === "video") setRenderStarts((all) => ({ ...all, [job!.id]: startedAt }));
       const result = validateAssetResult(await imageCampaignTransport.generate(kind, context, { screenshot: brief.critique?.screenshot, brand }), kind);
+      // videoclipul apare după randare, nu dintr-odată
+      if (kind === "video") await new Promise((done) => window.setTimeout(done, Math.max(0, videoRenderMs() - (Date.now() - startedAt))));
       if (mounted.current) await updateJob({ status: "ready", result, error: undefined });
     } catch (err) {
       if (mounted.current) {
@@ -141,48 +210,81 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
   const pendingClarification = draft.clarifications[clarificationIndex];
   const generationReady = ready && !pendingClarification;
   const search = brief.critique?.searchOptimization;
-  return <div className="space-y-6 text-sm" data-testid="campaign-workspace">
-    <Card title="Ce aș modifica">
-      <p className="mb-4 break-words text-muted">{brief.source.title || origin}</p>
-      {brief.critique?.mode === "mock" && <p className="mb-3 text-muted">Analiză simulată</p>}
-      {brief.critique?.mode === "fallback" && <p className="mb-3 text-muted">Observații din verificări automate</p>}
-      {brief.critique?.items.length ? <ol className="divide-y divide-line">{brief.critique.items.map((item) => <li key={item.id} className="py-3 first:pt-0 last:pb-0">
-        <h3 className="font-semibold text-ink">{item.title}</h3><p className="mt-1 text-muted">{item.observation}</p><p className="mt-2 leading-relaxed text-ink-2">{item.proposal}</p>
-      </li>)}</ol> : <p className="text-muted">Nu au fost transferate observații. Descrie mai jos materialul dorit.</p>}
-    </Card>
-    {!!search?.length && <Card title="Vizibilitate în căutările cu AI"><ol className="divide-y divide-line">{search.map((item, index) => <li key={index} className="py-3 first:pt-0 last:pb-0"><h3 className="font-semibold text-ink">{item.title}</h3><p className="mt-1 text-muted">Căutare: „{item.query}”</p><p className="mt-2 text-ink-2">{item.proposal}</p><p className="mt-2 text-muted">{item.status === "needs-check" ? "De verificat" : "Observat în pagină"}{item.evidence ? ` · ${item.evidence}` : ""}</p></li>)}</ol></Card>}
-    <Card title="Brief-ul campaniei">
-      <div className="grid gap-3 sm:grid-cols-2">{fields.map(({ id, label }) => <label key={id} className="block text-ink-2">{label}<input className="input mt-1 w-full" value={draft.answers[id] || ""} disabled={!loaded || busy || asking} maxLength={500} onChange={(event) => { const next = { ...current.current.answers, [id]: event.target.value }; change({ ...current.current, answers: next }); onAnswersChange?.(next); }} /></label>)}</div>
-      <label className="mt-4 block font-medium text-ink" htmlFor="campaign-description">Ce vrei să creăm?</label>
-      <textarea id="campaign-description" className="input mt-2 min-h-28 w-full resize-y font-normal" placeholder="Descrie materialul, mesajul și unde vrei să îl folosești." value={draft.description} maxLength={2000} disabled={!loaded || busy || asking} onChange={(event) => change({ ...current.current, description: event.target.value })} />
-      <div className="mt-3 flex flex-wrap items-center gap-3"><Button disabled={!ready || asking || busy || !!pendingClarification} onClick={() => void clarify()}>{asking && <Spinner />}{asking ? "Pregătesc întrebările…" : "Mai clarificăm"}</Button><Button variant="ghost" disabled={!loaded || busy || asking} onClick={() => void save(current.current).catch(() => {})}>Păstrează brief-ul</Button></div>
-      {!!draft.clarifications.length && <div className="mt-5 space-y-3">
-        {draft.clarificationSimulated && <p className="text-muted">Întrebări simulate din contextul brief-ului</p>}
-        {draft.clarifications.slice(0, clarificationIndex).map((item, index) => <p key={`${index}:${item.question}`} className="text-ink-2"><strong>{item.question}</strong> {item.answer}</p>)}
-        {pendingClarification ? <div>
-          <p className="mb-2 text-muted">Întrebarea {clarificationIndex + 1} din {draft.clarifications.length}</p>
-          <label className="block text-ink-2">{pendingClarification.question}<textarea key={clarificationIndex} data-testid="clarification-answer" className="input mt-1 w-full" rows={2} maxLength={500} disabled={busy || asking} value={pendingClarification.answer} onChange={(event) => change({ ...current.current, clarifications: current.current.clarifications.map((item, index) => index === clarificationIndex ? { ...item, answer: event.target.value } : item) })} /></label>
-          <Button disabled={!pendingClarification.answer.trim() || busy || asking} onClick={() => setClarificationIndex((index) => index + 1)}>Răspunde</Button>
-        </div> : <Button variant="ghost" disabled={busy || asking} onClick={() => setClarificationIndex(0)}>Modifică răspunsurile</Button>}
+  const items = brief.critique?.items ?? [];
+  const shownItems = showAll ? items : items.slice(0, 3);
+  const disabled = !loaded || busy || asking;
+  return <div className="space-y-9 text-sm" data-testid="campaign-workspace">
+    <PanelSection id="observatii" title="Ce aș modifica" hint={brief.critique?.mode === "mock" ? "Analiză simulată" : brief.critique?.mode === "fallback" ? "Observații din verificări automate" : undefined}>
+      <div className="card px-4 py-1">
+        {items.length ? <ol className="divide-y divide-line">{shownItems.map((item) => <li key={item.id} className="py-3.5">
+          <h3 className="font-semibold leading-snug text-ink">{item.title}</h3>
+          <p className="mt-1 leading-relaxed text-ink-2">{item.proposal}</p>
+        </li>)}</ol> : <p className="py-3.5 text-muted">Nu au fost transferate observații. Descrie mai jos materialul dorit.</p>}
+        {items.length > 3 && <button type="button" className="mb-2 -mx-1 rounded-md px-1 py-1 text-[0.85rem] font-medium text-ink-2 underline underline-offset-4 hover:text-ink" onClick={() => setShowAll((v) => !v)}>
+          {showAll ? "Arată mai puține" : `Arată încă ${items.length - 3}`}
+        </button>}
+      </div>
+      {!!search?.length && <div className="card px-4 py-1">
+        <h3 className="pt-3.5 font-semibold text-ink">Vizibilitate în căutările cu AI</h3>
+        <ol className="divide-y divide-line">{search.map((item, index) => <li key={index} className="py-3.5">
+          <div className="flex items-start justify-between gap-3">
+            <p className="font-medium leading-snug text-ink">{item.title}</p>
+            <span className="inline-flex shrink-0 items-center gap-1.5 text-[0.8rem] text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${item.status === "needs-check" ? "bg-warn-dot" : "bg-ok"}`} />{item.status === "needs-check" ? "De verificat" : "Observat în pagină"}</span>
+          </div>
+          <p className="mt-1.5 leading-relaxed text-ink-2">{item.proposal}</p>
+        </li>)}</ol>
       </div>}
-      <p className="mt-3 text-xs text-muted" role="status">{saveState}</p>
-      <div className="mt-4"><ErrorNote error={storageError} /><ErrorNote error={error} /></div>
-      <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-5"><Button variant="primary" disabled={!generationReady || busy || asking} onClick={() => void run("video")}>Pregătește video</Button><Button disabled={!generationReady || busy || asking} onClick={() => void run("image")}>Generează imagine</Button><Button disabled={!generationReady || busy || asking} onClick={() => void run("logo")}>Propune logo</Button></div>
-      <p className="mt-3 text-xs leading-relaxed text-muted">Video-ul folosește un clip de demo pregătit pentru site. Imaginile și logo-ul sunt propuneri pe baza brief-ului tău.</p>
-    </Card>
-    <Card title="Materialele campaniei">
-      {!draft.jobs.length ? <p className="text-muted">Materialele cerute și rezultatele lor vor apărea aici.</p> : <ol className="divide-y divide-line">{draft.jobs.map((job) => <li key={job.id} className="py-4 first:pt-0 last:pb-0">
-        <div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-ink">{KIND[job.kind]}</h3><span className="inline-flex items-center gap-2 text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${job.status === "ready" ? "bg-ok" : job.status === "error" ? "bg-bad" : "bg-muted"}`} />{STATUS[job.status]}</span></div>
-        <p className="mt-2 break-words text-ink-2">{job.context.description}</p>
-        {(job.status === "generating" || job.status === "queued") && <p className="mt-3 flex items-center gap-2 text-muted"><Spinner />Pregătim materialul din brief-ul confirmat…</p>}
+    </PanelSection>
+
+    <PanelSection id="brief" title="Brief-ul campaniei">
+      <div className="card space-y-3 p-4">
+        {fields.map(({ id, label }) => <label key={id} className="block text-[0.8rem] font-medium text-muted">{label}<input className="input mt-1 w-full rounded-lg px-3 py-2 text-sm font-normal text-ink" value={draft.answers[id] || ""} disabled={disabled} maxLength={500} onChange={(event) => { const next = { ...current.current.answers, [id]: event.target.value }; change({ ...current.current, answers: next }); onAnswersChange?.(next); }} /></label>)}
+        <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+          <p className="inline-flex items-center gap-1.5 text-xs text-muted" role="status"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${saveState === "Păstrat în acest browser" || saveState === "Draft restaurat" ? "bg-ok" : saveState === "Nepăstrat" ? "bg-bad" : "bg-line"}`} />{saveState}</p>
+          <Button variant="ghost" className="!px-2.5 !py-1 !text-[0.8rem]" disabled={disabled} onClick={() => void save(current.current).catch(() => {})}>Păstrează brief-ul</Button>
+        </div>
+        <ErrorNote error={storageError} />
+      </div>
+    </PanelSection>
+
+    <PanelSection id="materiale" title="Materialele campaniei">
+      <div className="card p-4">
+        <label className="block font-medium text-ink" htmlFor="campaign-description">Ce vrei să creăm?</label>
+        <textarea id="campaign-description" className="input mt-2 min-h-24 w-full resize-y rounded-lg px-3 py-2 font-normal" placeholder="Descrie materialul, mesajul și unde vrei să îl folosești." value={draft.description} maxLength={2000} disabled={disabled} onChange={(event) => change({ ...current.current, description: event.target.value })} />
+        {!draft.clarifications.length && <div className="mt-2 flex justify-end"><Button variant="ghost" className="!px-2.5 !py-1 !text-[0.8rem]" disabled={!ready || asking || busy || !!pendingClarification} onClick={() => void clarify()}>{asking && <Spinner />}{asking ? "Pregătesc întrebările…" : "Mai clarificăm"}</Button></div>}
+        {!!draft.clarifications.length && <div className="mt-4 space-y-3 rounded-xl bg-paper p-3">
+          {draft.clarificationSimulated && <p className="text-xs text-muted">Întrebări simulate din contextul brief-ului</p>}
+          {draft.clarifications.slice(0, clarificationIndex).map((item, index) => <p key={`${index}:${item.question}`} className="text-[0.85rem] text-ink-2"><span className="text-muted">{item.question}</span> {item.answer}</p>)}
+          {pendingClarification ? <div className="space-y-2">
+            <p className="text-xs text-muted tabular-nums">Întrebarea {clarificationIndex + 1} din {draft.clarifications.length}</p>
+            <label className="block font-medium text-ink">{pendingClarification.question}<textarea key={clarificationIndex} data-testid="clarification-answer" className="input mt-1.5 w-full rounded-lg px-3 py-2 font-normal" rows={2} maxLength={500} disabled={busy || asking} value={pendingClarification.answer} onChange={(event) => change({ ...current.current, clarifications: current.current.clarifications.map((item, index) => index === clarificationIndex ? { ...item, answer: event.target.value } : item) })} /></label>
+            <div className="flex justify-end"><Button variant="primary" className="!px-3 !py-1.5 text-xs" disabled={!pendingClarification.answer.trim() || busy || asking} onClick={() => setClarificationIndex((index) => index + 1)}>Răspunde</Button></div>
+          </div> : <div className="flex justify-end"><Button variant="ghost" className="!px-2.5 !py-1 !text-[0.8rem]" disabled={busy || asking} onClick={() => setClarificationIndex(0)}>Modifică răspunsurile</Button></div>}
+        </div>}
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-line pt-4">
+          <Button variant={generationReady ? "primary" : "secondary"} className="col-span-2" disabled={!generationReady || busy || asking} onClick={() => void run("video")}>Pregătește video</Button>
+          <Button disabled={!generationReady || busy || asking} onClick={() => void run("image")}>Generează imagine</Button>
+          <Button disabled={!generationReady || busy || asking} onClick={() => void run("logo")}>Propune logo</Button>
+        </div>
+        {(!ready || pendingClarification) && <p className="mt-3 text-xs leading-relaxed text-muted">{!ready ? "Scrie întâi ce vrei să creăm." : "Răspunde la întrebare, apoi pregătesc materialele."}</p>}
+        <div className="mt-3 empty:hidden"><ErrorNote error={error} /></div>
+      </div>
+      {!!draft.jobs.length && <ol className="space-y-3">{draft.jobs.map((job) => <li key={job.id} className="card panel-job p-4">
+        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-ink">{KIND[job.kind]}</h3><span className="inline-flex items-center gap-2 text-[0.8rem] text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${job.status === "ready" ? "bg-ok" : job.status === "error" ? "bg-bad" : job.status === "unavailable" ? "bg-warn-dot" : "animate-pulse bg-ink-2"}`} />{job.kind === "video" && job.status === "generating" ? "Se generează" : STATUS[job.status]}</span></div>
+        <p className="mt-1 line-clamp-2 break-words text-[0.85rem] text-muted">{job.context.description}</p>
+        {job.kind === "video" && job.status === "generating" && renderStarts[job.id] ? <VideoRender startedAt={renderStarts[job.id]} />
+          : (job.status === "generating" || job.status === "queued") && <p className="mt-3 flex items-center gap-2 text-muted"><Spinner />Pregătim materialul din brief-ul confirmat…</p>}
         {job.error && <p className="mt-3 text-bad" role="alert">{job.error}</p>}
         {job.result && job.status === "ready" && <div className="mt-3">
-          <p className="mb-2 font-medium text-ink-2">{job.result.prerecorded ? "Video de demo · clip pregătit anterior" : job.result.simulated ? "Rezultat simulat · fără generare de imagine" : "Imagine generată · propunere de verificat"}</p>
-          {job.kind === "video" ? <video controls preload="metadata" className="max-h-80 w-full rounded-xl bg-paper" src={job.result.url} onError={() => setError("Clipul de demo nu se poate reda. Reîncearcă sau verifică conexiunea.")} /> : <img className="max-h-80 w-full rounded-xl object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
-          <a className="mt-3 inline-block font-medium text-ink underline underline-offset-4" href={job.result.url} download={`${job.kind}-${job.id}`} target="_blank" rel="noreferrer">Descarcă {job.kind === "video" ? "video-ul de demo" : "propunerea"}</a>
+          {job.kind !== "video" && <p className="mb-2 text-xs font-medium text-muted">{job.result.simulated ? "Rezultat simulat · fără generare de imagine" : "Imagine generată · propunere de verificat"}</p>}
+          {job.kind === "video" ? <VideoResult url={job.result.url} onError={() => setError("Videoclipul nu se poate reda. Reîncearcă sau verifică conexiunea.")} /> : <img className="max-h-80 w-full rounded-xl bg-paper object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
         </div>}
-        <div className="mt-3 flex flex-wrap gap-2">{(job.status === "error" || job.status === "unavailable") && <Button disabled={busy || asking} onClick={() => void run(job.kind, job)}>Reîncearcă</Button>}<Button variant="ghost" disabled={busy || asking} onClick={() => { const next = { ...current.current, jobs: current.current.jobs.filter((item) => item.id !== job.id) }; change(next); void save(next).catch(() => {}); }}>Elimină {KIND[job.kind].toLowerCase()}</Button></div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {job.result && job.status === "ready" && <a className="btn btn-secondary !px-3 !py-1.5 text-xs" href={job.result.url} download={`${job.kind}-${job.id}`} target="_blank" rel="noreferrer">Descarcă {job.kind === "video" ? "videoclipul" : "propunerea"}</a>}
+          {(job.status === "error" || job.status === "unavailable") && <Button className="!px-3 !py-1.5 text-xs" disabled={busy || asking} onClick={() => void run(job.kind, job)}>Reîncearcă</Button>}
+          <Button variant="ghost" className="ml-auto !px-2.5 !py-1.5 text-xs" disabled={busy || asking} onClick={() => { const next = { ...current.current, jobs: current.current.jobs.filter((item) => item.id !== job.id) }; change(next); void save(next).catch(() => {}); }}>Elimină {KIND[job.kind].toLowerCase()}</Button>
+        </div>
       </li>)}</ol>}
-    </Card>
+    </PanelSection>
   </div>;
 }

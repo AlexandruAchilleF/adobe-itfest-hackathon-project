@@ -461,27 +461,91 @@ input::placeholder, textarea::placeholder { color: #8d90a6; }
   textarea { height: auto !important; }
 }
 
-/* Animațiile mascotei (src/modules/mascot/MascotFigure.tsx), doar când scenariul cere personajul */
-@keyframes mascot-bob { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
-@keyframes mascot-jump { 0%, 100% { transform: translateY(0) } 30% { transform: translateY(-12px) } 60% { transform: translateY(0) } 75% { transform: translateY(-4px) } }
-@keyframes mascot-shake { 0%, 100% { transform: rotate(0) } 25% { transform: rotate(-4deg) } 75% { transform: rotate(4deg) } }
-@keyframes mascot-blink { 0%, 94%, 100% { transform: scaleY(1) } 97% { transform: scaleY(0.1) } }
+/* Animațiile mascotei (src/modules/mascot/MascotFigure.tsx). Aceleași mișcări sunt copiate în
+   chrome-extension/content.js (foaia din shadow root); când schimbați una, schimbați-o și acolo. */
+/* corpul: plutire lentă, cu o ușoară legănare; saltul de bucurie se strânge înainte și după */
+@keyframes mascot-bob { 0%, 100% { transform: translateY(0) rotate(0) } 50% { transform: translateY(-3px) rotate(-1.2deg) } }
+@keyframes mascot-jump {
+  0%, 100% { transform: translateY(0) scale(1, 1) }
+  12% { transform: translateY(1px) scale(1.06, 0.92) }
+  38% { transform: translateY(-14px) scale(0.96, 1.05) }
+  62% { transform: translateY(0) scale(1.05, 0.94) }
+  78% { transform: translateY(-3px) scale(1, 1) }
+}
+@keyframes mascot-shake {
+  0%, 100% { transform: translateX(0) rotate(0) }
+  20% { transform: translateX(-2px) rotate(-5deg) }
+  40% { transform: translateX(2px) rotate(4deg) }
+  60% { transform: translateX(-1px) rotate(-2deg) }
+  80% { transform: translateX(1px) rotate(1deg) }
+}
+.mascot-live { overflow: visible; }
+/* contur alb, ca un abțibild: uliul se vede și pe fundaluri închise (filtrul e pe desen, nu în SVG) */
+.mascot-live { filter: drop-shadow(0 0 0.7px #fff) drop-shadow(0 0 0.7px #fff) drop-shadow(0 2px 4px rgb(16 21 58 / 0.18)); }
+.mascot-bob { animation: mascot-bob 3.2s cubic-bezier(0.45, 0, 0.55, 1) infinite; transform-origin: 50% 60%; }
+.mascot-jump { animation: mascot-jump 0.85s cubic-bezier(0.3, 0.7, 0.4, 1) 2; transform-origin: 50% 85%; }
+.mascot-shake { animation: mascot-shake 0.5s ease-out 2; transform-origin: 50% 70%; }
+/* aripile bat rar, ca la planare; pivotul e umărul. Aripa din spate vine cu o clipă în urmă */
+@keyframes mascot-hover { 0%, 100% { transform: rotate(0) } 40% { transform: rotate(7deg) } 72% { transform: rotate(-4deg) scaleY(0.97) } }
+.mascot-live .mascot-wing { transform-box: fill-box; transform-origin: 94% 50%; animation: mascot-hover 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+.mascot-live .mascot-wing-far { animation-delay: -0.14s; }
+/* capul se uită din când în când în jur; coada se mișcă scurt */
+@keyframes mascot-look { 0%, 60%, 100% { transform: rotate(0) } 65%, 76% { transform: rotate(-8deg) } 81%, 91% { transform: rotate(5deg) } }
+@keyframes mascot-tail { 0%, 86%, 100% { transform: rotate(0) } 90% { transform: rotate(3deg) } 95% { transform: rotate(-2deg) } }
+.mascot-live .mascot-head { transform-box: fill-box; transform-origin: 50% 90%; animation: mascot-look 9s ease-in-out infinite; }
+.mascot-live .mascot-tail { transform-box: fill-box; transform-origin: 50% 0; animation: mascot-tail 7s ease-in-out infinite; }
+/* clipitul: unul simplu, apoi unul dublu */
+@keyframes mascot-blink { 0%, 44%, 50%, 88%, 100% { transform: scaleY(1) } 47% { transform: scaleY(0.1) } 91% { transform: scaleY(0.1) } 93% { transform: scaleY(1) } 95.5% { transform: scaleY(0.1) } }
+.mascot-blink { animation: mascot-blink 6s infinite; transform-origin: 81px 70px; }
+/* bulele de gândire urcă pe rând; undele ascultării pulsează */
+@keyframes mascot-rise { 0% { opacity: 0; transform: translateY(2px) } 30%, 70% { opacity: 1; transform: none } 100% { opacity: 0; transform: translateY(-2px) } }
 @keyframes mascot-pulse { 0%, 100% { opacity: 0.3 } 50% { opacity: 1 } }
-.mascot-bob { animation: mascot-bob 3s ease-in-out infinite; }
-.mascot-jump { animation: mascot-jump 0.9s ease-out 2; }
-.mascot-shake { animation: mascot-shake 0.35s ease-in-out 4; }
-.mascot-blink { animation: mascot-blink 4s infinite; transform-origin: 81px 70px; }
-.mascot-dots circle, .mascot-waves path { animation: mascot-pulse 1.2s ease-in-out infinite; }
-.mascot-dots circle:nth-child(2), .mascot-waves path:nth-child(2) { animation-delay: 0.3s; }
-.mascot-dots circle:nth-child(3) { animation-delay: 0.6s; }
+.mascot-dots circle { animation: mascot-rise 1.5s ease-in-out infinite both; }
+.mascot-waves path { animation: mascot-pulse 1.2s ease-in-out infinite; }
+.mascot-dots circle:nth-child(2), .mascot-waves path:nth-child(2) { animation-delay: 0.2s; }
+.mascot-dots circle:nth-child(3) { animation-delay: 0.4s; }
+/* confetti: pleacă din uliu spre locul lor */
+@keyframes mascot-burst { from { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4) } 50% { opacity: 1 } to { opacity: 1; transform: none } }
+.mascot-bit { animation: mascot-burst 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.mascot-bit:nth-child(1) { --dx: 15px; --dy: -10px; }
+.mascot-bit:nth-child(2) { --dx: -13px; --dy: -11px; animation-delay: 40ms; }
+.mascot-bit:nth-child(3) { --dx: 7px; --dy: 12px; animation-delay: 80ms; }
+.mascot-bit:nth-child(4) { --dx: -9px; --dy: 13px; animation-delay: 120ms; }
+.mascot-bit:nth-child(5) { --dx: 13px; --dy: 3px; animation-delay: 160ms; }
+.mascot-bit:nth-child(6) { --dx: -13px; --dy: 2px; animation-delay: 200ms; }
 /* „searching”: lupa trece prin fața ochilor, stânga-dreapta; pupilele o urmăresc puțin */
 @keyframes mascot-search { 0%, 100% { transform: translateX(-7px) } 50% { transform: translateX(7px) } }
 @keyframes mascot-search-eye { 0%, 100% { transform: translateX(-0.8px) } 50% { transform: translateX(0.8px) } }
 .mascot-search { animation: mascot-search 1.6s ease-in-out infinite; }
 .mascot-search-eye { animation: mascot-search-eye 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path, .mascot-search, .mascot-search-eye { animation: none; }
+  .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path, .mascot-search, .mascot-search-eye,
+  .mascot-live .mascot-wing, .mascot-live .mascot-head, .mascot-live .mascot-tail { animation: none; }
+  .mascot-bit { animation-duration: 1ms; }
 }
+
+/* Replica uliului din panoul extensiei: balon cu codiță spre el, care reapare la fiecare replică nouă */
+.speech { position: relative; }
+.speech::before {
+  content: ""; position: absolute; left: -6px; top: 18px; width: 11px; height: 11px;
+  background: var(--color-card); border-left: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line);
+  transform: rotate(45deg); border-bottom-left-radius: 2px;
+}
+@keyframes speech-in { from { opacity: 0; transform: translateX(-4px) } to { opacity: 1; transform: none } }
+.speech-text { animation: speech-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes panel-step-in { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.panel-step { animation: panel-step-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes panel-job-in { from { opacity: 0; transform: translateY(8px) scale(0.99) } to { opacity: 1; transform: none } }
+.panel-job { animation: panel-job-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.panel-section:target h2 { color: var(--color-ink); }
+/* randarea videoclipului: o lumină trece peste cadru; cadrul curent clipește; clipul apare de sus în jos */
+@keyframes video-sweep { from { transform: translateX(-100%) } to { transform: translateX(100%) } }
+.video-render-sweep { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.07) 50%, transparent 70%); animation: video-sweep 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
+@keyframes video-frame { 0%, 100% { opacity: 0.35 } 50% { opacity: 1 } }
+.video-frame-now { animation: video-frame 0.9s ease-in-out infinite; }
+@keyframes video-reveal { from { clip-path: inset(0 0 100% 0 round 12px); opacity: 0.6 } to { clip-path: inset(0 0 0 0 round 12px); opacity: 1 } }
+.video-reveal { animation: video-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) { .speech-text, .panel-step, .panel-job, .video-render-sweep, .video-frame-now { animation: none; } .video-reveal { animation: none; } }
 
 /* elementul arătat de asistent în turul ghidat */
 @keyframes mascot-ring { 0%, 100% { box-shadow: 0 0 0 3px var(--color-ink-2) } 50% { box-shadow: 0 0 0 7px rgb(27 35 80 / 0.18) } }

@@ -7,7 +7,7 @@ async function injectSpire(tabId) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["config.js", "mascot-poses.js", "critique.js", "content.js"],
+      files: ["config.js", "mascot-poses.js", "critique.js", "inspire.js", "content.js"],
     });
     return true;
   } catch (e) {
@@ -49,7 +49,10 @@ async function capture(windowId) {
 
 // Observațiile AI ale criticii. Fetch-ul stă aici, nu în pagină: din pagină ar fi supus CORS-ului
 // site-ului. Chrome oprește service worker-ul dacă un fetch depășește 30 s, deci renunțăm înainte.
+// Serverul primește un termen puțin mai scurt, ca să împartă timpul între Gemini și modelul de rezervă
+// și să răspundă cu o eroare clară înainte să renunțe extensia.
 const AI_TIMEOUT_MS = 28000;
+const AI_SERVER_BUDGET_MS = 26000;
 const AI_IMAGE_WIDTH = 1280;
 
 async function shrinkImage(dataUrl) {
@@ -69,11 +72,11 @@ async function askCritique(request, image) {
     const res = await fetch(SPIRE_CONFIG.APP_URL + "/api/ai", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ prompt: request.prompt, schema: request.schema, mock: request.mock, attachments: [attachment] }),
+      body: JSON.stringify({ prompt: request.prompt, schema: request.schema, mock: request.mock, attachments: [attachment], timeoutMs: AI_SERVER_BUDGET_MS }),
       signal: AbortSignal.timeout(AI_TIMEOUT_MS),
     });
     const body = await res.json().catch(() => null);
-    if (!res.ok) return { ok: false, error: (body && body.error) || "HTTP " + res.status };
+    if (!res.ok) return { ok: false, status: res.status, error: (body && body.error) || "HTTP " + res.status };
     return { ok: true, data: body && body.data, model: body && body.model };
   } catch (e) {
     return { ok: false, error: e && e.message ? e.message : String(e) };
@@ -84,13 +87,13 @@ async function askCritique(request, image) {
 // (manifestul nu are externally_connectable), dar verificăm oricum expeditorul.
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id || !sender.tab) return false;
-  if (!message || (message.type !== "capture" && message.type !== "critique-ai")) return false;
+  if (!message || (message.type !== "capture" && message.type !== "critique-ai" && message.type !== "inspire-ai")) return false;
   // Doar cadrul principal al filei (content.js nu rulează în iframe-uri).
   if (sender.frameId !== 0) {
     sendResponse({ ok: false, error: "Captura se cere doar din pagina principală." });
     return false;
   }
-  if (message.type === "critique-ai") {
+  if (message.type === "critique-ai" || message.type === "inspire-ai") {
     askCritique(message.request, message.image).then(sendResponse);
     return true;
   }

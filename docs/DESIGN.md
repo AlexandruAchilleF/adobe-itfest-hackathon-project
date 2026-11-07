@@ -88,6 +88,12 @@ Uli e un uliu care zboară spre privitor, întors puțin spre dreapta. Ce îl fa
 
 Stările se văd din postură, nu doar din față: bucuria ridică aripile, îngrijorarea le lasă în jos și ridică sprâncenele, ascultarea înclină capul.
 
+În extensie, uliul are un contur alb subțire (filtru pe desen, nu în SVG), ca să se vadă și pe site-uri cu fundal închis.
+
+**Panoul din extensie** (480 px, `/nou?din=extensie`): sus, fix, uliul cu replica lui; după brief, dedesubt, navigarea pe secțiuni (Observații, Brief, Materiale; Design doar după ce alegi un chenar de pe pagină). În bara panoului, **Inspire** te lasă să tragi un dreptunghi peste pagină; zona e recreată în HTML/CSS și apare în panou, la scara ei, cu comutare Recreat / Original, ecran complet și cod de copiat. Fiecare secțiune are un titlu, o frază și un singur card, fără carduri în carduri. **Balonul de brief** de pe site pune o singură întrebare odată; răspunsurile date rămân sus ca etichete pe care le apeși ca să te întorci, iar la final apare un rezumat cu „Continuă cu o campanie”.
+
+Mișcarea (în `src/index.css`, copiată în foaia din `chrome-extension/content.js`): aripile pivotează din umăr; în zbor coborârea e mai rapidă decât ridicarea, iar corpul urcă pe coborâre; la schimbarea direcției se întoarce cu fața spre unde zboară. Așezat, respiră, clipește (uneori de două ori), se uită în jur și mișcă scurt din coadă, cu o umbră sub gheare. Bucuria sare, îngrijorarea se scutură, confetti pleacă din corp. Grupurile animabile din desen: `mascot-wing` (și `mascot-wing-far`), `mascot-head`, `mascot-tail`, `mascot-bit`. Fără stiluri inline în SVG (CSP-ul unor site-uri le blochează în extensie). Cu „mișcare redusă” rămân doar schimbările de stare, fără deplasare.
+
 ## Uneltele echipei
 
 Înregistrarea video, modul demo, starea AI, resetarea datelor și paginile „Pentru echipă” stau în panoul din `src/components/DevPanel.tsx`, care apare doar cu `?dev=1` (rămâne pornit în browser până la `?dev=0`). Juriul nu le vede.

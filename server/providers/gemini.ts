@@ -19,7 +19,11 @@ function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
   return Promise.race([work, expired]).finally(() => clearTimeout(timer));
 }
 
-async function callModel(model: string, req: AiRequest, schema: Record<string, unknown> | undefined): Promise<ProviderResult> {
+const MAX_BUDGET_MS = 60_000;
+/** Cu un termen total și un model de rezervă, principalul primește 60%, ca rezerva să mai aibă timp. */
+const PRIMARY_SHARE = 0.6;
+
+async function callModel(model: string, req: AiRequest, schema: Record<string, unknown> | undefined, timeoutMs: number): Promise<ProviderResult> {
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const parts: Part[] = (req.attachments ?? []).map((a) => ({
     inlineData: { mimeType: a.mimeType, data: a.data },
@@ -35,7 +39,7 @@ async function callModel(model: string, req: AiRequest, schema: Record<string, u
         ...(schema ? { responseMimeType: "application/json", responseJsonSchema: schema } : {}),
       },
     }),
-    Number(process.env.GEMINI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS,
+    timeoutMs,
   );
   const text = (res.text ?? "").trim();
   if (!text) {
@@ -60,10 +64,19 @@ export async function callGemini(req: AiRequest, schema?: Record<string, unknown
   const fallback = process.env.GEMINI_FALLBACK_MODEL || "gemini-3.5-flash";
   const models = [...new Set([primary, fallback])];
 
+  const perModel = Number(process.env.GEMINI_TIMEOUT_MS) || DEFAULT_TIMEOUT_MS;
+  const budget = Number(req.timeoutMs) > 0 ? Math.min(Number(req.timeoutMs), MAX_BUDGET_MS) : undefined;
+  const deadline = budget ? Date.now() + budget : undefined;
+
   let last: unknown;
-  for (const model of models) {
+  for (const [i, model] of models.entries()) {
+    let timeoutMs = perModel;
+    if (budget && deadline) {
+      const share = i === 0 && models.length > 1 ? budget * PRIMARY_SHARE : deadline - Date.now();
+      timeoutMs = Math.max(1, Math.min(perModel, share));
+    }
     try {
-      return await callModel(model, req, schema);
+      return await callModel(model, req, schema, timeoutMs);
     } catch (err) {
       last = err;
       if (!tryNextModel(err)) throw toProviderError(err, model);

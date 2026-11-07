@@ -19,6 +19,8 @@ export interface AiRequest {
   mock?: unknown;
   /** Forțează un furnizor pentru cererea asta. */
   provider?: AiProviderName;
+  /** Cât așteaptă apelantul în total, în ms (ex. extensia, oprită de Chrome la 30 s). Gemini împarte timpul între model și rezervă. */
+  timeoutMs?: number;
 }
 
 export interface AiResponse {

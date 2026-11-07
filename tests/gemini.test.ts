@@ -49,6 +49,21 @@ describe("callGemini, cu model de rezervă", () => {
     await expect(callGemini({ prompt: "x" })).rejects.toMatchObject({ status: 502 });
     expect(usedModels()).toEqual(["principal", "rezerva"]);
   });
+  it("cu timeoutMs, modelul de rezervă mai are timp după ce principalul nu răspunde", async () => {
+    vi.stubEnv("GEMINI_TIMEOUT_MS", "20000");
+    generateContent.mockImplementationOnce(() => new Promise(() => {})).mockResolvedValue(ok("merge"));
+    const started = Date.now();
+    expect((await callGemini({ prompt: "x", timeoutMs: 200 })).model).toBe("rezerva");
+    expect(Date.now() - started).toBeLessThan(200);
+  });
+  it("cu timeoutMs, renunță înainte să expire, chiar dacă niciun model nu răspunde", async () => {
+    vi.stubEnv("GEMINI_TIMEOUT_MS", "20000");
+    generateContent.mockImplementation(() => new Promise(() => {}));
+    const started = Date.now();
+    await expect(callGemini({ prompt: "x", timeoutMs: 200 })).rejects.toMatchObject({ status: 502 });
+    expect(Date.now() - started).toBeLessThan(260);
+    expect(usedModels()).toEqual(["principal", "rezerva"]);
+  });
   it("nu încearcă de două ori același model", async () => {
     vi.stubEnv("GEMINI_FALLBACK_MODEL", "principal");
     generateContent.mockRejectedValue(overloaded());

@@ -14,14 +14,14 @@ import { revealDelay, SCAN_TIMEOUT_MS, scanRequest } from "../../lib/extensionPa
 import { reducedMotion } from "../../lib/motion";
 import { hasPendingReference, takePendingReference } from "../../lib/pendingReference";
 import { isFromExtension, type CritiqueBrief, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
-import { type Answers, type FormatId, type Question, briefQuestions, questionsFor, fillBriefGaps, briefSeed } from "../../lib/gaps";
+import { type Answers, type FormatId, type Question, questionsFor, fillBriefGaps, briefSeed } from "../../lib/gaps";
 import { analyzeReference, checkMascot, generateMascot, summarizePage, writeCopy } from "../../lib/spireAi";
 import { illustrationSignature, readFile, toDataUrl } from "../../lib/spireImages";
 import { mascot } from "../../modules/mascot/mascot";
 import { MascotFigure } from "../../modules/mascot/MascotFigure";
 import { useMascotPage } from "../../modules/mascot/page";
 import { CampaignWorkspace } from "./CampaignWorkspace";
-import { CheckList, FormatTabs, useBrand, WhatIsNew } from "./parts";
+import { CheckList, FormatTabs, PanelNav, PanelSection, useBrand, WhatIsNew } from "./parts";
 import { ReferenceDrop } from "./ReferenceDrop";
 
 const ROLE_LABEL: Record<Anatomy["zones"][number]["role"], string> = { headline: "titlu", offer: "ofertă", cta: "buton", body: "text", illustration: "ilustrație", logo: "logo", photo: "fotografie" };
@@ -116,6 +116,29 @@ function QuestionBlock({ q, answers, onAnswer }: { q: Question; answers: Answers
         </label>
       )}
     </fieldset>
+  );
+}
+
+/** Panoul din extensie, înainte de scanare: drumul în trei pași, ca panoul să nu stea gol. */
+const PANEL_STEPS = [
+  ["Mă uit pe pagină", "Citesc culorile, fonturile, titlurile și butoanele site-ului."],
+  ["Îți spun ce aș schimba", "Apoi te întreb ce promovezi și cui te adresezi."],
+  ["Facem materialele", "Imagine, logo și video, pe stilul site-ului tău."],
+] as const;
+
+function PanelSteps() {
+  return (
+    <ol className="space-y-4 px-1 pt-3">
+      {PANEL_STEPS.map(([title, text], i) => (
+        <li key={title} className="panel-step flex gap-3" style={{ animationDelay: `${120 + i * 70}ms` }}>
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-card text-xs font-semibold text-ink tabular-nums ring-1 ring-line">{i + 1}</span>
+          <div className="min-w-0 pt-0.5">
+            <p className="text-[0.92rem] font-medium text-ink">{title}</p>
+            <p className="mt-0.5 text-sm leading-snug text-muted">{text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -224,7 +247,7 @@ export function NewCampaignPage() {
         setBrief(message.brief);
         setAnswers((current) => ({ ...message.brief.answers, ...current }));
         page.current = { ...message.brief.source, headings: [], ctas: [], colors: [], fonts: [] };
-        setSaid("Am păstrat brief-ul. Alege o referință pentru campanie.");
+        setSaid("Am păstrat brief-ul. Spune-mi ce materiale facem.");
       } else if (message.type === "spire:page") {
         window.clearTimeout(scanTimers.current.timeout);
         setScanFailed(false);
@@ -369,47 +392,20 @@ export function NewCampaignPage() {
   const ready = Boolean(answers.product?.trim());
   const formats = kit ? (Object.keys(kit.designs) as DesignFormat[]) : [];
   const design = kit?.designs[format];
-  const showPicker = !anatomy && !busy && (!embedded || !!brief);
+  // în panou, designul pe referință pornește doar dintr-un chenar ales pe pagină, nu dintr-o imagine încărcată
+  const showPicker = !anatomy && !busy && !embedded;
+  const mood = scanning ? "searching" : scanFailed || error ? "worried" : busy ? "thinking" : kit ? "happy" : "idle";
+  const sectioned = embedded && Boolean(brief);
+  const scanButton = (
+    <Button variant={scanned || sectioned ? "secondary" : "primary"} className="w-full" onClick={scan} disabled={scanning || Boolean(busy)} aria-busy={scanning}>
+      {scanning && <Spinner />}
+      {scanning ? "Mă uit pe pagină…" : scanned ? "Scanează din nou" : "Scanează pagina"}
+    </Button>
+  );
 
-  return (
-    <div onPaste={showPicker ? undefined : onPaste} className={embedded ? "mx-auto max-w-[420px] space-y-4 p-3" : "space-y-5"}>
-      {embedded ? (
-        <div className="space-y-3">
-          <div className="flex items-start gap-2">
-            <MascotFigure mood={scanning ? "searching" : scanFailed || error ? "worried" : busy ? "thinking" : kit ? "happy" : "idle"} size={64} />
-            <p className="card flex-1 p-3 text-[0.92rem] leading-snug text-ink">{busy ?? (said || "Sunt Spire. Apasă „Scanează pagina” și mă uit pe site-ul tău.")}</p>
-          </div>
-          <Button variant={scanned ? "secondary" : "primary"} className="w-full" onClick={scan} disabled={scanning || Boolean(busy)} aria-busy={scanning}>
-            {scanned ? "Scanează din nou" : "Scanează pagina"}
-          </Button>
-        </div>
-      ) : (
-        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <h1 className="text-[1.6rem] leading-tight font-semibold text-ink sm:text-[1.9rem]">Campanie nouă</h1>
-          <Steps current={newCampaignStep({ anatomy, kit })} />
-        </header>
-      )}
-
-      {error && (
-        <div className="space-y-2">
-          <ErrorNote error={error} />
-          {retry.current && (
-            <Button variant="secondary" onClick={() => retry.current?.()}>
-              Încearcă din nou
-            </Button>
-          )}
-        </div>
-      )}
-
-      {brief && <CampaignWorkspace brief={brief} answers={answers} brand={brand} onAnswersChange={setAnswers} />}
-      {brief && (
-        <Card title="Brief-ul tău" label="Din pagină">
-          <p className="mb-4 text-sm text-muted">{brief.source.title}</p>
-          <div className="space-y-5">
-            {briefQuestions(brief.answers.cta !== undefined ? ["link-vag"] : [], brief.source.title).map((q) => <QuestionBlock key={q.id} q={q} answers={answers} onAnswer={setAnswers} />)}
-          </div>
-        </Card>
-      )}
+  // Drumul pe o referință (imagine aleasă sau zonă din pagină): ce am văzut, întrebările, kitul.
+  const referenceFlow = (
+    <>
       {showPicker && <ReferenceDrop onPick={pick} action="primary" />}
 
       {reference && anatomy && (
@@ -468,6 +464,76 @@ export function NewCampaignPage() {
             </div>
           </Card>
         </div>
+      )}
+    </>
+  );
+
+  return (
+    <div onPaste={showPicker ? undefined : onPaste} className={embedded ? "mx-auto max-w-[480px] space-y-4 p-3 pb-10" : "space-y-5"}>
+      {embedded && (
+          /* uliul rămâne la vedere cât derulezi panoul (copil direct al paginii, altfel `sticky` s-ar
+             opri la capătul părintelui); replica lui reapare la fiecare schimbare. Cu brief-ul primit,
+             dedesubt apar secțiunile, ca să sari direct unde ai treabă. */
+          <div className="sticky top-0 z-10 -mx-3 -mt-3 space-y-2.5 border-b border-line bg-paper px-3 pt-2 pb-3 [@media(max-height:520px)]:static">
+            <div className="flex items-start gap-1">
+              <div className="shrink-0">
+                <MascotFigure mood={mood} size={sectioned ? 64 : 84} />
+              </div>
+              <div className={`speech card min-w-0 flex-1 px-3.5 ${sectioned ? "mt-1.5 py-2.5" : "mt-3 py-3"}`}>
+                <p key={busy ?? said} className="speech-text text-[0.92rem] leading-snug text-ink" role="status" aria-live="polite">
+                  {busy ?? (said || "Sunt Spire. Apasă „Scanează pagina” și mă uit pe site-ul tău.")}
+                </p>
+              </div>
+            </div>
+            {sectioned && (
+              <PanelNav
+                sections={[
+                  { id: "observatii", label: "Observații" },
+                  { id: "brief", label: "Brief" },
+                  { id: "materiale", label: "Materiale" },
+                  ...(anatomy ? [{ id: "design", label: "Design" }] : []),
+                ]}
+              />
+            )}
+          </div>
+      )}
+      {embedded && !sectioned && (
+        <div className="space-y-3">
+          {scanButton}
+          {!brief && !scanned && !scanning && !reference && <PanelSteps />}
+        </div>
+      )}
+      {!embedded && (
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <h1 className="text-[1.6rem] leading-tight font-semibold text-ink sm:text-[1.9rem]">Campanie nouă</h1>
+          <Steps current={newCampaignStep({ anatomy, kit })} />
+        </header>
+      )}
+
+      {error && (
+        <div className="space-y-2">
+          <ErrorNote error={error} />
+          {retry.current && (
+            <Button variant="secondary" onClick={() => retry.current?.()}>
+              Încearcă din nou
+            </Button>
+          )}
+        </div>
+      )}
+
+      {brief && <CampaignWorkspace brief={brief} answers={answers} brand={brand} onAnswersChange={setAnswers} />}
+      {/* în panou, designul pe referință apare doar când alegi un chenar de pe pagină;
+          pentru o zonă recreată în cod e butonul Inspire din bara panoului */}
+      {sectioned ? (
+        anatomy && (
+          <div className="pt-5">
+            <PanelSection id="design" title="Design pe stilul ales">
+              {referenceFlow}
+            </PanelSection>
+          </div>
+        )
+      ) : (
+        referenceFlow
       )}
     </div>
   );

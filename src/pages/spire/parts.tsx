@@ -1,5 +1,5 @@
 // Piese comune paginilor Spire: bifele gărzii, alegerea formatului, marca curentă.
-import { useLayoutEffect, useRef } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { demoBrand } from "../../lib/brand";
 import { brands, type DesignFormat, FORMAT_LABEL } from "../../lib/campaigns";
 import { failedKey, guardSummary } from "../../lib/campaignList";
@@ -77,4 +77,62 @@ export function FormatTabs({ formats, value, onChange }: { formats: DesignFormat
 /** Spus pe ecran: așezarea e preluată intenționat, restul e nou. */
 export function WhatIsNew() {
   return <p className="text-sm leading-relaxed text-muted">Preluat din referință: așezarea. Nou, pe marca ta: ilustrația, textele, culorile și fonturile.</p>;
+}
+
+/**
+ * O secțiune a panoului din extensie: titlu, o frază despre ce faci aici, apoi conținutul.
+ * Fără card în jur: conținutul își are cardul lui, ca să nu fie carduri în carduri.
+ */
+export function PanelSection({ id, title, hint, children }: { id: string; title: string; hint?: ReactNode; children: ReactNode }) {
+  return (
+    <section id={id} aria-labelledby={`${id}-titlu`} className="panel-section scroll-mt-40 space-y-3">
+      <div className="px-0.5">
+        <h2 id={`${id}-titlu`} className="text-[1.05rem] font-semibold tracking-[-0.01em] text-ink">
+          {title}
+        </h2>
+        {hint && <p className="mt-0.5 text-sm leading-snug text-muted">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Navigarea între secțiunile panoului: sare la secțiune și arată unde ești. */
+export function PanelNav({ sections }: { sections: Array<{ id: string; label: string }> }) {
+  const [active, setActive] = useState(sections[0]?.id);
+  const ids = sections.map((s) => s.id).join(",");
+  useEffect(() => {
+    const els = ids.split(",").map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    if (!els.length || typeof IntersectionObserver === "undefined") return;
+    const visible = new Map<string, boolean>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => visible.set(e.target.id, e.isIntersecting));
+        const first = els.find((el) => visible.get(el.id));
+        if (first) setActive(first.id);
+      },
+      { rootMargin: "-150px 0px -45% 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [ids]);
+  return (
+    <nav aria-label="Secțiunile panoului" className="flex gap-1 rounded-xl bg-paper-2 p-1">
+      {sections.map((s) => (
+        <a
+          key={s.id}
+          href={`#${s.id}`}
+          aria-current={active === s.id ? "true" : undefined}
+          onClick={(e) => {
+            e.preventDefault();
+            setActive(s.id);
+            document.getElementById(s.id)?.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+          }}
+          className={`flex-1 rounded-lg px-2 py-1.5 text-center text-[0.8rem] font-medium transition-colors ${active === s.id ? "bg-card text-ink shadow-[0_1px_2px_rgb(27_35_80/0.08)]" : "text-muted hover:text-ink"}`}
+        >
+          {s.label}
+        </a>
+      ))}
+    </nav>
+  );
 }

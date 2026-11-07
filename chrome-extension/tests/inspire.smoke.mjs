@@ -1,0 +1,81 @@
+import { fileURLToPath } from 'node:url';
+const { chromium, expect } = await import(new URL('../../node_modules/@playwright/test/index.mjs', import.meta.url));
+import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root=fileURLToPath(new URL('../..', import.meta.url));
+const dir=mkdtempSync(join(tmpdir(),'spire-resume-ext-')), profile=mkdtempSync(join(tmpdir(),'spire-resume-profile-'));
+let context;
+try {
+ cpSync(root+'/chrome-extension',dir,{recursive:true});
+ const manifest=JSON.parse(readFileSync(join(dir,'manifest.json'),'utf8'));
+ manifest.host_permissions=['<all_urls>']; writeFileSync(join(dir,'manifest.json'),JSON.stringify(manifest));
+ writeFileSync(join(dir,'config.js'),`globalThis.SPIRE_CONFIG={APP_URL:'https://app.spire.test',APP_ORIGIN:'https://app.spire.test'};`);
+ const content=join(dir,'content.js');writeFileSync(content,'globalThis.__spireTestSpeed=.03;\n'+readFileSync(content,'utf8'));
+ context=await chromium.launchPersistentContext(profile,{channel:'chromium',headless:true,viewport:{width:1280,height:720},args:[`--disable-extensions-except=${dir}`,`--load-extension=${dir}`]});
+ await context.route('https://site.spire.test/**',route=>route.fulfill({contentType:'text/html',body:'<title>Cazare</title><h1>Cazare pentru familii</h1><a href="/rezerva">Rezervă acum</a>'}));
+ await context.route('https://app.spire.test/**',route=>route.fulfill({contentType:'text/html',body:`<script>
+ window.calls=0;
+ addEventListener('message',e=>{if(e.data.type==='spire:critique-request'){window.calls++;parent.postMessage({type:'spire:critique-result',requestId:e.data.requestId,result:{mode:'mock',critiques:[{elementId:null,ruleId:'ai-critique',level:'important',title:'Scop neclar',body:'Titlul nu explică serviciul.',fix:'Aș descrie serviciul.',evidence:{category:'purpose'}}]}},'*')}});
+ parent.postMessage({type:'spire:brief-ready'},'*');</script>`}));
+ const sw=context.serviceWorkers()[0]||await context.waitForEvent('serviceworker');
+ const page=await context.newPage();page.on('pageerror',e=>console.log('PAGE ERROR',e.message));await page.goto('https://site.spire.test/');
+ await sw.evaluate(async()=>{const [tab]=await chrome.tabs.query({url:'https://site.spire.test/*'});await globalThis.injectSpire(tab.id)});
+ const host=page.locator('#spire-root'), bird=host.getByRole('button',{name:'Spire, deschide meniul'});
+ await sw.evaluate(() => {
+   const originalFetch=globalThis.fetch;
+   globalThis.inspireCalls=[];
+   globalThis.fetch=async (url,init)=>{
+    if(String(url).endsWith('/api/ai')) {
+     if(globalThis.inspireFail) return new Response(JSON.stringify({error:'Eroare de test Gemini'}),{status:502});
+     globalThis.inspireCalls.push(JSON.parse(init.body));
+     if(globalThis.inspireDelay) await new Promise(r=>setTimeout(r,globalThis.inspireDelay));
+     return new Response(JSON.stringify({model:'gemini-test',data:{title:'Selecție recreată',html:'<article><h1 id="recreated">Cazare pentru familii</h1><button>Rezervă acum</button></article><script>parent.document.body.dataset.attacked="yes"</script><img src="https://evil.spire.test/leak">',css:'body{background:rgb(230,240,250);font-family:Arial}article{padding:32px}button:hover{background:coral}'}}),{status:200,headers:{'content-type':'application/json'}});
+    }
+    return originalFetch(url,init);
+   };
+ });
+ await bird.click();
+ await host.getByRole('button',{name:'Inspire',exact:true}).click();
+ await expect(host.locator('.spire-crop')).toBeVisible();
+ await page.mouse.move(20,20);await page.mouse.down();await page.mouse.move(22,22);await page.mouse.up();
+ await expect(host.locator('.spire-crop')).toBeVisible();
+ expect(await sw.evaluate(()=>globalThis.inspireCalls.length)).toBe(0);
+ await page.keyboard.press('Escape');await expect(host.locator('.spire-crop')).toBeHidden();
+ await bird.click();await host.getByRole('button',{name:'Inspire',exact:true}).click();
+ await page.mouse.move(15,15);await page.mouse.down();await page.mouse.move(450,180);await page.mouse.up();
+ await expect(host.getByRole('heading',{name:'Selecție recreată',exact:true})).toBeVisible({timeout:15000});
+ const preview=host.getByTitle('Demo Inspire');
+ await expect(preview).toHaveAttribute('sandbox','');
+ const demo=await (await preview.elementHandle()).contentFrame();
+ await expect(demo.locator('#recreated')).toHaveText('Cazare pentru familii');
+ await expect(demo.locator('body')).toHaveCSS('background-color','rgb(230, 240, 250)');
+ expect(await demo.locator('script,img[src^="https:"]').count()).toBe(0);
+ expect(await page.evaluate(()=>document.body.dataset.attacked)).toBeUndefined();
+ await host.getByText('Vezi codul',{exact:true}).click();
+ await expect(host.locator('.spire-inspire-code')).toContainText('<article>');
+ const calls=await sw.evaluate(()=>globalThis.inspireCalls);
+ expect(calls.length).toBe(1);expect(calls[0].attachments[0].mimeType).toBe('image/jpeg');
+ expect(calls[0].prompt).toContain('HTML');
+ const size=await sw.evaluate(async data=>{const bitmap=await createImageBitmap(await (await fetch('data:image/jpeg;base64,'+data)).blob());return {w:bitmap.width,h:bitmap.height};},calls[0].attachments[0].data);
+ expect(size).toEqual({w:435,h:165});
+ writeFileSync('/tmp/spire-inspire-request.json',JSON.stringify(calls[0]));
+ await host.getByRole('button',{name:'Închide demo-ul'}).click();
+ await expect(host.locator('.spire-inspire')).toBeHidden();
+ await sw.evaluate(()=>{globalThis.inspireFail=true});
+ await bird.click();await host.getByRole('button',{name:'Inspire',exact:true}).click();
+ await page.mouse.move(15,15);await page.mouse.down();await page.mouse.move(450,180);await page.mouse.up();
+ await expect(host.getByRole('alert')).toHaveText('Eroare de test Gemini');
+ await sw.evaluate(()=>{globalThis.inspireFail=false});
+ await host.getByRole('button',{name:'Reîncearcă',exact:true}).click();
+ await expect(host.getByRole('heading',{name:'Selecție recreată',exact:true})).toBeVisible();
+ await host.getByRole('button',{name:'Închide demo-ul'}).click();
+ await sw.evaluate(()=>{globalThis.inspireDelay=1500});
+ await bird.click();await host.getByRole('button',{name:'Inspire',exact:true}).click();
+ await page.mouse.move(15,15);await page.mouse.down();await page.mouse.move(450,180);await page.mouse.up();
+ await expect(host.getByRole('heading',{name:'Recreez selecția…'})).toBeVisible();
+ await host.getByRole('button',{name:'Închide demo-ul'}).click();
+ await page.waitForTimeout(1800);
+ await expect(host.locator('.spire-inspire')).toBeHidden();
+ console.log('PASS: selecție → apel AI cu captură → HTML/CSS în demo izolat → cod → închidere');
+} finally {await context?.close();rmSync(dir,{recursive:true,force:true});rmSync(profile,{recursive:true,force:true});}

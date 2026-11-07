@@ -72,7 +72,9 @@ describe("ZIP-ul din public/", () => {
   });
 
   it("e la zi cu chrome-extension/ (altfel: npm run ext:zip)", () => {
-    const expected = walk(SRC).filter((f) => f !== "README.md").sort();
+    // aceeași regulă ca scripts/build-extension-zip.mjs: fără documentație și fără teste (ex. tests/)
+    const skip = /(^readme(\.|$)|\.md$|\.(test|spec)\.|^tests?$|^__tests__$)/i;
+    const expected = walk(SRC).filter((f) => !f.split("/").some((part) => skip.test(part))).sort();
     expect([...files.keys()].sort()).toEqual(expected);
     for (const name of expected) {
       if (name === "config.js") continue;

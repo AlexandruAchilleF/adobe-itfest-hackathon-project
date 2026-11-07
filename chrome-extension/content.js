@@ -46,14 +46,26 @@
   // Stilurile sunt locale, în foaie construită: funcționează și cu style-src none.
   var sheet = new CSSStyleSheet();
   sheet.replaceSync(`/* Stilurile stratului Spire. Se încarcă doar în shadow root-ul lui #spire-root, deci nu ating
-   pagina gazdă. Fără dark mode. Gazda (poziție fixă, all: initial) e stilată din content.js. */
+   pagina gazdă. Fără dark mode. Gazda (poziție fixă, all: initial) e stilată din content.js.
+   Culorile sunt cele din aplicație (src/index.css, docs/DESIGN.md): bleumarin pentru text,
+   coral doar pe acțiunea principală, coral aprins pe chenarele de pe pagină. */
 
 :host {
-  --spire-coral: #F25C3B;
-  --spire-ink: #1f2a44;
-  --spire-paper: #ffffff;
-  --spire-line: #e3e5ea;
-  font-family: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --spire-ink: #1b2350;
+  --spire-ink-2: #3d4366;
+  --spire-muted: #646985;
+  --spire-line: #e5e3de;
+  --spire-paper: #f6f5f2;
+  --spire-paper-2: #efede8;
+  --spire-card: #ffffff;
+  --spire-coral: #c84a37;
+  --spire-coral-deep: #a3392a;
+  --spire-coral-bright: #e0614a;
+  --spire-gold: #d9a03a;
+  --spire-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --spire-shadow: 0 1px 2px rgba(27, 35, 80, 0.06), 0 18px 40px -18px rgba(27, 35, 80, 0.38);
+  --spire-font: "Spire Geist", "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--spire-font);
   color: var(--spire-ink);
 }
 
@@ -72,18 +84,29 @@
 }
 
 /* Linia de scanare: trece o dată de sus în jos, cât content.js citește pagina (spire:scan).
-   Stă în .spire-boxes, deci nu prinde clicuri. Durata e SCAN_LINE_MS din content.js. */
+   Stă în .spire-boxes, deci nu prinde clicuri. Durata e SCAN_LINE_MS din content.js.
+   În urma ei rămâne o dâră scurtă, ca să se vadă direcția. */
 .spire-scanline {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--spire-coral);
-  box-shadow: 0 0 0 1px rgba(242, 92, 59, 0.12), 0 6px 18px rgba(242, 92, 59, 0.28);
-  opacity: 0.75;
+  background: var(--spire-coral-bright);
+  box-shadow: 0 6px 18px rgba(224, 97, 74, 0.3);
+  opacity: 0.85;
   pointer-events: none;
-  animation: spire-scan 1200ms ease-in-out forwards;
+  animation: spire-scan 1200ms cubic-bezier(0.45, 0, 0.25, 1) forwards;
+}
+
+.spire-scanline::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  height: 56px;
+  background: linear-gradient(to top, rgba(224, 97, 74, 0.12), rgba(224, 97, 74, 0));
 }
 
 @keyframes spire-scan {
@@ -92,10 +115,10 @@
     opacity: 0;
   }
   10% {
-    opacity: 0.75;
+    opacity: 0.85;
   }
   90% {
-    opacity: 0.75;
+    opacity: 0.85;
   }
   100% {
     transform: translateY(100vh);
@@ -118,24 +141,28 @@
   .spire-scanline {
     inset: 0;
     height: auto;
-    background: rgba(242, 92, 59, 0.06);
+    background: rgba(224, 97, 74, 0.06);
     box-shadow: none;
     opacity: 0;
     animation: spire-scan-flash 400ms ease-out 1;
+  }
+
+  .spire-scanline::before {
+    display: none;
   }
 }
 
 /* Un chenar de scanare (A2): elementul citit din pagină. Poziția vine din content.js. */
 .spire-box {
   position: absolute;
-  border: 2px solid var(--spire-coral);
-  border-radius: 6px;
-  background: rgba(242, 92, 59, 0.06);
+  border: 2px solid var(--spire-coral-bright);
+  border-radius: 8px;
+  background: rgba(224, 97, 74, 0.05);
   pointer-events: none;
   /* Stins până îi vine rândul; content.js pune .spire-box-lit pe rând, la 250 ms. */
   opacity: 0;
-  transform: scale(0.98);
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  transform: scale(0.97);
+  transition: opacity 220ms ease-out, transform 320ms var(--spire-ease), background-color 150ms ease-out;
 }
 
 /* Aprins, chenarul se poate alege (A3). Interiorul rămâne transparent la clicuri (un chenar hero
@@ -189,7 +216,7 @@
 
 .spire-box-lit:hover,
 .spire-box-lit:focus-visible {
-  background: rgba(242, 92, 59, 0.14);
+  background: rgba(224, 97, 74, 0.12);
   outline: none;
 }
 
@@ -200,18 +227,19 @@
   position: absolute;
   right: 6px;
   bottom: 6px;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
   background: var(--spire-ink);
   color: #ffffff;
-  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+  font: 500 12px/1.4 var(--spire-font);
+  box-shadow: 0 6px 14px -6px rgba(27, 35, 80, 0.5);
 }
 
 /* Stratul de decupaj (A3): peste pagină, sub panou; prinde clicuri doar cât e deschis. */
 .spire-crop {
   position: fixed;
   inset: 0;
-  background: rgba(31, 42, 68, 0.12);
+  background: rgba(27, 35, 80, 0.14);
   cursor: crosshair;
   pointer-events: auto;
   touch-action: none;
@@ -225,15 +253,16 @@
 
 .spire-crop-rect {
   position: absolute;
-  border: 2px solid var(--spire-coral);
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid var(--spire-coral-bright);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 9999px rgba(27, 35, 80, 0.12);
   pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .spire-box {
-    transition: none;
+    transition: opacity 150ms ease-out;
     transform: none;
   }
 }
@@ -243,55 +272,93 @@
   position: absolute;
   left: -2px;
   bottom: 100%;
-  margin-bottom: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  background: var(--spire-coral);
+  margin-bottom: 5px;
+  padding: 2px 9px;
+  border-radius: 7px;
+  background: var(--spire-coral-bright);
   color: #ffffff;
-  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+  font: 500 12px/1.4 var(--spire-font);
   white-space: nowrap;
+  box-shadow: 0 6px 14px -8px rgba(163, 57, 42, 0.6);
 }
 
-/* Panoul din dreapta: aplicația Spire. */
+/* Panoul din dreapta: aplicația Spire. Intră din dreapta; strâns, iese tot spre dreapta. */
 .spire-panel {
   position: fixed;
   top: 0;
   right: 0;
-  width: 420px;
+  width: 480px;
   max-width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--spire-paper);
   border-left: 1px solid var(--spire-line);
-  box-shadow: -8px 0 24px rgba(31, 42, 68, 0.12);
+  box-shadow: -1px 0 0 rgba(27, 35, 80, 0.03), -24px 0 48px -24px rgba(27, 35, 80, 0.28);
   pointer-events: auto;
+  animation: spire-panel-in 380ms var(--spire-ease);
+  transition: transform 300ms var(--spire-ease), visibility 0s linear 0s;
+}
+
+@keyframes spire-panel-in {
+  from {
+    transform: translateX(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
 
 /* Strâns: ascuns, dar încărcat (visibility nu descarcă iframe-ul și nu se lovește la clic). */
-.spire-panel[hidden] {display:none}
-.spire-panel.spire-panel-collapsed {
-  visibility: hidden;
+.spire-panel[hidden] {
+  display: none;
 }
 
-/* Fila panoului strâns, lipită de marginea dreaptă. */
+.spire-panel.spire-panel-collapsed {
+  visibility: hidden;
+  transform: translateX(100%);
+  transition: transform 240ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 240ms;
+}
+
+/* Fila panoului strâns, lipită de marginea dreaptă: semnul Spire, apoi numele, pe verticală. */
 .spire-tab {
   position: fixed;
   top: 96px;
   right: 0;
   width: 44px;
-  padding: 14px 0;
+  padding: 12px 0 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   border: 1px solid var(--spire-line);
   border-right: 0;
-  border-radius: 10px 0 0 10px;
-  background: var(--spire-paper);
+  border-radius: 12px 0 0 12px;
+  background: var(--spire-card);
   color: var(--spire-ink);
-  box-shadow: -4px 0 12px rgba(31, 42, 68, 0.12);
-  font: 500 13px/1 "Geist", system-ui, sans-serif;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+  box-shadow: -10px 8px 24px -14px rgba(27, 35, 80, 0.4);
+  font: 600 13px/1 var(--spire-font);
+  letter-spacing: 0.01em;
   cursor: pointer;
   pointer-events: auto;
+  animation: spire-tab-in 300ms var(--spire-ease) 120ms both;
+  transition: background-color 150ms ease-out, padding 200ms var(--spire-ease);
+}
+
+.spire-tab-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+@keyframes spire-tab-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: none;
+  }
 }
 
 .spire-tab[hidden] {
@@ -299,7 +366,8 @@
 }
 
 .spire-tab:hover {
-  background: #f4f5f7;
+  background: var(--spire-paper);
+  padding-right: 4px;
 }
 
 .spire-tab:focus-visible {
@@ -315,74 +383,307 @@
   background: var(--spire-paper);
 }
 
-/* Bara de sus a panoului: starea (stânga), apoi butoanele. */
+/* Bara de sus a panoului: semnul și numele, uneltele; dedesubt, starea (doar când are text). */
 .spire-bar {
   display: flex;
   align-items: center;
+  gap: 6px;
+  padding: 10px 10px 10px 14px;
+  background: var(--spire-card);
+  border-bottom: 1px solid var(--spire-line);
+}
+
+.spire-brand {
+  display: flex;
+  align-items: center;
   gap: 8px;
-  padding: 8px 10px 0;
+  margin-right: auto;
+  font: 600 15px/1 var(--spire-font);
+  letter-spacing: -0.01em;
+  color: var(--spire-ink);
+}
+
+/* Semnul aplicației: pătrat bleumarin rotunjit cu un pătrățel coral (Mark din src/App.tsx). */
+.spire-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--spire-ink);
+}
+
+.spire-mark::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--spire-coral-bright);
 }
 
 .spire-status {
-  flex: 1;
-  min-width: 0;
   margin: 0;
-  font: 400 13px/1.35 "Geist", system-ui, sans-serif;
-  color: var(--spire-ink);
+  padding: 8px 14px;
+  font: 400 13px/1.4 var(--spire-font);
+  color: var(--spire-ink-2);
+  background: var(--spire-paper-2);
+  border-bottom: 1px solid var(--spire-line);
+}
+
+.spire-status:empty {
+  display: none;
 }
 
 .spire-button {
   flex: none;
-  padding: 6px 12px;
-  border: 1px solid var(--spire-line);
-  border-radius: 10px;
-  background: var(--spire-paper);
-  color: var(--spire-ink);
-  font: 500 13px/1.2 "Geist", system-ui, sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--spire-ink-2);
+  font: 500 13px/1 var(--spire-font);
   cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.spire-button svg {
+  flex: none;
 }
 
 .spire-button:hover {
-  background: #f4f5f7;
+  background: var(--spire-paper-2);
+  color: var(--spire-ink);
+}
+
+/* Decupajul pornit: butonul rămâne apăsat, în bleumarin. */
+.spire-button[aria-pressed="true"] {
+  background: var(--spire-ink);
+  color: #ffffff;
+}
+
+/* Strânge și Închide: doar iconița, numele e în aria-label. */
+.spire-icon-button {
+  width: 32px;
+  padding: 0;
 }
 
 .spire-button:focus-visible {
   outline: 2px solid var(--spire-ink);
   outline-offset: 2px;
 }
-:host { font-family:Geist,system-ui,sans-serif; color:#1f2a44 }
-.spire-bird {position:fixed;top:0;left:0;width:140px;height:140px;padding:0;border:0;background:none;cursor:pointer;pointer-events:auto;z-index:3;outline-offset:-15px}
+
+@media (prefers-reduced-motion: reduce) {
+  .spire-panel,
+  .spire-tab {
+    animation: none;
+  }
+
+  .spire-panel,
+  .spire-panel.spire-panel-collapsed {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* ---- Uliul, meniul și balonul. Mișcările desenului sunt copiate din src/index.css (mascot-*). ---- */
+.spire-bird {position:fixed;top:0;left:0;width:140px;height:140px;padding:0;border:0;background:none;cursor:pointer;pointer-events:auto;z-index:3;outline-offset:-15px;-webkit-tap-highlight-color:transparent}
+.spire-bird:focus-visible {outline:2px solid var(--spire-ink);border-radius:50%}
 .spire-body {display:block;width:100%;height:100%;transform-origin:50% 78%}
-.spire-pose {position:absolute;inset:0;opacity:0;transition:opacity .18s;pointer-events:none}
+/* umbra de sub gheare: apare cât stă așezat, se strânge când zboară */
+.spire-shadow {position:absolute;left:50%;top:97px;width:44px;height:8px;margin-left:-22px;border-radius:50%;background:rgba(27,35,80,.2);filter:blur(2.5px);opacity:0;transform:scale(.5);transition:opacity .2s ease-out,transform .35s var(--spire-ease);pointer-events:none}
+.perched .spire-shadow {opacity:1;transform:none}
+.spire-bird:hover .spire-shadow {transform:scale(1.12)}
+.spire-pose {position:absolute;inset:0;opacity:0;transition:opacity .16s ease-out;pointer-events:none}
 .spire-pose.show {opacity:1}
 .spire-pose svg {width:100%;height:100%;overflow:visible}
-.mascot-wing {transform-box:fill-box;transform-origin:10% 25%}
-.flap .mascot-wing {animation:spire-flap .17s ease-in-out infinite alternate}
-.glide .mascot-wing {animation:spire-glide 1.4s ease-in-out infinite alternate}
-.flare .mascot-wing {animation:none;transform:rotate(-34deg);transition:transform .25s ease-out}
-.perched .spire-pose.show svg {animation:spire-breathe 2.8s ease-in-out infinite alternate;transform-origin:50% 78%}
-@keyframes spire-flap {from{transform:rotate(-30deg)}to{transform:rotate(18deg) scaleY(.92)}}
-@keyframes spire-glide {from{transform:rotate(-6deg)}to{transform:rotate(-2deg)}}
-@keyframes spire-breathe {to{transform:scale(1.012,.99)}}
-.spire-menu,.spire-bubble {position:fixed;pointer-events:auto;z-index:4;background:#fff;border:1px solid #e3e5ea;border-radius:16px;padding:16px;box-shadow:0 8px 28px #1f2a4420;font:14px/1.45 Geist,system-ui,sans-serif;color:#1f2a44}
-.spire-menu {width:220px;display:grid;gap:8px}
-.spire-bubble {width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}
-.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}\n.spire-bubble [hidden] {display:none!important}
-.spire-menu button,.spire-bubble button {border:1px solid #e3e5ea;border-radius:9px;background:#fff;color:#1f2a44;padding:8px 10px;cursor:pointer;font:500 13px/1.3 Geist,system-ui,sans-serif}
-.spire-menu .spire-primary,.spire-bubble .spire-primary {background:#F25C3B;color:white;border-color:#F25C3B}
-.spire-question {display:grid;gap:5px;margin-top:12px}.spire-question input {width:100%;padding:8px;border:1px solid #e3e5ea;border-radius:8px;font:14px Geist,system-ui,sans-serif}.spire-options {display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.spire-bubble ul {padding-left:18px}
-.spire-bubble h2 {font:600 17px/1.3 Geist,system-ui,sans-serif;margin:8px 0}
-.spire-bubble p {margin:8px 0;overflow-wrap:anywhere}
-.spire-level {font-weight:500}
-.spire-level:before {content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#b08834;margin-right:8px}
-.spire-level[data-level="important"]:before {background:#F25C3B}
-.spire-level[data-level="marunt"]:before {background:#8b94a6}
-.spire-row {display:flex;gap:8px;align-items:center;margin-top:12px}
-.spire-row span {flex:1}
-.spire-crit-outline {position:fixed;border:2px solid #F25C3B;border-radius:6px;background:#F25C3B0A;pointer-events:none}
-@media(prefers-reduced-motion:reduce){.spire-pose,.spire-body,.mascot-wing {transition:none!important;animation:none!important}.perched .spire-pose.show svg {animation:none}}
+/* contur alb, ca un abțibild: uliul se vede și pe fundaluri închise. Filtrul stă pe desen, nu în SVG */
+.spire-body {filter:drop-shadow(0 0 .8px #fff) drop-shadow(0 0 .8px #fff) drop-shadow(0 0 .6px #fff) drop-shadow(0 3px 6px rgba(16,21,58,.28))}
+/* aripile pivotează din umăr. Bătaia: coborârea e mai rapidă decât ridicarea, iar corpul urcă pe coborâre */
+.mascot-wing {transform-box:fill-box;transform-origin:94% 50%}
+.flap .mascot-wing {animation:spire-flap .3s linear infinite}
+.flap .mascot-wing-far {animation-delay:-.035s}
+.flap .spire-pose.show svg {animation:spire-heave .3s linear infinite}
+.glide .mascot-wing {animation:spire-glide 1.6s ease-in-out infinite alternate}
+.flare .mascot-wing {animation:none;transform:rotate(34deg) scaleX(.9);transition:transform .22s var(--spire-ease)}
+@keyframes spire-flap {0%{transform:rotate(28deg) scaleX(.92);animation-timing-function:cubic-bezier(.5,0,.6,1)} 42%{transform:rotate(-26deg) scaleY(.9);animation-timing-function:cubic-bezier(.4,0,.5,1)} 100%{transform:rotate(28deg) scaleX(.92)}}
+@keyframes spire-heave {0%,100%{transform:translateY(2px)} 42%{transform:translateY(-3px)}}
+@keyframes spire-glide {from{transform:rotate(8deg)} to{transform:rotate(2deg) scaleY(.98)}}
+/* așezat: respiră, se uită în jur, clipește, mișcă scurt din coadă */
+.perched .spire-pose.show svg {animation:spire-breathe 3.2s ease-in-out infinite alternate;transform-origin:50% 78%}
+@keyframes spire-breathe {to{transform:scale(1.014,.988)}}
+.mascot-head {transform-box:fill-box;transform-origin:50% 90%;animation:spire-look 9s ease-in-out infinite}
+.mascot-tail {transform-box:fill-box;transform-origin:50% 0;animation:spire-tail 7s ease-in-out infinite}
+.flap .mascot-head,.glide .mascot-head,.flap .mascot-tail {animation:none}
+@keyframes spire-look {0%,60%,100%{transform:rotate(0)} 65%,76%{transform:rotate(-8deg)} 81%,91%{transform:rotate(5deg)}}
+@keyframes spire-tail {0%,86%,100%{transform:rotate(0)} 90%{transform:rotate(3deg)} 95%{transform:rotate(-2deg)}}
+.mascot-blink {transform-box:fill-box;transform-origin:50% 50%!important;animation:spire-blink 6s infinite}
+@keyframes spire-blink {0%,44%,50%,88%,100%{transform:scaleY(1)} 47%{transform:scaleY(.1)} 91%{transform:scaleY(.1)} 93%{transform:scaleY(1)} 95.5%{transform:scaleY(.1)}}
+.mascot-dots circle {animation:spire-rise 1.5s ease-in-out infinite both}
+.mascot-dots circle:nth-child(2) {animation-delay:.2s}
+.mascot-dots circle:nth-child(3) {animation-delay:.4s}
+@keyframes spire-rise {0%{opacity:0;transform:translateY(2px)} 30%,70%{opacity:1;transform:none} 100%{opacity:0;transform:translateY(-2px)}}
+.mascot-search {animation:spire-search 1.6s ease-in-out infinite}
+.mascot-search-eye {animation:spire-search-eye 1.6s ease-in-out infinite}
+@keyframes spire-search {0%,100%{transform:translateX(-7px)} 50%{transform:translateX(7px)}}
+@keyframes spire-search-eye {0%,100%{transform:translateX(-.8px)} 50%{transform:translateX(.8px)}}
+.mascot-bit {animation:spire-burst .9s var(--spire-ease) both}
+.mascot-bit:nth-child(1) {--dx:15px;--dy:-10px}
+.mascot-bit:nth-child(2) {--dx:-13px;--dy:-11px;animation-delay:40ms}
+.mascot-bit:nth-child(3) {--dx:7px;--dy:12px;animation-delay:80ms}
+.mascot-bit:nth-child(4) {--dx:-9px;--dy:13px;animation-delay:120ms}
+.mascot-bit:nth-child(5) {--dx:13px;--dy:3px;animation-delay:160ms}
+.mascot-bit:nth-child(6) {--dx:-13px;--dy:2px;animation-delay:200ms}
+@keyframes spire-burst {from{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.4)} 50%{opacity:1} to{opacity:1;transform:none}}
+/* starea se vede din tot corpul: bucuria sare, îngrijorarea se scutură */
+.spire-pose.show[data-mood="happy"] svg {animation:spire-hop .8s cubic-bezier(.3,.7,.4,1) 1;transform-origin:50% 80%}
+.spire-pose.show[data-mood="celebrate"] svg {animation:spire-hop .8s cubic-bezier(.3,.7,.4,1) 2;transform-origin:50% 80%}
+.spire-pose.show[data-mood="worried"] svg {animation:spire-shake .5s ease-out 2;transform-origin:50% 70%}
+@keyframes spire-hop {0%,100%{transform:translateY(0) scale(1,1)} 12%{transform:translateY(1px) scale(1.06,.92)} 38%{transform:translateY(-14px) scale(.96,1.05)} 62%{transform:translateY(0) scale(1.05,.94)} 78%{transform:translateY(-3px) scale(1,1)}}
+@keyframes spire-shake {0%,100%{transform:translateX(0) rotate(0)} 20%{transform:translateX(-2px) rotate(-5deg)} 40%{transform:translateX(2px) rotate(4deg)} 60%{transform:translateX(-1px) rotate(-2deg)} 80%{transform:translateX(1px) rotate(1deg)}}
+
+/* meniul și balonul: carduri albe, ca în aplicație; apar dinspre uliu */
+.spire-menu,.spire-bubble {position:fixed;pointer-events:auto;z-index:4;background:var(--spire-card);border:1px solid var(--spire-line);border-radius:16px;box-shadow:var(--spire-shadow);font:400 14px/1.5 var(--spire-font);color:var(--spire-ink);-webkit-font-smoothing:antialiased;transform-origin:left top}
+.spire-menu[data-side="left"],.spire-bubble[data-side="left"] {transform-origin:right top}
+.spire-menu:not([hidden]),.spire-bubble:not([hidden]) {animation:spire-pop .28s var(--spire-ease)}
+@keyframes spire-pop {from{opacity:0;transform:translateY(6px) scale(.96)} to{opacity:1;transform:none}}
+.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}
+.spire-bubble [hidden] {display:none!important}
+.spire-menu ::selection,.spire-bubble ::selection {background:#fbebe6;color:var(--spire-ink)}
+.spire-menu {width:252px;padding:6px;display:grid;gap:2px}
+.spire-menu-head {display:flex;align-items:center;gap:10px;padding:8px 8px 10px}
+.spire-menu-head b {display:block;font:600 14px/1.2 var(--spire-font)}
+.spire-menu-head small {display:block;margin-top:2px;font:400 12px/1.3 var(--spire-font);color:var(--spire-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.spire-menu button {display:flex;align-items:center;gap:10px;width:100%;margin:0;border:0;border-radius:10px;background:none;padding:9px 10px;color:var(--spire-ink);text-align:left;font:500 14px/1.2 var(--spire-font);cursor:pointer;transition:background-color .15s ease-out}
+.spire-menu button:hover {background:var(--spire-paper)}
+.spire-menu button svg {flex:none;color:var(--spire-muted)}
+.spire-menu .spire-primary,.spire-menu .spire-primary:hover {background:var(--spire-coral);color:#fff}
+.spire-menu .spire-primary:hover {background:var(--spire-coral-deep)}
+.spire-menu .spire-primary svg {color:#fff}
+.spire-note {margin:2px 10px 6px;font:400 12.5px/1.45 var(--spire-font);color:var(--spire-muted)}
+.spire-sep {height:1px;margin:2px 6px;background:var(--spire-line)}
+.spire-bubble {width:min(360px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;padding:16px 18px 18px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--spire-line) transparent}
+.spire-bubble button {display:inline-flex;align-items:center;justify-content:center;height:34px;border:0;border-radius:10px;background:var(--spire-card);box-shadow:inset 0 0 0 1px var(--spire-line);color:var(--spire-ink);padding:0 12px;cursor:pointer;font:500 13px/1 var(--spire-font);transition:background-color .15s ease-out,box-shadow .15s ease-out,transform .1s ease-out}
+.spire-bubble button:hover {box-shadow:inset 0 0 0 1px #cfccc4;background:#fcfbf9}
+.spire-bubble button:active,.spire-menu button:active {transform:scale(.98)}
+.spire-bubble button:disabled {opacity:.45;cursor:default;transform:none}
+.spire-bubble .spire-primary {background:var(--spire-coral);box-shadow:none;color:#fff}
+.spire-bubble .spire-primary:hover:not(:disabled) {background:var(--spire-coral-deep);box-shadow:none}
+.spire-menu button:focus-visible,.spire-bubble button:focus-visible,.spire-bubble summary:focus-visible {outline:2px solid var(--spire-ink);outline-offset:2px}
+.spire-bubble .spire-link {height:auto;padding:0;margin-top:12px;background:none;box-shadow:none;color:var(--spire-muted);font-weight:400;text-decoration:underline;text-underline-offset:3px}
+.spire-bubble .spire-link:hover {background:none;box-shadow:none;color:var(--spire-ink)}
+.spire-meta {display:flex;align-items:center;justify-content:space-between;gap:12px;font:500 12px/1.3 var(--spire-font)}
+.spire-provenance {color:var(--spire-muted);font:500 12px/1.3 var(--spire-font)}
+.spire-level {display:inline-flex;align-items:center;gap:7px;color:var(--spire-ink-2);font:500 12.5px/1.3 var(--spire-font)}
+.spire-level:before {content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--spire-gold)}
+.spire-level[data-level="important"]:before {background:var(--spire-coral-bright);box-shadow:0 0 0 3px rgba(224,97,74,.18)}
+.spire-level[data-level="marunt"]:before {background:#8b90a8}
+.spire-bubble h2 {margin:10px 0 6px;font:600 17px/1.3 var(--spire-font);letter-spacing:-.012em;text-wrap:balance;color:var(--spire-ink)}
+.spire-bubble h2:first-child {margin-top:0}
+.spire-bubble p {margin:6px 0;color:var(--spire-ink-2);overflow-wrap:anywhere}
+.spire-bubble p:empty {margin:0}
+.spire-bubble ul {margin:8px 0;padding-left:18px;color:var(--spire-ink-2)}
+.spire-bubble li+li {margin-top:4px}
+.spire-bubble details {margin:12px 0 4px;padding:10px 12px;border-radius:12px;background:var(--spire-paper)}
+.spire-bubble summary {cursor:pointer;font:500 13.5px/1.3 var(--spire-font);color:var(--spire-ink);border-radius:6px}
+.spire-bubble summary::marker {color:var(--spire-muted)}
+.spire-bubble .spire-busy {display:flex;align-items:center;gap:10px;margin:2px 0 12px;color:var(--spire-ink)}
+.spire-busy::before {content:"";flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--spire-line);border-top-color:var(--spire-ink);animation:spire-spin .8s linear infinite}
+@keyframes spire-spin {to{transform:rotate(360deg)}}
+.spire-row {display:flex;gap:8px;align-items:center;margin-top:16px}
+.spire-progress {flex:1;display:flex;align-items:center;gap:10px;color:var(--spire-muted);font:500 12.5px/1 var(--spire-font);font-variant-numeric:tabular-nums}
+.spire-steps {display:flex;gap:4px}
+.spire-steps i {width:6px;height:6px;border-radius:3px;background:var(--spire-line);transition:width .3s var(--spire-ease),background-color .3s ease-out}
+.spire-steps i.done {background:var(--spire-ink-2)}
+.spire-steps i.now {width:16px;background:var(--spire-ink)}
+/* bara de jos se golește până trece singur la următoarea observație; se oprește cât stai pe balon */
+.spire-timer {display:block;height:2px;margin:16px -18px -18px;background:var(--spire-ink);opacity:.22;transform-origin:left center}
+.spire-question {display:grid;gap:8px;margin-top:6px;font:500 14px/1.4 var(--spire-font);color:var(--spire-ink)}
+.spire-question input {width:100%;height:40px;padding:0 12px;border:1px solid var(--spire-line);border-radius:10px;background:#fff;color:var(--spire-ink);font:400 14px var(--spire-font);transition:border-color .15s ease-out,box-shadow .15s ease-out}
+.spire-question input:focus {outline:none;border-color:var(--spire-ink);box-shadow:0 0 0 3px rgba(27,35,80,.12)}
+.spire-question input::placeholder {color:var(--spire-muted)}
+.spire-options {display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 12px}
+.spire-options button {height:30px;padding:0 10px;font-weight:400;color:var(--spire-ink-2)}
+.spire-stage {display:block}
+.spire-intro {font-size:13.5px;line-height:1.45;color:var(--spire-ink-2)!important;margin:12px 0 4px!important}
+.spire-step {font:500 12px/1.3 var(--spire-font)!important;color:var(--spire-muted)!important;margin:14px 0 6px!important;font-variant-numeric:tabular-nums}
+.spire-ask {font:600 17px/1.3 var(--spire-font);letter-spacing:-.012em;color:var(--spire-ink);text-wrap:balance}
+.spire-answers {display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.spire-bubble .spire-answer {display:inline-flex;align-items:baseline;gap:6px;max-width:100%;height:auto;padding:5px 9px;border-radius:8px;background:var(--spire-paper);box-shadow:none;font:400 12.5px/1.3 var(--spire-font);text-align:left}
+.spire-bubble button.spire-answer:hover {background:var(--spire-paper-2);box-shadow:none}
+.spire-answer strong {flex:none;font-weight:500;color:var(--spire-muted)}
+.spire-answer span {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px;color:var(--spire-ink);font-weight:500}
+.spire-recap {display:grid;gap:6px;margin:10px 0 2px}
+.spire-recap .spire-answer {display:flex;width:100%;padding:8px 10px}
+.spire-recap .spire-answer strong {width:72px}
+.spire-recap .spire-answer span {max-width:none;white-space:normal;overflow-wrap:anywhere}
+.spire-row-end {justify-content:flex-end}
+.spire-bubble .spire-quiet {background:none;box-shadow:none;color:var(--spire-ink-2)}
+.spire-bubble .spire-quiet:hover {background:var(--spire-paper);box-shadow:none}
+.spire-note-line {font-size:12.5px;color:var(--spire-ink-2)!important;margin:10px 0 0!important}
+.spire-actions {display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.spire-actions .spire-primary {flex-basis:100%;height:40px;font-size:14px}
+.spire-bubble .spire-actions button:not(.spire-primary) {height:30px;padding:0 8px;background:none;box-shadow:none;color:var(--spire-ink-2);white-space:nowrap}
+.spire-bubble .spire-actions button:not(.spire-primary):hover {background:var(--spire-paper);box-shadow:none;color:var(--spire-ink)}
+.spire-stage > h2:first-child {margin-top:12px}
+.spire-question .spire-note {margin:0 0 4px;font-size:13px;font-weight:400;color:var(--spire-muted)}
+.spire-crit-outline {position:fixed;border:2px solid var(--spire-coral-bright);border-radius:8px;background:rgba(224,97,74,.05);box-shadow:0 0 0 4px rgba(224,97,74,.14);pointer-events:none;animation:spire-outline .45s var(--spire-ease)}
+@keyframes spire-outline {from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .spire-pose,.spire-body,.mascot-wing,.mascot-head,.mascot-tail,.mascot-dots circle,.mascot-search,.mascot-search-eye,.spire-shadow {transition:none!important;animation:none!important}
+  .mascot-bit {animation-duration:1ms!important}
+  .spire-pose.show svg,.perched .spire-pose.show svg {animation:none!important}
+  .spire-menu:not([hidden]),.spire-bubble:not([hidden]) {animation:spire-fade .15s ease-out}
+  .spire-crit-outline {animation:none}
+}
+@keyframes spire-fade {from{opacity:0}}
 `);
   shadow.adoptedStyleSheets = [sheet];
+
+  // Fontul aplicației (Geist), din pachetul extensiei. @font-face nu se aplică dintr-un shadow root,
+  // așa că îl adăugăm în document sub un nume propriu („Spire Geist”), fără să atingem fonturile
+  // paginii. Dacă nu se poate (extensie reîncărcată, test fără chrome.runtime), rămâne fontul sistemului.
+  try {
+    [["fonts/geist-latin.woff2", "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"],
+     ["fonts/geist-latin-ext.woff2", "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"]].forEach(function (f) {
+      var face = new FontFace("Spire Geist", "url(" + chrome.runtime.getURL(f[0]) + ") format('woff2')", { weight: "100 900", unicodeRange: f[1], display: "swap" });
+      document.fonts.add(face);
+      face.load().catch(function () {});
+    });
+  } catch (_) { /* fără fontul propriu */ }
+
+  // Iconițele: un singur traseu SVG, linie de 1,6 px, desenate element cu element prin DOM.
+  var ICONS = {
+    crop: "M4.5 1.5v10h10M1.5 4.5h10v10",
+    collapse: "M5.5 3.5 10 8l-4.5 4.5M13.5 2.5v11",
+    close: "M3.5 3.5l9 9M12.5 3.5l-9 9",
+    critique: "M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM10.3 10.3l3.7 3.7",
+    campaign: "M8 2 14 5.2 8 8.4 2 5.2ZM2 8.4l6 3.2 6-3.2M2 11.4l6 3.2 6-3.2",
+    inspire: "M8 1.8v3M8 11.2v3M1.8 8h3M11.2 8h3M3.6 3.6l2 2M10.4 10.4l2 2M12.4 3.6l-2 2M5.6 10.4l-2 2",
+    back: "M10 3.5 5.5 8l4.5 4.5",
+    expand: "M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10",
+    copy: "M5.5 5.5h8v8h-8ZM10.5 5.5v-3h-8v8h3",
+  };
+  function icon(name) {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16"); svg.setAttribute("width", "16"); svg.setAttribute("height", "16");
+    svg.setAttribute("aria-hidden", "true"); svg.setAttribute("fill", "none");
+    var path = document.createElementNS(NS, "path");
+    path.setAttribute("d", ICONS[name]); path.setAttribute("stroke", "currentColor"); path.setAttribute("stroke-width", "1.6");
+    path.setAttribute("stroke-linecap", "round"); path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+    return svg;
+  }
+  function mark() {
+    var m = document.createElement("span"); m.className = "spire-mark"; m.setAttribute("aria-hidden", "true");
+    return m;
+  }
 
   // Stratul pentru chenarele de scanare (A2). Nu prinde clicuri; doar chenarele aprinse (A3).
   var boxes = document.createElement("div");
@@ -406,49 +707,61 @@
 
   var bar = document.createElement("div");
   bar.className = "spire-bar";
+  var brand = document.createElement("span");
+  brand.className = "spire-brand";
+  brand.append(mark(), "Spire");
+  bar.appendChild(brand);
 
-  // Mesajele scurte (erori, indicații). Doar textContent.
+  // Mesajele scurte (erori, indicații), sub bară; ascunse cât sunt goale. Doar textContent.
   var status = document.createElement("p");
   status.className = "spire-status";
   status.setAttribute("role", "status");
-  bar.appendChild(status);
 
-  var cropButton = document.createElement("button");
-  cropButton.type = "button";
-  cropButton.className = "spire-button";
-  cropButton.textContent = "Decupează";
-  cropButton.setAttribute("aria-pressed", "false");
-  bar.appendChild(cropButton);
+  // Inspire: alegi o zonă din pagină, iar Spire o recreează în HTML/CSS, aici în panou.
+  var inspireButton = document.createElement("button");
+  inspireButton.type = "button";
+  inspireButton.className = "spire-button";
+  inspireButton.append(icon("inspire"), "Inspire");
+  inspireButton.setAttribute("aria-label", "Inspire: recreează o zonă din pagină");
+  inspireButton.addEventListener("click", function () { startInspire(); });
+  bar.appendChild(inspireButton);
 
   // „Strânge”: panoul se ascunde (visibility, deci iframe-ul rămâne încărcat cu starea aplicației)
   // și în locul lui rămâne o filă îngustă la marginea dreaptă. Pagina de sub panou devine clicabilă.
   var collapseButton = document.createElement("button");
   collapseButton.type = "button";
-  collapseButton.className = "spire-button";
-  collapseButton.textContent = "Strânge";
+  collapseButton.className = "spire-button spire-icon-button";
+  collapseButton.appendChild(icon("collapse"));
+  collapseButton.title = "Strânge";
   collapseButton.setAttribute("aria-label", "Strânge panoul Spire");
   bar.appendChild(collapseButton);
 
   var close = document.createElement("button");
   close.type = "button";
-  close.className = "spire-button spire-close";
-  close.textContent = "Închide Spire";
+  close.className = "spire-button spire-icon-button spire-close";
+  close.appendChild(icon("close"));
+  close.title = "Închide Spire";
+  close.setAttribute("aria-label", "Închide Spire");
   close.addEventListener("click", function () {
     host.style.setProperty("display", "none", "important");
   });
   bar.appendChild(close);
   panel.appendChild(bar);
+  panel.appendChild(status);
 
   var iframe = document.createElement("iframe");
   iframe.className = "spire-frame";
   iframe.title = "Spire";
 
-  iframe.allow = "clipboard-write";
+  // fullscreen: videoclipul din panou se poate deschide pe tot ecranul
+  iframe.allow = "clipboard-write; fullscreen";
+  iframe.allowFullscreen = true;
   panel.appendChild(iframe);
 
   // Panoul și iframe-ul se atașează doar la alegerea campaniei.
   var appReady = false, campaignOpened = false;
   var latestCritique = null;
+  var latestCritiques = null, latestBriefTitle = "";
   function ensureApp(forCritique) {
     if (!panel.isConnected) {
       panel.hidden = true;
@@ -456,18 +769,48 @@
       shadow.appendChild(panel);
     }
   }
+  // Aplicația nu răspunde (ex. `npm run dev` oprit): în loc de pagina de eroare a browserului,
+  // panoul spune ce s-a întâmplat și oferă reîncercarea.
+  var offline = document.createElement("div");
+  offline.className = "spire-offline"; offline.hidden = true; offline.setAttribute("role", "alert");
+  var offlineTitle = document.createElement("h2"); offlineTitle.textContent = "Nu ajung la aplicația Spire";
+  var offlineText = document.createElement("p");
+  offlineText.textContent = "Verifică dacă aplicația rulează la " + config.APP_URL.replace(/^https?:\/\//, "") + (/localhost|127\.0\.0\.1/.test(config.APP_URL) ? " (în proiect: npm run dev)" : "") + ", apoi încearcă din nou.";
+  var offlineRetry = document.createElement("button"); offlineRetry.type = "button"; offlineRetry.textContent = "Încearcă din nou";
+  offline.append(offlineTitle, offlineText, offlineRetry);
+  panel.insertBefore(offline, iframe);
+  var offlineTimer = 0;
+  function setOffline(on) {
+    offline.hidden = !on; panel.classList.toggle("spire-panel-offline", on);
+  }
+  function watchApp() {
+    clearTimeout(offlineTimer);
+    if (appReady) return setOffline(false);
+    offlineTimer = setTimeout(function () { if (!appReady) setOffline(true); }, 6000);
+  }
+  offlineRetry.addEventListener("click", function () {
+    setOffline(false); appReady = false;
+    iframe.src = iframe.src; // reîncarcă aplicația
+    watchApp();
+  });
   function openCampaign() {
     stopCritique();
+    if (inspirePanel) { inspireToken++; inspirePanel.hidden = true; panel.classList.remove("spire-panel-inspire"); }
     campaignOpened = true;
     ensureApp(); panel.hidden = false;
     setCollapsed(false);
+    dodgePanel();
+    watchApp();
     if (appReady) sendBrief();
   }
 
   var tab = document.createElement("button");
   tab.type = "button";
   tab.className = "spire-tab";
-  tab.textContent = "Spire";
+  var tabText = document.createElement("span");
+  tabText.className = "spire-tab-text";
+  tabText.textContent = "Spire";
+  tab.append(mark(), tabText);
   tab.setAttribute("aria-label", "Deschide panoul Spire");
   tab.hidden = true;
   shadow.appendChild(tab);
@@ -497,6 +840,10 @@
   bird.className = "spire-bird perched";
   bird.type = "button";
   bird.setAttribute("aria-label", "Spire, deschide meniul");
+  // umbra de sub gheare: stă pe element cât uliul e așezat (în afara corpului, nu se rotește cu el)
+  var perchShadow = document.createElement("span");
+  perchShadow.className = "spire-shadow";
+  bird.appendChild(perchShadow);
   var body = document.createElement("span");
   body.className = "spire-body";
   bird.appendChild(body);
@@ -511,15 +858,23 @@
       body.appendChild(wrapper);
     });
   });
-  var mood = "idle";
-  function pose(m) { mood = m; refreshPose(); }
-  function refreshPose() {
-    var p = bird.classList.contains("perched") ? "perched" : "flying";
+  var mood = "idle", wingState = "perched", facing = 1;
+  function pose(m) { var changed = m !== mood; mood = m; refreshPose(changed); }
+  // La o stare nouă, desenul nou „se umflă” scurt din corp: schimbarea se vede, nu doar se înlocuiește.
+  function refreshPose(pop) {
+    var p = bird.classList.contains("perched") ? "perched" : "flying", shown = null;
     body.querySelectorAll(".spire-pose").forEach(function (el) {
-      el.classList.toggle("show", el.dataset.mood === mood && el.dataset.pose === p);
+      var on = el.dataset.mood === mood && el.dataset.pose === p;
+      el.classList.toggle("show", on);
+      if (on) shown = el;
     });
+    if (pop && shown && shown.animate && !motion.matches) {
+      shown.animate([{ transform: "scale(.9)", opacity: 0.4 }, { transform: "none", opacity: 1 }], { duration: 300, easing: "cubic-bezier(.16,1,.3,1)" });
+    }
   }
   function wings(c) {
+    if (c === wingState && bird.classList.contains(c)) return; // în zbor se cere la fiecare cadru
+    wingState = c;
     bird.classList.remove("flap", "glide", "flare", "perched");
     if (c) bird.classList.add(c);
     refreshPose();
@@ -531,17 +886,36 @@
   var menu = document.createElement("div");
   menu.className = "spire-menu";
   menu.hidden = true;
-  function button(parent, label, fn, primary) {
+  function button(parent, label, fn, primary, iconName) {
     var b = document.createElement("button");
-    b.type = "button"; b.textContent = label;
+    b.type = "button";
+    if (iconName) b.appendChild(icon(iconName));
+    b.append(label);
     if (primary) b.className = "spire-primary";
     b.addEventListener("click", fn); parent.appendChild(b);
     return b;
   }
-  button(menu, "Critică pagina", function () { menu.hidden = true; critique(); }, true);
+  var menuHead = document.createElement("div");
+  menuHead.className = "spire-menu-head";
+  var menuTitle = document.createElement("span");
+  line(menuTitle, "b", "Spire");
+  line(menuTitle, "small", location.hostname.replace(/^www\./, ""));
+  menuHead.append(mark(), menuTitle);
+  menu.appendChild(menuHead);
+  button(menu, "Inspire", function () { menu.hidden = true; startInspire(); }, false, "campaign");
+  line(menu, "p", "Selectează ceva ce îți place. Trimit selecția la AI și o recreez în cod.", "spire-note");
+  button(menu, "Critică pagina", function () { menu.hidden = true; critique(); }, true, "critique");
   line(menu, "p", "Trimite la AI o captură a ecranului și textele din ea.", "spire-note");
-  button(menu, "Fă o campanie", function () { menu.hidden = true; openCampaign(); });
-  button(menu, "Închide Spire", function () { stopCritique(); menu.hidden = true; host.style.setProperty("display", "none", "important"); });
+  line(menu, "div", "", "spire-sep");
+  var resumeBriefButton = button(menu, "Continuă brief-ul", function () {
+    if (!latestCritiques) return;
+    currentAnswers(); stopCritique(); menu.hidden = true;
+    showBubble(null, 0, 0, globalThis.SpireCritique.summarySentence(latestCritiques));
+    void showBrief(latestCritiques, latestBriefTitle);
+  }, false, "campaign");
+  resumeBriefButton.hidden = true; resumeBriefButton.style.display = "none";
+  button(menu, "Fă o campanie", function () { menu.hidden = true; openCampaign(); }, false, "campaign");
+  button(menu, "Închide Spire", function () { stopCritique(); menu.hidden = true; host.style.setProperty("display", "none", "important"); }, false, "close");
   shadow.append(bird, bubble, menu);
   bird.addEventListener("click", function () {
     menu.hidden = !menu.hidden;
@@ -552,19 +926,30 @@
   function positionPopup(el) {
     var r = bird.getBoundingClientRect();
     var w = el.offsetWidth, h = el.offsetHeight;
-    var x = r.right + 6 + w > innerWidth ? r.left - w - 6 : r.right + 6;
+    var left = r.right + 6 + w > innerWidth;
+    var x = left ? r.left - w - 6 : r.right + 6;
+    el.dataset.side = left ? "left" : "right";
     el.style.left = Math.max(8, Math.min(innerWidth - w - 8, x)) + "px";
     el.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - 10)) + "px";
   }
   function place(x, y, rot, sx, sy) {
     bird.style.transform = "translate(" + (x - S / 2) + "px," + (y - S * .78) + "px)";
-    body.style.transform = "rotate(" + (rot || 0) + "deg) scale(" + (sx || 1) + "," + (sy || 1) + ")";
+    body.style.transform = "rotate(" + (rot || 0) + "deg) scale(" + ((sx || 1) * facing).toFixed(3) + "," + (sy || 1) + ")";
     if (!bubble.hidden) positionPopup(bubble);
     if (!menu.hidden) positionPopup(menu);
   }
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms * speed); }); }
+  // Cât panoul e deschis, uliul stă pe pagină, în stânga lui, nu peste el.
+  function panelLeft() {
+    return panel.isConnected && !panel.hidden && !panel.classList.contains("spire-panel-collapsed") ? Math.min(innerWidth, panel.getBoundingClientRect().left) : innerWidth;
+  }
   function clampPoint(p) {
-    return { x: Math.max(75, Math.min(innerWidth - 75, p.x)), y: Math.max(115, Math.min(innerHeight - 30, p.y)) };
+    return { x: Math.max(75, Math.min(panelLeft() - 75, p.x)), y: Math.max(115, Math.min(innerHeight - 30, p.y)) };
+  }
+  function dodgePanel() {
+    var safe = clampPoint(pos);
+    if (Math.abs(safe.x - pos.x) < 2) return;
+    void takeoff().then(function () { return fly(safe, 800, .25); }).then(function (ok) { if (ok) return land(); });
   }
   function fly(to, dur, arc) {
     to = clampPoint(to);
@@ -582,9 +967,11 @@
         var t = Math.min(1, (now-t0)/dur), e = t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
         var x = B(e,from.x,c1.x,c2.x,to.x), y = B(e,from.y,c1.y,c2.y,to.y);
         var vx = x-px; px=x; ang += (Math.max(-22, Math.min(22,vx*2.2))-ang)*.15;
+        // se întoarce cu fața spre unde zboară: scaleX trece prin 0, ca o rotire pe loc
+        if (Math.abs(vx) > .4) facing += ((vx < 0 ? -1 : 1) - facing) * .32;
         if (t > .35 && t < .7) wings("glide"); else if (t >= .7 && t < .9) wings("flap"); else if(t >= .9) wings("flare");
         var bob = Math.sin(now/90)*(t<.9?2:0); pos={x:x,y:y+bob}; place(x,y+bob,ang);
-        if(t<1) requestAnimationFrame(step); else { pos=to; ang=0; resolve(true); }
+        if(t<1) requestAnimationFrame(step); else { pos=to; ang=0; facing=facing<0?-1:1; resolve(true); }
       }
       requestAnimationFrame(step);
     });
@@ -714,7 +1101,7 @@
   // Răspunsurile aparțin extensiei, separat pentru fiecare origine a site-ului.
   var memoryKey = "spire:brief:" + location.origin;
   var briefAnswers = {}, answerInputs = {}, memoryVersion = 0;
-  var memoryError = "";
+  var memoryError = "", hasMemory = false;
   var memoryReady = readMemory();
   function cleanAnswers(value) {
     var out = {};
@@ -728,6 +1115,7 @@
     try {
       var stored = await chrome.storage.local.get(memoryKey);
       if (version === memoryVersion) briefAnswers = cleanAnswers(stored[memoryKey]);
+      hasMemory = Object.keys(cleanAnswers(stored[memoryKey])).length > 0;
     } catch (_) { memoryError = "Nu pot citi răspunsurile păstrate."; }
   }
   function currentAnswers() {
@@ -740,72 +1128,106 @@
       source: { url: location.href, title: document.title.slice(0, 300) }, answers: currentAnswers(), critique: latestCritique || undefined
     } }, config.APP_ORIGIN);
   }
+  // Brieful, ca o conversație: o singură întrebare pe ecran. Răspunsurile date rămân sus, ca
+  // etichete scurte; un clic pe una te întoarce la întrebarea ei. La final, un rezumat și pasul următor.
+  var ANSWER_LABELS = { product: "Produs", audience: "Public", goal: "Obiectiv", cta: "Buton" };
   async function showBrief(crits, title) {
     await memoryReady;
     if (bubble.hidden || bubble.dataset.summary !== "true") return;
-    var proposals = globalThis.SpireCritique.modificationSuggestions(crits);
-    if (proposals.length) {
-      var changes = document.createElement("details");
-      line(changes, "summary", "Aș modifica…");
-      var list = document.createElement("ul");
-      proposals.forEach(function (text) { line(list, "li", text); }); changes.appendChild(list); bubble.appendChild(changes);
-    }
-    line(bubble, "h2", "Pentru campania ta");
+    var summary = globalThis.SpireCritique.summarySentence(crits);
     var questions = globalThis.SpireCritique.briefQuestions(crits.map(function (c) { return c.evidence && ["primary-action", "navigation"].includes(c.evidence.category) ? "link-vag" : c.ruleId; }), title);
-    var questionIndex = 0;
-    var conversation = document.createElement("div"); bubble.appendChild(conversation);
-    var finalActions = document.createElement("div");
+    var questionIndex = 0, note = null, noteText = memoryError;
+    function say(text) { noteText = text; if (note) note.textContent = text; }
     function revealAnswer(target) {
       positionPopup(bubble);
       bubble.scrollTop += Math.max(0, target.getBoundingClientRect().bottom - bubble.getBoundingClientRect().bottom + 16);
     }
-    function renderQuestion() {
-      conversation.replaceChildren(); answerInputs = {};
-      questions.slice(0, questionIndex).forEach(function (q) {
-        var answer = line(conversation, "p", "", "spire-answer");
-        line(answer, "strong", q.text + " "); line(answer, "span", briefAnswers[q.id] || "");
-      });
-      finalActions.hidden = questionIndex < questions.length;
-      if (questionIndex >= questions.length) { revealAnswer(finalActions); return; }
+    function go(index, keepNote) { if (!keepNote) noteText = ""; questionIndex = index; render(true); }
+    function render(slide) {
+      bubble.replaceChildren(); answerInputs = {};
+      var meta = line(bubble, "div", "", "spire-meta");
+      line(meta, "span", critiqueProvenance, "spire-provenance");
+      var steps = line(meta, "span", "", "spire-steps"); steps.setAttribute("aria-hidden", "true");
+      questions.forEach(function (_, k) { var d = document.createElement("i"); d.className = k < questionIndex ? "done" : k === questionIndex ? "now" : ""; steps.appendChild(d); });
+      var stage = line(bubble, "div", "", "spire-stage");
+      if (slide && stage.animate && !motion.matches) stage.animate([{ opacity: 0, transform: "translateX(14px)" }, { opacity: 1, transform: "none" }], { duration: 280, easing: "cubic-bezier(.16,1,.3,1)" });
+      if (questionIndex >= questions.length) renderDone(stage); else renderQuestion(stage);
+      note = line(bubble, "p", noteText, "spire-note-line"); note.setAttribute("role", "status");
+      if (hasMemory) {
+        var forget = button(bubble, "Uită răspunsurile", async function () {
+          try {
+            await chrome.storage.local.remove(memoryKey); memoryVersion++; briefAnswers = {}; hasMemory = false;
+            noteText = "Răspunsuri uitate."; go(0, true);
+          } catch (_) { say("Nu am putut uita răspunsurile. Încearcă din nou."); }
+        });
+        forget.classList.add("spire-link");
+      }
+      positionPopup(bubble);
+    }
+    function renderQuestion(stage) {
+      if (questionIndex === 0) line(stage, "p", "Am terminat. " + summary + " Acum câteva întrebări scurte pentru campanie.", "spire-intro");
+      var given = questions.slice(0, questionIndex);
+      if (given.length) {
+        var chips = line(stage, "div", "", "spire-answers");
+        given.forEach(function (q, k) {
+          var chip = button(chips, "", function () { go(k); });
+          chip.className = "spire-answer"; chip.title = "Schimbă răspunsul";
+          line(chip, "strong", ANSWER_LABELS[q.id] || q.text); line(chip, "span", briefAnswers[q.id] || "");
+        });
+      }
       var q = questions[questionIndex];
-      line(conversation, "p", "Întrebarea " + (questionIndex + 1) + " din " + questions.length);
+      line(stage, "p", "Întrebarea " + (questionIndex + 1) + " din " + questions.length, "spire-step");
       var label = document.createElement("label"); label.className = "spire-question";
-      line(label, "span", q.text);
+      line(label, "span", q.text, "spire-ask");
+      var brandName = title.split(/[|—–]/)[0].trim().slice(0, 80) || location.hostname;
+      var offerName = (briefAnswers.product || "această ofertă").slice(0, 90);
+      var brandPrompts = {
+        product: "La „" + brandName + "”, ce ofertă alegem, de ce ar prefera-o clientul și ce dovadă reală avem?",
+        audience: "Cine ar alege „" + offerName + "” și ce nevoie principală vrea să rezolve?",
+        goal: "Ce rezultat concret contează acum pentru „" + brandName + "” și în ce perioadă?",
+        cta: "Ce pas poate face clientul imediat și unde trebuie să îl ducă butonul?",
+      };
+      var detail = line(label, "small", brandPrompts[q.id] || "", "spire-note");
+      detail.id = "spire-brand-question-" + q.id;
       var input = document.createElement("input"); input.type = "text"; input.maxLength = 500;
+      input.placeholder = q.options.length ? "Scrie sau alege mai jos" : "Scrie aici";
       input.value = briefAnswers[q.id] || ""; input.setAttribute("aria-label", q.text);
-      answerInputs[q.id] = input; label.appendChild(input); conversation.appendChild(label);
+      input.setAttribute("aria-describedby", detail.id);
+      answerInputs[q.id] = input; label.appendChild(input); stage.appendChild(label);
       function advance() {
         if (!input.value.trim()) return;
-        memoryVersion++; briefAnswers[q.id] = input.value.trim(); questionIndex++; renderQuestion();
+        memoryVersion++; briefAnswers[q.id] = input.value.trim(); go(questionIndex + 1);
       }
       if (q.options.length) {
-        var options = document.createElement("div"); options.className = "spire-options";
+        var options = line(stage, "div", "", "spire-options");
         q.options.forEach(function (option) { button(options, option, function () { input.value = option; advance(); }); });
-        conversation.appendChild(options);
       }
-      var next = button(conversation, "Continuă", advance, true);
+      var row = line(stage, "div", "", "spire-row spire-row-end");
+      if (questionIndex > 0) button(row, "Înapoi", function () { currentAnswers(); go(questionIndex - 1); }).classList.add("spire-quiet");
+      var next = button(row, "Continuă", advance, true);
       next.disabled = !input.value.trim();
       input.addEventListener("input", function () { memoryVersion++; briefAnswers[q.id] = input.value; next.disabled = !input.value.trim(); });
       input.addEventListener("keydown", function (event) { if (event.key === "Enter") { event.preventDefault(); advance(); } });
-      input.focus({ preventScroll: true }); revealAnswer(conversation);
+      input.focus({ preventScroll: true }); revealAnswer(row);
     }
-    var note = line(bubble, "p", memoryError); note.setAttribute("role", "status");
-    button(finalActions, "Păstrează răspunsurile", async function () {
-      var answers = currentAnswers();
-      try { await chrome.storage.local.set({ [memoryKey]: answers }); note.textContent = "Răspunsuri păstrate."; }
-      catch (_) { note.textContent = "Nu am putut păstra răspunsurile. Încearcă din nou."; }
-    });
-    button(bubble, "Uită răspunsurile", async function () {
-      try {
-        await chrome.storage.local.remove(memoryKey); memoryVersion++; briefAnswers = {};
-        questionIndex = 0; renderQuestion();
-        note.textContent = "Răspunsuri uitate.";
-      } catch (_) { note.textContent = "Nu am putut uita răspunsurile. Încearcă din nou."; }
-    });
-    button(finalActions, "Modifică răspunsurile", function () { questionIndex = 0; renderQuestion(); });
-    button(finalActions, "Continuă cu o campanie", function () { currentAnswers(); openCampaign(); }, true);
-    bubble.appendChild(finalActions); renderQuestion();
-    positionPopup(bubble);
+    function renderDone(stage) {
+      line(stage, "h2", "Brief-ul e gata");
+      var list = line(stage, "div", "", "spire-recap");
+      questions.forEach(function (q) {
+        var item = line(list, "div", "", "spire-answer");
+        line(item, "strong", ANSWER_LABELS[q.id] || q.text); line(item, "span", briefAnswers[q.id] || "");
+      });
+      var actions = line(stage, "div", "", "spire-actions");
+      button(actions, "Continuă cu o campanie", function () { currentAnswers(); openCampaign(); }, true);
+      button(actions, "Păstrează răspunsurile", async function () {
+        var answers = currentAnswers();
+        try { await chrome.storage.local.set({ [memoryKey]: answers }); hasMemory = true; noteText = "Răspunsuri păstrate."; render(false); }
+        catch (_) { say("Nu am putut păstra răspunsurile. Încearcă din nou."); }
+      });
+      button(actions, "Modifică răspunsurile", function () { go(0); });
+      revealAnswer(actions);
+    }
+    render(true);
   }
   var critiqueProvenance = "";
   var activeAiCritique = null;
@@ -866,31 +1288,52 @@
         ["title", "body", "fix"].every(function (key) { return typeof c[key] === "string" && c[key].length <= 600; });
     });
   }
+  // Balonul reapare dinspre uliu la fiecare conținut nou, chiar dacă era deja deschis.
+  function popBubble() {
+    if (!bubble.animate) return;
+    bubble.animate(motion.matches ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateY(6px) scale(.97)" }, { opacity: 1, transform: "none" }],
+      { duration: motion.matches ? 150 : 300, easing: "cubic-bezier(.16,1,.3,1)" });
+  }
   function showBubble(c,index,total,summary) {
-    bubble.replaceChildren(); bubble.hidden=false;
+    bubble.replaceChildren(); bubble.hidden=false; popBubble();
+    var meta=line(bubble,"div","","spire-meta");
+    line(meta,"span",critiqueProvenance,"spire-provenance");
     if(summary) {
-      bubble.dataset.summary="true";line(bubble,"div",critiqueProvenance,"spire-provenance");line(bubble,"h2","Am terminat");line(bubble,"p",summary);positionPopup(bubble);
+      bubble.dataset.summary="true";line(bubble,"h2","Am terminat");line(bubble,"p",summary);positionPopup(bubble);
       return Promise.resolve();
     }
     delete bubble.dataset.summary;
-    line(bubble,"div",critiqueProvenance,"spire-provenance");
     var labels={"important":"Important","de-imbunatatit":"De îmbunătățit","marunt":"Mărunt"};
-    var level=line(bubble,"div",labels[c.level],"spire-level");
+    var level=line(meta,"span",labels[c.level],"spire-level");
     level.dataset.level=c.level;
     line(bubble,"h2",c.title);line(bubble,"p",c.body);
-    var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);line(row,"span",(index+1)+" din "+total);
+    var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);
+    // progresul: o liniuță pentru observația curentă, puncte pentru celelalte
+    var progress=line(row,"span","","spire-progress"), steps=line(progress,"span","","spire-steps");
+    steps.setAttribute("aria-hidden","true");
+    for(var k=0;k<total;k++){var dot=document.createElement("i");dot.className=k<index?"done":k===index?"now":"";steps.appendChild(dot);}
+    line(progress,"span",(index+1)+" din "+total);
+    // bara de jos se golește până la trecerea automată; cât stai cu mouse-ul pe balon, așteaptă
+    var timerBar=line(bubble,"span","","spire-timer");timerBar.setAttribute("aria-hidden","true");
     return new Promise(function(resolve){
-      var done=false;
-      function next(){if(done)return;done=true;clearTimeout(timer);resumeBubble=null;resolve();}
+      var done=false, anim=null, timer=null;
+      function next(){if(done)return;done=true;clearTimeout(timer);if(anim)anim.cancel();bubble.onmouseenter=bubble.onmouseleave=null;resumeBubble=null;resolve();}
       button(row,"Următorul",next,true);button(row,"Oprește",stopCritique);
-      var timer=setTimeout(next,8000*speed);resumeBubble=next;positionPopup(bubble);
+      var ms=8000*speed;
+      if(timerBar.animate){
+        anim=timerBar.animate([{transform:"scaleX(1)"},{transform:"scaleX(0)"}],{duration:ms,easing:"linear",fill:"forwards"});
+        anim.finished.then(next,function(){});
+        bubble.onmouseenter=function(){if(!done)anim.pause();};
+        bubble.onmouseleave=function(){if(!done)anim.play();};
+      } else timer=setTimeout(next,ms);
+      resumeBubble=next;positionPopup(bubble);
     });
   }
   async function critique() {
     stopCritique();mode="crit";var id=tour;pose("searching");await wait(1200);
     if(id!==tour)return;
     var facts=readFacts();
-    bubble.replaceChildren(); bubble.hidden=false; line(bubble,"p","Analizez pagina…"); button(bubble,"Oprește",stopCritique); positionPopup(bubble);
+    bubble.replaceChildren(); bubble.hidden=false; popBubble(); line(bubble,"p","Analizez pagina…","spire-busy"); button(bubble,"Oprește",stopCritique); positionPopup(bubble);
     var result=await requestAiCritique(facts,id);
     if(id!==tour || result.cancelled)return;
     var crits;
@@ -930,6 +1373,8 @@
     if(id!==tour)return;
     outlined=null;outline.hidden=true;pose(crits.some(function(c){return c.level==="important";})?"happy":"celebrate");
     showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits));
+    latestCritiques = crits; latestBriefTitle = facts.page.title;
+    resumeBriefButton.hidden = false; resumeBriefButton.style.removeProperty("display");
     showBrief(crits, facts.page.title); mode="roam";
   }
   pose("idle");place(pos.x,pos.y);scheduleRoam();
@@ -1490,6 +1935,7 @@
   }
 
   // Modul de decupaj: stratul prinde clicurile, tragi un dreptunghi, Esc anulează.
+  var cropPurpose = "reference";
   var dragStart = null; // { x, y, pointerId }
 
   function dragBox(event) {
@@ -1523,14 +1969,9 @@
     setDragging(false);
     cropRect.hidden = true;
     crop.hidden = !on;
-    cropButton.setAttribute("aria-pressed", on ? "true" : "false");
     setStatus(on ? "Trage un dreptunghi peste pagină. Esc anulează." : "");
   }
 
-  cropButton.addEventListener("click", function () {
-    if (busy) return;
-    setCropMode(crop.hidden);
-  });
 
   crop.addEventListener("pointerdown", function (event) {
     if (event.button !== 0 || busy) return;
@@ -1558,7 +1999,8 @@
       return;
     }
     setCropMode(false);
-    sendReference(box, idsInside(box));
+    if (cropPurpose === "inspire") void inspireSelection(box);
+    else sendReference(box, idsInside(box));
   });
 
   crop.addEventListener("pointercancel", function () {
@@ -1573,10 +2015,220 @@
       if (event.key === "Escape" && !crop.hidden) {
         event.preventDefault();
         setCropMode(false);
+        if (cropPurpose === "inspire") bubble.hidden = true;
       }
     },
     true,
   );
+
+  // Inspire folosește decupajul existent; demo-ul nu modifică DOM-ul site-ului gazdă.
+  var inspireToken = 0, inspirePanel = null, inspireLast = null;
+  var inspireSheet = new CSSStyleSheet();
+  inspireSheet.replaceSync(`
+    .spire-inspire{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;background:var(--spire-paper);color:var(--spire-ink);font:14px/1.45 var(--spire-font)}
+    .spire-inspire[hidden]{display:none!important}
+    .spire-panel-inspire .spire-frame{display:none}
+    .spire-panel-offline .spire-frame{display:none}
+    .spire-panel-inspire .spire-offline{display:none}
+    .spire-offline{margin:16px 14px;padding:18px;border-radius:14px;background:var(--spire-card);box-shadow:inset 0 0 0 1px var(--spire-line);display:grid;gap:8px;justify-items:start;font:14px/1.45 var(--spire-font);color:var(--spire-ink-2);animation:spire-pop .3s var(--spire-ease)}
+    .spire-offline[hidden]{display:none}
+    .spire-offline h2{margin:0;font:600 16px/1.3 var(--spire-font);color:var(--spire-ink)}
+    .spire-offline p{margin:0}
+    .spire-offline button{margin-top:6px;height:34px;padding:0 14px;border:0;border-radius:10px;background:var(--spire-coral);color:#fff;font:500 13px/1 var(--spire-font);cursor:pointer}
+    .spire-offline button:hover{background:var(--spire-coral-deep)}
+    .spire-offline button:focus-visible{outline:2px solid var(--spire-ink);outline-offset:2px}
+    .spire-inspire-bar{display:flex;align-items:center;gap:8px;padding:14px 14px 4px}
+    .spire-inspire-bar h2{font:600 17px/1.3 var(--spire-font);letter-spacing:-.012em;margin:0;flex:1;min-width:0;text-wrap:balance}
+    .spire-inspire button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;border:0;border-radius:9px;background:var(--spire-card);box-shadow:inset 0 0 0 1px var(--spire-line);color:var(--spire-ink);padding:0 11px;cursor:pointer;font:500 13px/1 var(--spire-font);transition:background-color .15s ease-out,box-shadow .15s ease-out}
+    .spire-inspire button:hover{box-shadow:inset 0 0 0 1px #cfccc4}
+    .spire-inspire button.spire-primary{background:var(--spire-coral);color:#fff;box-shadow:none}
+    .spire-inspire button.spire-primary:hover{background:var(--spire-coral-deep)}
+    .spire-inspire .spire-inspire-back{width:32px;padding:0;background:none;box-shadow:none;color:var(--spire-ink-2)}
+    .spire-inspire .spire-inspire-back:hover{background:var(--spire-paper-2);box-shadow:none}
+    .spire-inspire button:focus-visible,.spire-inspire summary:focus-visible{outline:2px solid var(--spire-ink);outline-offset:2px}
+    .spire-inspire-status{padding:0 14px 0 54px;margin:0 0 12px;color:var(--spire-muted);font-size:12.5px}
+    .spire-inspire-switch{display:flex;gap:2px;margin:0 14px 10px;padding:3px;border-radius:11px;background:var(--spire-paper-2)}
+    .spire-inspire .spire-inspire-switch button{flex:1;height:28px;background:none;box-shadow:none;color:var(--spire-muted);font-size:12.5px}
+    .spire-inspire .spire-inspire-switch button[aria-pressed="true"]{background:var(--spire-card);color:var(--spire-ink);box-shadow:0 1px 2px rgba(27,35,80,.1)}
+    .spire-inspire-stage{position:relative;margin:0 14px;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 0 0 1px var(--spire-line),0 12px 28px -18px rgba(27,35,80,.35);animation:spire-pop .4s var(--spire-ease)}
+    .spire-inspire-stage:fullscreen{margin:0;border-radius:0;display:grid;place-items:center;background:var(--spire-paper)}
+    .spire-inspire-frame{display:block;border:0;background:#fff;transform-origin:0 0}
+    .spire-inspire-original{display:block;width:100%;height:auto}
+    .spire-inspire-loading{position:relative;margin:0 14px;border-radius:12px;overflow:hidden;background:var(--spire-ink);min-height:160px;max-height:70vh;display:grid;place-items:center}
+    .spire-inspire-loading img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.28;filter:saturate(.6)}
+    .spire-inspire-loading::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.12) 50%,transparent 70%);animation:spire-sweep 1.8s cubic-bezier(.45,0,.55,1) infinite}
+    .spire-inspire-bird{position:relative;width:96px;height:96px;filter:drop-shadow(0 0 .8px #fff) drop-shadow(0 0 .8px #fff)}
+    .spire-inspire-bird svg{width:100%;height:100%;overflow:visible}
+    @keyframes spire-sweep{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+    .spire-inspire-actions{display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px 4px}
+    .spire-inspire details{margin:8px 14px 18px;padding:10px 12px;border-radius:12px;background:var(--spire-card);box-shadow:inset 0 0 0 1px var(--spire-line)}
+    .spire-inspire summary{cursor:pointer;font:500 13px/1.3 var(--spire-font);color:var(--spire-ink-2)}
+    .spire-inspire-code{margin:10px 0 0;max-height:260px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,SFMono-Regular,monospace;color:var(--spire-ink-2);user-select:text}
+    .spire-inspire-error{margin:8px 14px;padding:16px;border-radius:12px;background:#fbebe6;color:var(--spire-coral-deep);display:grid;gap:12px;justify-items:start}
+    .spire-inspire-error p{margin:0}
+    @media(prefers-reduced-motion:reduce){.spire-inspire-loading::after,.spire-inspire-stage{animation:none}}
+  `);
+  shadow.adoptedStyleSheets = shadow.adoptedStyleSheets.concat(inspireSheet);
+  var inspireResize = null;
+  function closeInspire() {
+    inspireToken++;
+    if (inspireResize) { inspireResize.disconnect(); inspireResize = null; }
+    if (inspirePanel) inspirePanel.hidden = true;
+    panel.classList.remove("spire-panel-inspire");
+    // venit doar pentru Inspire: panoul se închide odată cu demo-ul
+    if (!campaignOpened) panel.hidden = true;
+    bird.focus({ preventScroll: true });
+  }
+  function startInspire() {
+    if (busy) return;
+    stopCritique();
+    closeInspire();
+    menu.hidden = true;
+    panel.hidden = true; // pagina rămâne liberă pentru selecție
+    cropPurpose = "inspire";
+    setCropMode(true);
+    bubble.replaceChildren(); line(bubble, "h2", "Alege o zonă"); line(bubble, "p", "Trage un dreptunghi peste partea din pagină care îți place. O recreez în HTML, în panou. Esc anulează.");
+    bubble.hidden = false; positionPopup(bubble);
+  }
+  // Demo-ul stă în panoul din dreapta, în locul aplicației, până apeși „Înapoi”.
+  function inspireShell(title) {
+    if (!inspirePanel) {
+      inspirePanel = document.createElement("section");
+      inspirePanel.className = "spire-inspire";
+      inspirePanel.setAttribute("role", "region"); inspirePanel.setAttribute("aria-label", "Inspire");
+      panel.insertBefore(inspirePanel, iframe);
+    }
+    if (inspireResize) { inspireResize.disconnect(); inspireResize = null; }
+    ensureApp(); panel.hidden = false; setCollapsed(false);
+    panel.classList.add("spire-panel-inspire");
+    dodgePanel();
+    inspirePanel.replaceChildren(); inspirePanel.hidden = false;
+    var toolbar = document.createElement("div"); toolbar.className = "spire-inspire-bar";
+    var back = button(toolbar, "", closeInspire); back.className = "spire-inspire-back";
+    back.appendChild(icon("back")); back.setAttribute("aria-label", "Închide demo-ul"); back.title = campaignOpened ? "Înapoi la campanie" : "Închide";
+    line(toolbar, "h2", title);
+    inspirePanel.appendChild(toolbar);
+    return inspirePanel;
+  }
+  // Textele și stilurile măsurate din zonă: AI-ul le folosește ca valori exacte, nu ghicite.
+  function selectionText(box) {
+    var texts = [], walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), node, visited = 0, length = 0;
+    while ((node = walker.nextNode()) && visited++ < 5000 && length < 4000) {
+      var parent = node.parentElement;
+      if (!parent || host.contains(parent) || parent.closest("script,style,noscript,input,textarea,select,[hidden]")) continue;
+      var text = normalize(node.nodeValue, 300);
+      if (!text) continue;
+      var range = document.createRange(); range.selectNodeContents(node);
+      var r = range.getBoundingClientRect();
+      if (r.width <= 0 || r.height <= 0 || r.left + r.width / 2 < box.x || r.left + r.width / 2 > box.x + box.w || r.top + r.height / 2 < box.y || r.top + r.height / 2 > box.y + box.h) continue;
+      texts.push(text); length += text.length;
+    }
+    return texts.join("\n").slice(0, 4000);
+  }
+  function selectionStyles(box) {
+    var out = [], walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT), el, visited = 0;
+    while ((el = walker.nextNode()) && visited++ < 3000 && out.length < 40) {
+      if (host.contains(el) || SKIP_TAGS[el.tagName]) continue;
+      var r = el.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4 || r.left < box.x - 2 || r.top < box.y - 2 || r.right > box.x + box.w + 2 || r.bottom > box.y + box.h + 2) continue;
+      var cs = getComputedStyle(el), own = normalize(directText(el), 60), tag = el.tagName.toLowerCase();
+      var bg = cs.backgroundColor, painted = bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg);
+      if (!own && !painted && !/^(img|svg|button|a|input)$/.test(tag)) continue;
+      out.push({ tag: tag, text: own, x: Math.round(r.left - box.x), y: Math.round(r.top - box.y), w: Math.round(r.width), h: Math.round(r.height),
+        font: cs.fontFamily.split(",")[0].replace(/["']/g, "").trim().slice(0, 40), size: Math.round(parseFloat(cs.fontSize)), weight: cs.fontWeight,
+        color: cs.color, background: painted ? bg : "", radius: cs.borderRadius, align: cs.textAlign });
+    }
+    return out;
+  }
+  async function inspireSelection(box) {
+    if (busy) return;
+    var token = ++inspireToken, image, timer;
+    var context = { w: box.w, h: box.h, text: selectionText(box), styles: selectionStyles(box) };
+    busy = true; bubble.hidden = true; setLayerHidden(true);
+    try {
+      image = await Promise.race([
+        twoFrames().then(captureTab).then(loadImage).then(function (img) { return cropImage(img, box); }),
+        new Promise(function (_, reject) { timer = setTimeout(function () { reject(new Error(CAPTURE_FAILED)); }, 8000); }),
+      ]);
+      if (!image) throw new Error(CAPTURE_FAILED);
+    } catch (err) {
+      if (token === inspireToken) inspireError(err.message || CAPTURE_FAILED);
+      return;
+    } finally { clearTimeout(timer); busy = false; setLayerHidden(false); }
+    if (token !== inspireToken) return;
+    inspireLast = { image: image, context: context };
+    await generateInspire(token);
+  }
+  function inspireError(message) {
+    var shell = inspireShell("Inspire"), error = document.createElement("div"); error.className = "spire-inspire-error";
+    var text = line(error, "p", message); text.setAttribute("role", "alert");
+    if (inspireLast) button(error, "Reîncearcă", function () { void generateInspire(++inspireToken); }, true);
+    shell.appendChild(error);
+  }
+  function thinkingBird() {
+    var wrap = document.createElement("span"); wrap.className = "spire-inspire-bird";
+    var svg = new DOMParser().parseFromString(globalThis.SPIRE_POSES.thinking.flying, "image/svg+xml").documentElement;
+    wrap.appendChild(document.importNode(svg, true));
+    return wrap;
+  }
+  // Demo-ul se desenează la lățimea zonei alese, apoi se micșorează cât panoul: arată ca originalul.
+  function scaledFrame(stage, box, frame, w, h) {
+    frame.style.width = w + "px"; frame.style.height = h + "px";
+    function fit() {
+      if (box.hidden) { stage.style.height = ""; return; }
+      var full = shadow.fullscreenElement === stage;
+      var k = full ? Math.min(innerWidth / w, innerHeight / h) : Math.min(1, stage.clientWidth / w);
+      frame.style.transform = "scale(" + k + ")";
+      box.style.width = Math.round(w * k) + "px"; box.style.height = Math.round(h * k) + "px";
+      stage.style.height = full ? "" : Math.round(h * k) + "px";
+    }
+    inspireResize = new ResizeObserver(fit); inspireResize.observe(stage); fit();
+    return fit;
+  }
+  async function generateInspire(token) {
+    var shell = inspireShell("Recreez selecția…");
+    var status = line(shell, "p", "Construiesc demo-ul din selecția ta.", "spire-inspire-status"); status.setAttribute("role", "status");
+    var loading = line(shell, "div", "", "spire-inspire-loading");
+    loading.style.aspectRatio = Math.max(1, Math.round(inspireLast.context.w)) + " / " + Math.max(1, Math.round(inspireLast.context.h));
+    var preview = document.createElement("img"); preview.alt = ""; preview.src = inspireLast.image; preview.onerror = function () { preview.remove(); };
+    loading.append(preview, thinkingBird());
+    try {
+      var reply = await chrome.runtime.sendMessage({ type: "inspire-ai", request: globalThis.SpireInspire.request(inspireLast.context), image: inspireLast.image });
+      if (token !== inspireToken) return;
+      if (!reply || !reply.ok) throw new Error(reply && reply.status === 429 ? "Gemini a atins limita temporară de utilizare. Încearcă din nou puțin mai târziu." : reply && reply.error || "Nu am putut crea demo-ul. Încearcă din nou.");
+      var result = globalThis.SpireInspire.result(reply.data);
+      shell = inspireShell(result.title);
+      line(shell, "p", reply.model === "mock" ? "Demo simulat · HTML/CSS" : "Recreat cu AI · HTML/CSS", "spire-inspire-status");
+      var ctx = inspireLast.context, w = Math.max(200, Math.round(ctx.w)), h = Math.max(120, Math.round(ctx.h));
+      // comparația: recreat sau original, pe aceeași scenă
+      var toggle = line(shell, "div", "", "spire-inspire-switch"); toggle.setAttribute("role", "group"); toggle.setAttribute("aria-label", "Ce arăt");
+      var showMade = button(toggle, "Recreat", function () { pick(true); }), showOrig = button(toggle, "Original", function () { pick(false); });
+      var stage = line(shell, "div", "", "spire-inspire-stage");
+      var box = line(stage, "div", ""); box.style.overflow = "hidden";
+      var frame = document.createElement("iframe"); frame.className = "spire-inspire-frame"; frame.title = "Demo Inspire";
+      frame.setAttribute("sandbox", ""); frame.setAttribute("referrerpolicy", "no-referrer"); frame.srcdoc = result.document;
+      box.appendChild(frame);
+      var original = document.createElement("img"); original.className = "spire-inspire-original"; original.alt = "Zona originală din pagină"; original.src = inspireLast.image; original.hidden = true;
+      original.onerror = function () { toggle.remove(); };
+      stage.appendChild(original);
+      var fit = scaledFrame(stage, box, frame, w, h);
+      function pick(made) {
+        showMade.setAttribute("aria-pressed", String(made)); showOrig.setAttribute("aria-pressed", String(!made));
+        box.hidden = !made; original.hidden = made; fit();
+      }
+      pick(true);
+      var actions = line(shell, "div", "", "spire-inspire-actions");
+      var full = button(actions, "Ecran complet", function () { if (stage.requestFullscreen) void stage.requestFullscreen().catch(function () {}); }); full.prepend(icon("expand"));
+      var copy = button(actions, "Copiază codul", async function () {
+        try { await navigator.clipboard.writeText(result.document); copy.lastChild.textContent = "Copiat"; }
+        catch (_) { copy.lastChild.textContent = "Nu am putut copia"; }
+        setTimeout(function () { copy.lastChild.textContent = "Copiază codul"; }, 1800);
+      });
+      copy.prepend(icon("copy")); copy.lastChild.textContent = "Copiază codul";
+      var details = document.createElement("details"); line(details, "summary", "Vezi codul");
+      line(details, "pre", result.document, "spire-inspire-code"); shell.appendChild(details);
+    } catch (err) { if (token === inspireToken) inspireError(err.message || "Nu am putut crea demo-ul. Încearcă din nou."); }
+  }
 
   // Nu scanăm la `load`-ul iframe-ului: doar la spire:scan, când omul apasă „Scanează pagina”.
   // `spire:ready` (vechiul semnal „aplicația ascultă, scanează acum”) a fost scos: ar fi pornit
@@ -1589,7 +2241,7 @@
     var data = event.data;
     if (!data || typeof data !== "object" || typeof data.type !== "string") return;
     if (data.type === "spire:brief-ready") {
-      appReady = true;
+      appReady = true; clearTimeout(offlineTimer); setOffline(false);
       if (activeAiCritique) activeAiCritique.send();
       void memoryReady.then(sendBrief);
     } else if (data.type === "spire:critique-result") {

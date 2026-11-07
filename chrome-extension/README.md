@@ -1,6 +1,6 @@
 # Spire, extensia de Chrome
 
-Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secțiuni) și îl duce în aplicația web, unde se construiește designul pe marca ta. Din meniul uliului, „Fă o campanie” pune aplicația (`/nou?din=extensie`) într-un `iframe` ancorat în dreapta paginii, 420 px lățime.
+Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secțiuni) și îl duce în aplicația web, unde se construiește designul pe marca ta. Din meniul uliului, „Fă o campanie” pune aplicația (`/nou?din=extensie`) într-un `iframe` ancorat în dreapta paginii, 480 px lățime.
 
 ## Cum o încarci manual
 
@@ -67,6 +67,15 @@ După critică, Spire propune cel mult trei modificări și întreabă ce promov
 
 După întrebări, „Continuă cu o campanie” arată propunerile detaliate și secțiunea de vizibilitate în căutările cu AI. Descrierea omului, răspunsurile și clarificările intră în snapshotul fiecărui material. Draftul și coada rămân în browser, separat pe site; un reload nu repetă automat generarea.
 
-„Generează imagine” și „Propune logo” folosesc `/api/image`. Rezultatele mock sunt marcate ca simulate. „Pregătește video” folosește un clip de demo mapat explicit pe domeniu; nu pretinde generare video live. Pentru `marinapark.ro`, clipul este local, la `public/samples/spire/demo-videos/marina-park.mp4` (40 s), preluat din portofoliul echipei Exedria. Domeniile fără clip configurat primesc o stare de indisponibilitate, nu un material inventat.
+„Generează imagine” și „Propune logo” folosesc `/api/image`. Rezultatele mock sunt marcate ca simulate. „Pregătește video” folosește un clip de demo mapat explicit pe domeniu. Interfața îl arată după o animație de randare de circa 20 de secunde (`window.__spireVideoMs` o scurtează în teste), fără eticheta „clip pregătit anterior”; în date, rezultatul rămâne marcat `prerecorded`. Clipul are buton „Ecran complet”, iar iframe-ul din extensie permite fullscreen. Pentru `marinapark.ro`, clipul este local, la `public/samples/spire/demo-videos/marina-park.mp4` (40 s), preluat din portofoliul echipei Exedria. Domeniile fără clip configurat primesc o stare de indisponibilitate, nu un material inventat.
 
 Adaptorul aplicației pentru critică și recomandări de căutare este `src/lib/critiqueClient.ts`. Contractele pure ale engine-ului și gateway-ul din service worker rămân compatibile în `src/lib/critiqueAi.ts` și `background.js`; turul și campania folosesc transportul corelat al aplicației, fără un al doilea apel AI.
+
+
+## Inspire: selecție → cod → demo pe pagină
+
+Din meniul uliului, **Inspire** pornește selecția cu mouse-ul. Trage un dreptunghi peste zona dorită; `Esc` anulează. Extensia trimite numai captura decupată și textele selectate la motorul AI configurat în `config.js`, prin gateway-ul existent din service worker.
+
+Rezultatul HTML/CSS apare peste pagină într-un iframe cu `sandbox` fără permisiuni, fără scripturi și fără acces la rețea. Pagina originală rămâne intactă. **Vezi codul** arată documentul efectiv randat; **Selectează din nou** pornește o altă selecție. Modul mock este etichetat „Demo simulat”. Închiderea demo-ului ignoră răspunsurile întârziate.
+
+Verificarea fluxului (Chromium, AI dublat controlat): `node chrome-extension/tests/inspire.smoke.mjs`. Acoperă selecție mică, Esc, captura decupată, generarea, CSS randat, izolarea HTML, eroare și reîncercare.
