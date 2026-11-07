@@ -177,7 +177,7 @@ function Head({ ribbon, title, center = true, dark = false, size = 68 }: { ribbo
 }
 
 function Mockup({ mock, active, data }: { mock: Mock; active: boolean; data: LandingData }) {
-  if (mock === "scan") return <ScanMock active={active} />;
+  if (mock === "scan") return <ScanMock active={active} neutral />;
   if (mock === "ask") return <AskMock active={active} campaign={data.campaign} />;
   return <KitMock active={active} data={data} />;
 }

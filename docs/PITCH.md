@@ -39,7 +39,7 @@ Vorbim ca între oameni, scurt și sigur. Ce n-am măsurat spunem deschis.
 ### 0:00–0:15 · Hook, cu sala (slide-ul 2, „Ghiciți”) · David
 
 > Ridicați mâna dacă ați văzut pe net un design și v-ați zis: vreau și eu așa ceva, pentru firma mea. [pauză, mâinile sus]
-> Bun. Câte prompturi îi trebuie unui chat ca să facă asta pentru o gelaterie, cu mascota ei și cu prețul corect? Unul? Cinci? Zece? [mâinile la fiecare]
+> Bun. Câte prompturi îi trebuie unui chat ca să facă asta pentru o gelaterie, cu culorile ei și cu prețul corect? Unul? Cinci? Zece? [mâinile la fiecare]
 
 Revenim la vot înainte de video. Dacă sala e tăcută, mergem mai departe după prima întrebare.
 
@@ -53,7 +53,7 @@ Revenim la vot înainte de video. Dacă sala e tăcută, mergem mai departe dup�
 
 ### 0:40–0:48 · Ce face Spire (slide-ul 5) · David → Alexandru
 
-> Spire e o extensie de Chrome. Te uiți la o pagină care îți place, apeși, răspunzi la trei întrebări și primești postarea și story-ul, cu culorile și mascota ta. Alexandru vă arată cum.
+> Spire e o extensie de Chrome. Te uiți la o pagină care îți place, apeși, răspunzi la trei întrebări și primești postarea și story-ul, în culorile firmei tale. Alexandru vă arată cum.
 
 ### 0:48–1:25 · Arhitectura (slide-ul 6) · Alexandru
 
@@ -61,14 +61,14 @@ Slide-ul pornește cu „Citește” aprins. Patru clicuri până la imaginea co
 
 > Avem o regulă simplă: AI-ul propune, codul verifică, omul aprobă.
 > Extensia vede pagina doar după ce apeși pe ea.
-> **[clic]** Gemini se uită la design și scrie textele, iar FLUX.2 desenează mascota. Dacă Gemini răspunde în altă formă decât am cerut, aruncăm răspunsul.
-> **[clic]** Modelul de imagine desenează doar mascota. Textul și prețul le așază codul, ca straturi separate. Dintr-o singură imagine n-am putea verifica nimic. Așa, codul citește fiecare cifră.
+> **[clic]** Gemini se uită la design și scrie textele, iar FLUX.2 creează elementele vizuale. Dacă Gemini răspunde în altă formă decât am cerut, aruncăm răspunsul.
+> **[clic]** Modelul de imagine creează doar elementele vizuale. Textul și prețul le așază codul, ca straturi separate. Dintr-o singură imagine n-am putea verifica nimic. Așa, codul citește fiecare cifră.
 > **[clic]** Omul schimbă ce vrea, vede iar verificarea și descarcă.
-> **[clic]** Ce nu trece se reface, de cel mult două ori. Dacă nu răspunde Gemini, trecem pe alt model. Dacă nu iese desenul, punem mascota originală și spunem asta pe ecran.
+> **[clic]** Ce nu trece se reface, de cel mult două ori. Dacă nu răspunde Gemini, trecem pe alt model. Dacă nu iese un element vizual, punem imaginea originală și spunem asta pe ecran.
 
 ### 1:25–1:50 · Garda (slide-ul 7) · Alexandru
 
-> Un chat îți poate scrie alt preț și nu te anunță. La noi, codul compară prețul cu ce ai dat tu, măsoară cât de departe sunt culorile de ale tale, vede dacă textul se citește și respinge desenul care seamănă prea tare cu originalul.
+> Un chat îți poate scrie alt preț și nu te anunță. La noi, codul compară prețul cu ce ai dat tu, măsoară cât de departe sunt culorile de ale tale, vede dacă textul se citește și respinge elementul vizual care seamănă prea tare cu originalul.
 > În tot proiectul avem 492 de teste unitare și 73 end-to-end, și rulează fără chei AI. ✂
 
 Sursele din cod: `src/lib/agentLoop.ts`, `src/lib/campaigns.ts`, `src/lib/compose.ts`, `src/lib/guard.ts`, `server/providers/gemini.ts`. Numărul de teste e cel de la ultima rulare; dacă s-a schimbat codul, rulați `npm run check` și spuneți cifra nouă.
@@ -133,7 +133,7 @@ Fiecare fragment tehnic spune **o decizie și de ce**, nu o listă de tehnologii
 
 ## Varianta de 30 de secunde (pe hol, la mentori)
 
-> Omul de marketing vede un design care îi place și vrea ceva la fel, pe marca lui, azi. În chat iese altă mascotă și alt preț. Spire apare peste site, se uită la design, pune două-trei întrebări și face kitul de campanie cu mascota și culorile mărcii. Codul verifică prețul, culorile și contrastul, iar omul aprobă.
+> Omul de marketing vede un design care îi place și vrea ceva la fel, pe marca lui, azi. În chat ies alte culori și alt preț. Spire apare peste site, se uită la design, pune două-trei întrebări și face materialele campaniei pe culorile mărcii. Codul verifică prețul, culorile și contrastul, iar omul aprobă.
 
 Pentru varianta de 5 minute: arhitectura rămâne întreagă; adăugați toate întrebările din demo și un slide cu ce a prins garda în rulările reale.
 
@@ -167,19 +167,19 @@ Le-am putut folosi azi: la Gemini, modelele de imagine cer plată, așa că ilus
 Citirea paginii, marca salvată, straturi editabile, aceeași ofertă pe toate formatele și verificări făcute de cod. Dacă prețul de pe design nu e cel dat de om, codul îl prinde.
 
 **5. „Fără AI, mai există produsul?”**
-Nu. Fără AI nu înțelegem referința și nu avem mascotă. Codul doar păzește.
+Nu. Fără AI nu înțelegem referința și nu avem elemente vizuale. Codul doar păzește.
 
 **6. „Cât de bună e calitatea, măsurat?”**
 Nu am măsurat încă. Aș măsura așa: pe un set de referințe, câte materiale trec verificarea, câte au nevoie de reîncercare și câte ar publica un om de marketing. Întrebarea e sigură de la un om de „Run and Operate”.
 
 **7. „Ce se întâmplă dacă Gemini dă 429 sau pică în timpul unei rulări?”**
-Depinde de pas. La analiză și texte, la 429, eroare de server sau 20 de secunde fără răspuns, trecem automat pe modelul Gemini de rezervă (`server/providers/gemini.ts`). Dacă pică ilustrația, kitul iese cu mascota originală, iar garda spune „generarea n-a reușit”. Furnizorul AI se alege din configurație (`server/ai.ts`), nu după o eroare, deci nu spuneți „failover între furnizori”. Pentru imagine nu există al doilea furnizor, doar rezerva.
+Depinde de pas. La analiză și texte, la 429, eroare de server sau 20 de secunde fără răspuns, trecem automat pe modelul Gemini de rezervă (`server/providers/gemini.ts`). Dacă pică un element vizual, kitul iese cu imaginea originală, iar garda spune „generarea n-a reușit”. Furnizorul AI se alege din configurație (`server/ai.ts`), nu după o eroare, deci nu spuneți „failover între furnizori”. Pentru imagine nu există al doilea furnizor, doar rezerva.
 
 **7b. „Clipul cine îl scrie?”**
 Codul cere Claude (`src/lib/campaignVideo.ts`), dar pe producție nu e setată cheia, așa că azi răspunde Gemini. Scenariul trece prin verificarea din `src/lib/videoPlan.ts`, iar dacă pică folosim un scenariu de rezervă. Browserul randează clipul.
 
 **8. „Ce faceți cu un model care minte în verificare?”**
-Doar „seamănă cu mascota” e o verificare AI și e marcată „AI” pe ecran. Restul se calculează din design. Dacă garda pică, nu ajunge la om ca „verificat”.
+Doar verificarea care compară imaginea generată cu cea din marcă e făcută de AI și e marcată „AI” pe ecran. Restul se calculează din design. Dacă garda pică, nu ajunge la om ca „verificat”.
 
 **9. „Merge extensia pe orice site? Dar pe site-urile cu CSP sau pe Instagram?”**
 Nu am testat sistematic pe site-uri mari. Pe pagini care nu se pot citi, lucrăm pe pixeli și marcăm rolurile culorilor ca „ghicite”. Un CSP strict poate bloca panoul, care e un iframe.

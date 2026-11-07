@@ -60,7 +60,7 @@ export const PITCH: PitchConfig = {
   builtToday: [
     "Extensia Chrome: uliul peste site, scanarea paginii și Inspire",
     "Citirea referinței și întrebările, cu Gemini",
-    "Mascota redesenată în stilul referinței, cu FLUX.2 pe Cloudflare",
+    "Elemente vizuale în stilul referinței, cu FLUX.2 pe Cloudflare",
     "Designul pe straturi, verificările din cod și reîncercările AI-ului",
     "Aplicația: campanii, marca, export PNG, clipul randat în browser, datele în Supabase",
   ],
@@ -73,14 +73,14 @@ export const PITCH: PitchConfig = {
   architecture: {
     steps: [
       { owner: "cod", title: "Citește", lines: ["Extensia vede pagina doar când apeși."] },
-      { owner: "AI", title: "Propune", lines: ["Gemini înțelege designul și scrie textele.", "FLUX.2 desenează mascota."] },
+      { owner: "AI", title: "Propune", lines: ["Gemini înțelege designul și scrie textele.", "FLUX.2 creează elementele vizuale."] },
       { owner: "cod", title: "Verifică", lines: ["Pune designul pe straturi.", "Verifică prețul, culorile, contrastul și dacă e o copie."] },
       { owner: "om", title: "Aprobă", lines: ["Editează, vede verificarea din nou și descarcă."] },
     ],
     loop: "Ce nu trece se întoarce la AI, de cel mult două ori",
     failures: [
       { when: "Pică modelul Gemini", then: "trecem automat pe alt model" },
-      { when: "Pică desenul", then: "mascota originală, iar garda o spune" },
+      { when: "Pică un element vizual", then: "imaginea originală, iar garda o spune" },
       { when: "Fără cheie AI", then: "mod demo, spus ca atare" },
     ],
   },
@@ -119,12 +119,12 @@ const STORY = {
   steps: [
     { tag: "Se uită", title: "Citește *pagina*", text: "Uliul apare peste site și marchează ce e bun pentru campanie.", mock: "scan" },
     { tag: "Întreabă", title: "Doar *trei lucruri*", text: "Oferta, îndemnul și formatele. Restul îl ia din marcă.", mock: "ask" },
-    { tag: "Face", title: "Kitul de *campanie*", text: "Postare și story, cu mascota în stilul referinței, pe straturi editabile.", mock: "kit" },
+    { tag: "Face", title: "Kitul de *campanie*", text: "Postare și story, cu elemente vizuale în stilul referinței, pe straturi editabile.", mock: "kit" },
   ] satisfies Array<{ tag: string; title: string; text: string; mock: Mock }>,
   guardTitle: "AI-ul propune.\n*Codul verifică.*",
   guardText: "Înainte să vezi kitul, codul verifică fiecare material: prețul, culorile mărcii, contrastul, cât seamănă cu referința. Ce nu trece se întoarce la AI, de cel mult două ori.",
   guessTitle: "Câte *prompturi?*",
-  guessText: "Ca un chat să facă asta pentru o gelaterie, cu mascota ei și cu prețul corect.",
+  guessText: "Ca un chat să facă asta pentru o gelaterie, cu culorile ei și cu prețul corect.",
   guessOptions: ["1", "5", "10+"],
 };
 

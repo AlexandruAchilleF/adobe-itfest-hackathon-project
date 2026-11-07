@@ -86,7 +86,7 @@ describe("pitch deck", () => {
     for (const s of all) {
       const deck = buildDeck(s, PITCH);
       expect(missing(deck)).toEqual([]);
-      expect(JSON.stringify(deck)).not.toMatch(/Zod|Delta E|dHash|activeTab|de completat/i);
+      expect(JSON.stringify(deck)).not.toMatch(/Zod|Delta E|dHash|activeTab|de completat|mascot/i);
     }
   });
 

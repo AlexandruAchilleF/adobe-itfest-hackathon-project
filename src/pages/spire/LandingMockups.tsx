@@ -197,8 +197,11 @@ function ExtensionPanel({ on, children }: { on: boolean; children: ReactNode }) 
 // 6 clic și panoul, 7 cursorul pe „Scanează pagina”, 8 scanarea, 9 chenarele.
 const SCAN_AT = [450, 1000, 1500, 2200, 2700, 3300, 3900, 4500, 5700];
 
-export function ScanMock({ active }: { active: boolean }) {
-  const { picks, said } = useMemo(demoScan, []);
+/** `neutral`: în pitch nu spunem „mascotă”; textele machetei zic „imagine”. Landing-ul rămâne cu textele produsului. */
+export function ScanMock({ active, neutral = false }: { active: boolean; neutral?: boolean }) {
+  const { picks, said: rawSaid } = useMemo(demoScan, []);
+  const word = (s: string) => (neutral ? s.replace(/mascota/g, "imaginea").replace(/mascotă/g, "imagine") : s);
+  const said = word(rawSaid);
   const phase = useSequence(active, SCAN_AT, { loop: true, rest: 3800 });
   const root = useRef<HTMLDivElement>(null);
   const icon = useRef<HTMLSpanElement>(null);
@@ -229,7 +232,7 @@ export function ScanMock({ active }: { active: boolean }) {
           {scanning && <span className="land-scanline" style={{ ["--h" as string]: `${VIEW_H}px` }} aria-hidden />}
           {picks.map((p, i) => (
             <span key={p.elementId} className="land-xbox" data-lit={scanned} style={{ ...boxPercent(p.elementId), transitionDelay: scanned ? `${i * 250}ms` : "0ms" }}>
-              <span className="land-xlabel">{KIND_LABELS[p.kind]}</span>
+              <span className="land-xlabel">{word(KIND_LABELS[p.kind])}</span>
             </span>
           ))}
           {/* uliul stă pe marginea ilustrației, în stânga panoului care se deschide */}
@@ -261,7 +264,7 @@ export function ScanMock({ active }: { active: boolean }) {
                 {picks.map((p, i) => (
                   <li key={p.elementId} className="land-row flex items-start gap-1.5 text-[8.5px] leading-snug text-ink-2" data-on={scanned} style={{ transitionDelay: `${300 + i * 250}ms` }}>
                     <span className="mt-[3px] h-1.5 w-1.5 shrink-0 rounded-full bg-ok" aria-hidden />
-                    {p.reason}
+                    {word(p.reason)}
                   </li>
                 ))}
               </ul>
