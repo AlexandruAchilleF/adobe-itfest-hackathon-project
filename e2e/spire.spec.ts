@@ -262,6 +262,14 @@ test('sidebar: constatări, căutări AI, brief păstrat și materiale la cerere
   await expect(workspace.getByRole('status')).toContainText('Păstrat în acest browser');
   await workspace.getByRole('button',{name:'Mai clarificăm'}).click();
   await expect(workspace.getByText('Întrebări simulate din contextul brief-ului')).toBeVisible();
+  await expect(workspace.getByTestId('clarification-answer')).toHaveCount(1);
+  await expect(workspace.getByRole('button',{name:'Răspunde',exact:true})).toBeDisabled();
+  await expect(workspace.getByRole('button',{name:'Generează imagine'})).toBeDisabled();
+  for(let i=0;i<3 && await workspace.getByTestId('clarification-answer').count();i++) {
+    await workspace.getByTestId('clarification-answer').fill('Răspuns '+(i+1));
+    await workspace.getByRole('button',{name:'Răspunde',exact:true}).click();
+  }
+  await expect(workspace.getByTestId('clarification-answer')).toHaveCount(0);
   await workspace.getByRole('button',{name:'Generează imagine'}).click();
   await expect(workspace.getByText('Rezultat simulat · fără generare de imagine')).toBeVisible();
   await workspace.getByRole('button',{name:'Pregătește video'}).click();
@@ -297,4 +305,21 @@ test('sidebar: Marina Park redă clipul local cu proveniență de demo', async (
   await expect(video).toHaveAttribute('src','/samples/spire/demo-videos/marina-park.mp4');
   await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).duration)).toBeGreaterThan(39);
   expect(await video.evaluate(el => (el as HTMLVideoElement).duration)).toBeLessThan(41);
+});
+
+
+test("scanarea completează brief-ul și păstrează ce a editat omul", async ({ page }) => {
+  const frame = await embedded(page);
+  const send = () => page.evaluate(() => {
+    const element = { id: "h", tag: "h1", text: "Cazare pentru familii", box: { x: 0, y: 0, w: 1400, h: 500 }, styles: { color: "#000", background: "#fff", fontFamily: "Arial", fontSize: "60px", fontWeight: "700" }, inFirstScreen: true };
+    const summary = { url: new URL(location.href).origin + "/", title: "Marina Park", headings: [element.text], ctas: [], colors: [], fonts: [] };
+    (document.querySelector("#spire") as HTMLIFrameElement).contentWindow!.postMessage({ type: "spire:page", page: summary, elements: [element] }, "*");
+  });
+  await send();
+  const product = frame.getByTestId("campaign-workspace").getByLabel("Produs sau serviciu");
+  await expect(product).toHaveValue("Cazare pentru familii");
+  await product.fill("Produs ales de om");
+  await send();
+  await expect(frame.getByText(/Am găsit 1/)).toBeVisible();
+  await expect(product).toHaveValue("Produs ales de om");
 });

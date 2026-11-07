@@ -367,7 +367,7 @@
 .spire-menu,.spire-bubble {position:fixed;pointer-events:auto;z-index:4;background:#fff;border:1px solid #e3e5ea;border-radius:16px;padding:16px;box-shadow:0 8px 28px #1f2a4420;font:14px/1.45 Geist,system-ui,sans-serif;color:#1f2a44}
 .spire-menu {width:220px;display:grid;gap:8px}
 .spire-bubble {width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}
-.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}
+.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}\n.spire-bubble [hidden] {display:none!important}
 .spire-menu button,.spire-bubble button {border:1px solid #e3e5ea;border-radius:9px;background:#fff;color:#1f2a44;padding:8px 10px;cursor:pointer;font:500 13px/1.3 Geist,system-ui,sans-serif}
 .spire-menu .spire-primary,.spire-bubble .spire-primary {background:#F25C3B;color:white;border-color:#F25C3B}
 .spire-question {display:grid;gap:5px;margin-top:12px}.spire-question input {width:100%;padding:8px;border:1px solid #e3e5ea;border-radius:8px;font:14px Geist,system-ui,sans-serif}.spire-options {display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.spire-bubble ul {padding-left:18px}
@@ -750,22 +750,42 @@
       proposals.forEach(function (text) { line(list, "li", text); }); bubble.appendChild(list);
     }
     line(bubble, "h2", "Pentru campania ta");
-    answerInputs = {};
-    globalThis.SpireCritique.briefQuestions(crits.map(function (c) { return c.evidence && ["primary-action", "navigation"].includes(c.evidence.category) ? "link-vag" : c.ruleId; }), title).forEach(function (q) {
+    var questions = globalThis.SpireCritique.briefQuestions(crits.map(function (c) { return c.evidence && ["primary-action", "navigation"].includes(c.evidence.category) ? "link-vag" : c.ruleId; }), title);
+    var questionIndex = 0;
+    var conversation = document.createElement("div"); bubble.appendChild(conversation);
+    var finalActions = document.createElement("div");
+    function renderQuestion() {
+      conversation.replaceChildren(); answerInputs = {};
+      questions.slice(0, questionIndex).forEach(function (q) {
+        var answer = line(conversation, "p", "", "spire-answer");
+        line(answer, "strong", q.text + " "); line(answer, "span", briefAnswers[q.id] || "");
+      });
+      finalActions.hidden = questionIndex < questions.length;
+      if (questionIndex >= questions.length) { positionPopup(bubble); return; }
+      var q = questions[questionIndex];
+      line(conversation, "p", "Întrebarea " + (questionIndex + 1) + " din " + questions.length);
       var label = document.createElement("label"); label.className = "spire-question";
       line(label, "span", q.text);
       var input = document.createElement("input"); input.type = "text"; input.maxLength = 500;
       input.value = briefAnswers[q.id] || ""; input.setAttribute("aria-label", q.text);
-      input.addEventListener("input", function () { memoryVersion++; briefAnswers[q.id] = input.value; });
-      answerInputs[q.id] = input; label.appendChild(input); bubble.appendChild(label);
+      answerInputs[q.id] = input; label.appendChild(input); conversation.appendChild(label);
+      function advance() {
+        if (!input.value.trim()) return;
+        memoryVersion++; briefAnswers[q.id] = input.value.trim(); questionIndex++; renderQuestion();
+      }
       if (q.options.length) {
         var options = document.createElement("div"); options.className = "spire-options";
-        q.options.forEach(function (option) { button(options, option, function () { memoryVersion++; input.value = option; briefAnswers[q.id] = option; }); });
-        bubble.appendChild(options);
+        q.options.forEach(function (option) { button(options, option, function () { input.value = option; advance(); }); });
+        conversation.appendChild(options);
       }
-    });
+      var next = button(conversation, "Continuă", advance, true);
+      next.disabled = !input.value.trim();
+      input.addEventListener("input", function () { memoryVersion++; briefAnswers[q.id] = input.value; next.disabled = !input.value.trim(); });
+      input.addEventListener("keydown", function (event) { if (event.key === "Enter") { event.preventDefault(); advance(); } });
+      input.focus({ preventScroll: true }); positionPopup(bubble);
+    }
     var note = line(bubble, "p", memoryError); note.setAttribute("role", "status");
-    button(bubble, "Păstrează răspunsurile", async function () {
+    button(finalActions, "Păstrează răspunsurile", async function () {
       var answers = currentAnswers();
       try { await chrome.storage.local.set({ [memoryKey]: answers }); note.textContent = "Răspunsuri păstrate."; }
       catch (_) { note.textContent = "Nu am putut păstra răspunsurile. Încearcă din nou."; }
@@ -773,11 +793,13 @@
     button(bubble, "Uită răspunsurile", async function () {
       try {
         await chrome.storage.local.remove(memoryKey); memoryVersion++; briefAnswers = {};
-        Object.keys(answerInputs).forEach(function (key) { answerInputs[key].value = ""; });
+        questionIndex = 0; renderQuestion();
         note.textContent = "Răspunsuri uitate.";
       } catch (_) { note.textContent = "Nu am putut uita răspunsurile. Încearcă din nou."; }
     });
-    button(bubble, "Continuă cu o campanie", function () { currentAnswers(); openCampaign(); }, true);
+    button(finalActions, "Modifică răspunsurile", function () { questionIndex = 0; renderQuestion(); });
+    button(finalActions, "Continuă cu o campanie", function () { currentAnswers(); openCampaign(); }, true);
+    bubble.appendChild(finalActions); renderQuestion();
     positionPopup(bubble);
   }
   var critiqueProvenance = "";
@@ -874,6 +896,9 @@
       critiqueProvenance=result.mode==="mock"?"Analiză simulată":"Analiză AI";
       crits=result.critiques;
     }
+    await memoryReady;
+    if (id !== tour) return;
+    briefAnswers = globalThis.SpireCritique.fillBriefGaps(briefAnswers, Object.assign({}, globalThis.SpireCritique.briefSeed(facts.page, facts.elements), cleanAnswers(result.suggestedAnswers)));
     latestCritique = { mode: result.error ? "fallback" : result.mode,
       items: crits.map(function(c,index){return {id:"change-"+index,title:c.title.slice(0,100),observation:c.body.slice(0,120),proposal:c.fix.slice(0,180),elementId:c.elementId};}),
       screenshot: result.screenshot, searchOptimization: Array.isArray(result.searchOptimization) ? result.searchOptimization.slice(0,3) : [] };
@@ -1566,6 +1591,11 @@
       if (!activeAiCritique || data.requestId !== activeAiCritique.requestId || !activeAiCritique.sent) return;
       if (data.error || !validAiResult(data.result)) activeAiCritique.finish({ error: true });
       else activeAiCritique.finish(data.result);
+    } else if (data.type === "spire:brief-suggested") {
+      void memoryReady.then(function () {
+        currentAnswers();
+        briefAnswers = globalThis.SpireCritique.fillBriefGaps(briefAnswers, cleanAnswers(data.answers));
+      });
     } else if (data.type === "spire:scan") {
       requestScan();
     } else if (data.type === "spire:picks") {

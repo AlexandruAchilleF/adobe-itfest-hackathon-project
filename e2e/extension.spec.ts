@@ -857,15 +857,43 @@ async function finishCritique(page: Page) {
     if(await next.isVisible()) await next.click();
     await page.waitForTimeout(200);
   }
+  await expect(root.getByRole('textbox')).toHaveCount(1);
+}
+
+async function completeBrief(page: Page) {
+  const root=page.locator('#spire-root');
+  for(let i=0;i<4 && await root.getByRole('button',{name:'Continuă',exact:true}).isVisible();i++) {
+    const input=root.getByRole('textbox');
+    if(!(await input.inputValue()).trim()) await input.fill('Răspuns confirmat');
+    await root.getByRole('button',{name:'Continuă',exact:true}).click();
+  }
   await expect(root.getByRole('button',{name:'Păstrează răspunsurile'})).toBeVisible();
 }
+
+test('brief: arată o singură întrebare și așteaptă răspunsul înainte de următoarea', async () => {
+  const page = await openFixture(); await inject(); await finishCritique(page);
+  const root = page.locator('#spire-root');
+  await expect(root.getByRole('textbox')).toHaveCount(1);
+  await expect(root.getByRole('textbox',{name:'Cui te adresezi?'})).toHaveCount(0);
+  await expect(root.getByRole('textbox')).not.toHaveValue('');
+  await root.getByRole('textbox').fill('');
+  await expect(root.getByRole('button',{name:'Continuă',exact:true})).toBeDisabled();
+  await root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'}).fill('Cazare');
+  await root.getByRole('button',{name:'Continuă',exact:true}).click();
+  await expect(root.getByRole('textbox',{name:'Cui te adresezi?'})).toBeVisible();
+  await expect(root.getByRole('textbox')).toHaveCount(1);
+  await expect(root.locator('.spire-answer')).toContainText('Cazare');
+  await page.close();
+});
 
 test("brief: memorie a extensiei, reîncărcare, uitare și transfer doar după ready valid", async () => {
   appScan = false;
   const page = await openFixture(); await inject(); await finishCritique(page);
   let root = page.locator('#spire-root');
   await root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'}).fill('Cana mea');
+  await root.getByRole('button',{name:'Continuă',exact:true}).click();
   await root.getByRole('textbox',{name:'Cui te adresezi?'}).fill('Părinți');
+  await completeBrief(page);
   await root.getByRole('button',{name:'Păstrează răspunsurile'}).click();
   await expect(root.getByRole('status')).toContainText('Răspunsuri păstrate.');
   expect(await page.evaluate(()=>localStorage.length)).toBe(0);
@@ -873,7 +901,9 @@ test("brief: memorie a extensiei, reîncărcare, uitare și transfer doar după 
   root=page.locator('#spire-root');
   await expect(root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'})).toHaveValue('Cana mea');
   await inject(); await inject();
+  await root.getByRole('button',{name:'Continuă',exact:true}).click();
   await expect(root.getByRole('textbox',{name:'Cui te adresezi?'})).toHaveValue('Părinți');
+  await completeBrief(page);
   await root.getByRole('button',{name:'Continuă cu o campanie'}).click();
   await expect.poll(()=>page.frames().some(f=>f.url().startsWith(APP_URL))).toBe(true);
   const frame=page.frames().find(f=>f.url().startsWith(APP_URL))!;
@@ -893,22 +923,25 @@ test("brief: memorie a extensiei, reîncărcare, uitare și transfer doar după 
   await expect.poll(async()=> (await received(frame)).filter(m=>m.type==='spire:brief').length).toBeGreaterThanOrEqual(1);
   await page.reload(); await inject(); await finishCritique(page);
   await root.getByRole('button',{name:'Uită răspunsurile'}).click();
-  await expect(root.getByRole('textbox',{name:'Cui te adresezi?'})).toHaveValue('');
-  await page.reload(); await inject(); await finishCritique(page);
   await expect(root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'})).toHaveValue('');
+  await expect(root.getByRole('textbox',{name:'Cui te adresezi?'})).toHaveCount(0);
+  await page.reload(); await inject(); await finishCritique(page);
+  await expect(root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'})).not.toHaveValue('Cana mea');
   await page.close();
 });
 
 test('AI: un singur apel corelat, panou ascuns, rezultat simulat și brief final', async () => {
   aiMode='mock'; appScan=false;
-  const page=await openFixture(); await inject(); await finishCritique(page);
+  const page=await openFixture(); await inject(); await finishCritique(page); await completeBrief(page);
   const root=page.locator('#spire-root');
   const frame=page.frames().find(f=>f.url().startsWith(APP_URL))!;
   await expect(root.locator('.spire-panel')).toBeHidden();
   await expect(root.locator('.spire-bubble')).toContainText('Analiză simulată');
   expect((await received(frame)).filter(m=>m.type==='spire:critique-request')).toHaveLength(1);
   expect((await received(frame)).filter(m=>m.type==='spire:brief')).toHaveLength(0);
+  await root.getByRole('button',{name:'Modifică răspunsurile'}).click();
   await root.getByRole('textbox',{name:'Ce produs sau serviciu promovezi?'}).fill('Produs final');
+  await completeBrief(page);
   await root.getByRole('button',{name:'Continuă cu o campanie'}).click();
   await expect(root.locator('.spire-panel')).toBeVisible();
   await expect.poll(()=>frame.evaluate(()=> (window as unknown as {__spireBrief?:{answers:{product:string}}}).__spireBrief?.answers.product)).toBe('Produs final');

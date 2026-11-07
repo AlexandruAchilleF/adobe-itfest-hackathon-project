@@ -13,6 +13,15 @@ const respond = (observations = [finding()], provider = "gemini") => vi.mocked(a
 beforeEach(() => vi.clearAllMocks());
 
 describe("critica AI", () => {
+  it("precompletează brief-ul din același răspuns, numai cu dovezi valide", async () => {
+    vi.mocked(ask).mockResolvedValue({ data: { observations: [], brief: {
+      product: { value: "Servicii", evidence: "Servicii" },
+      audience: { value: "Familii", evidence: "text inventat" },
+    } }, raw: { provider: "gemini" } } as never);
+    const result = await critiqueWithAi(input());
+    expect(CritiqueResult.parse(result).suggestedAnswers).toEqual({ product: "Servicii" });
+    expect(ask).toHaveBeenCalledTimes(1);
+  });
   it("apelează modelul o singură dată cu criterii compacte și date citate", async () => {
     respond();
     const result = await critiqueWithAi(input());

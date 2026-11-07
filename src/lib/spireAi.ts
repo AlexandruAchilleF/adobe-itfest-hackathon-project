@@ -9,7 +9,8 @@ import { campaignCandidates } from "./campaign";
 import { type Copy, copyFromAnswers } from "./compose";
 import { isDemoMode } from "./demoMode";
 import type { PageElement, PageSummary, SectionNode } from "./extensionBridge";
-import type { Answers } from "./gaps";
+import { briefSeed, type Answers } from "./gaps";
+import { ExtractedBrief, BRIEF_INSTRUCTION, acceptExtractedBrief } from "./pageBrief";
 import type { Check } from "./guard";
 import { mascotInstruction } from "./mascotPrompt";
 import { toDataUrl } from "./spireImages";
@@ -25,16 +26,18 @@ function viewportOf(elements: PageElement[]): { w: number; h: number } {
   return { w: right || 1440, h: right ? Math.round(right * 0.625) : 900 };
 }
 
-const PageRead = z.object({ said: z.string(), picks: z.array(z.object({ elementId: z.string(), reason: z.string() })) });
+const PageRead = z.object({ brief: ExtractedBrief, said: z.string(), picks: z.array(z.object({ elementId: z.string(), reason: z.string() })) });
 
-export async function summarizePage(page: PageSummary, elements: PageElement[]): Promise<{ said: string; picks: Array<{ elementId: string; reason: string }> }> {
+export async function summarizePage(page: PageSummary, elements: PageElement[]): Promise<{ said: string; picks: Array<{ elementId: string; reason: string }>; suggestedAnswers: Partial<Answers> }> {
   const candidates = campaignCandidates(elements, viewportOf(elements));
+  const seed = briefSeed(page, elements);
   const mock = {
+    brief: {},
     said: `Am găsit ${candidates.length} ${candidates.length === 1 ? "element util" : "elemente utile"} pentru o campanie pe „${page.title}”. Alege unul.`,
     picks: candidates.map((c) => ({ elementId: c.elementId, reason: c.reason })),
   };
   const { data: read } = await ask({
-    prompt: `Te uiți la o pagină web pentru un om de marketing. În „said” spune-i, în română, într-o frază scurtă, ce ai găsit util pentru o campanie. La „picks” păstrează exact aceste elemente și explică în câteva cuvinte de ce merge fiecare.\n${data({ page, candidates: candidates.map((c) => ({ elementId: c.elementId, kind: c.kind, text: elements.find((e) => e.id === c.elementId)?.text.slice(0, 120) })) })}`,
+    prompt: `${BRIEF_INSTRUCTION}\nTe uiți la o pagină web pentru un om de marketing. În „said” spune-i, în română, într-o frază scurtă, ce ai găsit util pentru o campanie. La „picks” păstrează exact aceste elemente și explică în câteva cuvinte de ce merge fiecare.\n${data({ page, texts: elements.map(e => e.text), candidates: candidates.map((c) => ({ elementId: c.elementId, kind: c.kind, text: elements.find((e) => e.id === c.elementId)?.text.slice(0, 120) })) })}`,
     schema: PageRead,
     mock,
     signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -42,7 +45,7 @@ export async function summarizePage(page: PageSummary, elements: PageElement[]):
   // alegerea rămâne a codului: AI-ul poate doar să explice elementele găsite de reguli
   const allowed = new Set(candidates.map((c) => c.elementId));
   const picks = read.picks.filter((p) => allowed.has(p.elementId));
-  return { said: read.said, picks: picks.length ? picks : mock.picks };
+  return { said: read.said, picks: picks.length ? picks : mock.picks, suggestedAnswers: { ...seed, ...acceptExtractedBrief(read.brief, [page.title, ...elements.map(e => e.text)]) } };
 }
 
 export async function analyzeReference(image: string, extra?: { elements?: PageElement[]; root?: SectionNode }): Promise<Anatomy> {

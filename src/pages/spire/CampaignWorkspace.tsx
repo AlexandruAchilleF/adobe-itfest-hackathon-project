@@ -28,6 +28,7 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
   const [saveState, setSaveState] = useState("Se încarcă draftul…");
   const [busy, setBusy] = useState(false);
   const [asking, setAsking] = useState(false);
+  const [clarificationIndex, setClarificationIndex] = useState(0);
   const lock = useRef(false);
   const collection = useRef<ReturnType<typeof workspaceCollection> | null>(null);
   const rowId = useRef<string | null>(null);
@@ -47,6 +48,8 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
           rowId.current = row.id;
           const next = restoreWorkspaceDraft(row.data, brief, answers);
           current.current = next; setDraft(next);
+          const unanswered = next.clarifications.findIndex((item) => !item.answer.trim());
+          setClarificationIndex(unanswered < 0 ? next.clarifications.length : unanswered);
           onAnswersChange?.({ ...answers, ...next.answers });
         }
         setSaveState(row ? "Draft restaurat" : "Draft nou");
@@ -128,11 +131,15 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
       const answered = previous.filter((item) => item.answer.trim());
       const items = [...answered, ...result.items.filter((item) => !answered.some((p) => p.question === item.question)).map((item) => ({ ...item, answer: previous.find((p) => p.question === item.question)?.answer || "" }))].slice(0, 3);
       const next = { ...current.current, clarifications: items, clarificationSimulated: result.simulated };
+      const unanswered = items.findIndex((item) => !item.answer.trim());
+      setClarificationIndex(unanswered < 0 ? items.length : unanswered);
       change(next); await save(next);
     } catch (err) { if (mounted.current) setError(message(err)); }
     finally { if (mounted.current) setAsking(false); }
   }
   const ready = loaded && !!draft.description.trim();
+  const pendingClarification = draft.clarifications[clarificationIndex];
+  const generationReady = ready && !pendingClarification;
   const search = brief.critique?.searchOptimization;
   return <div className="space-y-6 text-sm" data-testid="campaign-workspace">
     <Card title="Ce aș modifica">
@@ -148,11 +155,19 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
       <div className="grid gap-3 sm:grid-cols-2">{fields.map(({ id, label }) => <label key={id} className="block text-ink-2">{label}<input className="input mt-1 w-full" value={draft.answers[id] || ""} disabled={!loaded || busy || asking} maxLength={500} onChange={(event) => { const next = { ...current.current.answers, [id]: event.target.value }; change({ ...current.current, answers: next }); onAnswersChange?.(next); }} /></label>)}</div>
       <label className="mt-4 block font-medium text-ink" htmlFor="campaign-description">Ce vrei să creăm?</label>
       <textarea id="campaign-description" className="input mt-2 min-h-28 w-full resize-y font-normal" placeholder="Descrie materialul, mesajul și unde vrei să îl folosești." value={draft.description} maxLength={2000} disabled={!loaded || busy || asking} onChange={(event) => change({ ...current.current, description: event.target.value })} />
-      <div className="mt-3 flex flex-wrap items-center gap-3"><Button disabled={!ready || asking || busy} onClick={() => void clarify()}>{asking && <Spinner />}{asking ? "Pregătesc întrebările…" : "Mai clarificăm"}</Button><Button variant="ghost" disabled={!loaded || busy || asking} onClick={() => void save(current.current).catch(() => {})}>Păstrează brief-ul</Button></div>
-      {!!draft.clarifications.length && <div className="mt-5 space-y-3">{draft.clarificationSimulated && <p className="text-muted">Întrebări simulate din contextul brief-ului</p>}{draft.clarifications.map((item, index) => <label key={`${index}:${item.question}`} className="block text-ink-2">{item.question}<textarea className="input mt-1 w-full" rows={2} maxLength={500} disabled={busy || asking} value={item.answer} onChange={(event) => change({ ...current.current, clarifications: current.current.clarifications.map((c, i) => i === index ? { ...c, answer: event.target.value } : c) })} /></label>)}</div>}
+      <div className="mt-3 flex flex-wrap items-center gap-3"><Button disabled={!ready || asking || busy || !!pendingClarification} onClick={() => void clarify()}>{asking && <Spinner />}{asking ? "Pregătesc întrebările…" : "Mai clarificăm"}</Button><Button variant="ghost" disabled={!loaded || busy || asking} onClick={() => void save(current.current).catch(() => {})}>Păstrează brief-ul</Button></div>
+      {!!draft.clarifications.length && <div className="mt-5 space-y-3">
+        {draft.clarificationSimulated && <p className="text-muted">Întrebări simulate din contextul brief-ului</p>}
+        {draft.clarifications.slice(0, clarificationIndex).map((item, index) => <p key={`${index}:${item.question}`} className="text-ink-2"><strong>{item.question}</strong> {item.answer}</p>)}
+        {pendingClarification ? <div>
+          <p className="mb-2 text-muted">Întrebarea {clarificationIndex + 1} din {draft.clarifications.length}</p>
+          <label className="block text-ink-2">{pendingClarification.question}<textarea key={clarificationIndex} data-testid="clarification-answer" className="input mt-1 w-full" rows={2} maxLength={500} disabled={busy || asking} value={pendingClarification.answer} onChange={(event) => change({ ...current.current, clarifications: current.current.clarifications.map((item, index) => index === clarificationIndex ? { ...item, answer: event.target.value } : item) })} /></label>
+          <Button disabled={!pendingClarification.answer.trim() || busy || asking} onClick={() => setClarificationIndex((index) => index + 1)}>Răspunde</Button>
+        </div> : <Button variant="ghost" disabled={busy || asking} onClick={() => setClarificationIndex(0)}>Modifică răspunsurile</Button>}
+      </div>}
       <p className="mt-3 text-xs text-muted" role="status">{saveState}</p>
       <div className="mt-4"><ErrorNote error={storageError} /><ErrorNote error={error} /></div>
-      <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-5"><Button variant="primary" disabled={!ready || busy || asking} onClick={() => void run("video")}>Pregătește video</Button><Button disabled={!ready || busy || asking} onClick={() => void run("image")}>Generează imagine</Button><Button disabled={!ready || busy || asking} onClick={() => void run("logo")}>Propune logo</Button></div>
+      <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-5"><Button variant="primary" disabled={!generationReady || busy || asking} onClick={() => void run("video")}>Pregătește video</Button><Button disabled={!generationReady || busy || asking} onClick={() => void run("image")}>Generează imagine</Button><Button disabled={!generationReady || busy || asking} onClick={() => void run("logo")}>Propune logo</Button></div>
       <p className="mt-3 text-xs leading-relaxed text-muted">Video-ul folosește un clip de demo pregătit pentru site. Imaginile și logo-ul sunt propuneri pe baza brief-ului tău.</p>
     </Card>
     <Card title="Materialele campaniei">

@@ -11,7 +11,7 @@ import { DesignCanvas } from "../../modules/canvas/DesignCanvas";
 import type { Design } from "../../lib/design";
 import { revealDelay, SCAN_TIMEOUT_MS, scanRequest } from "../../lib/extensionPanel";
 import { isFromExtension, type CritiqueBrief, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
-import { type Answers, type FormatId, type Question, briefQuestions, questionsFor } from "../../lib/gaps";
+import { type Answers, type FormatId, type Question, briefQuestions, questionsFor, fillBriefGaps, briefSeed } from "../../lib/gaps";
 import { analyzeReference, checkMascot, generateMascot, summarizePage, writeCopy } from "../../lib/spireAi";
 import { illustrationSignature, readFile, toDataUrl } from "../../lib/spireImages";
 import { mascot } from "../../modules/mascot/mascot";
@@ -217,8 +217,18 @@ export function NewCampaignPage() {
         setScanFailed(false);
         page.current = message.page;
         elements.current = message.elements;
+        const seed = briefSeed(message.page, message.elements);
+        setAnswers(current => fillBriefGaps(current, seed));
+        try {
+          if (new URL(message.page.url).origin === event.origin) {
+            setBrief(current => current || { source: { url: message.page.url, title: message.page.title.slice(0, 300) }, answers: {} });
+          }
+        } catch { /* O adresă invalidă nu devine sursa unui brief. */ }
+        window.parent.postMessage({ type: "spire:brief-suggested", answers: seed }, event.origin);
         void summarizePage(message.page, message.elements)
           .then((read) => {
+            setAnswers(current => fillBriefGaps(current, read.suggestedAnswers));
+            window.parent.postMessage({ type: "spire:brief-suggested", answers: read.suggestedAnswers }, event.origin);
             // lupa stă cel puțin SCAN_MIN_MS de la apăsare, ca animația să se vadă
             window.clearTimeout(scanTimers.current.reveal);
             scanTimers.current.reveal = window.setTimeout(() => {

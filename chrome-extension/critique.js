@@ -645,12 +645,33 @@
 		});
 		return questions;
 	}
+	/** Precompletare numai din texte observate; intenția campaniei rămâne a omului. */
+	function briefSeed(page, elements) {
+		const product = (elements.find((e) => e.tag.toLowerCase() === "h1" && e.text.trim())?.text || page.headings?.[0] || page.title).trim().slice(0, 500);
+		const cta = elements.find((e) => (e.tag.toLowerCase() === "a" || e.tag.toLowerCase() === "button" || e.role === "button") && /^(rezerv|cumpără|comandă|cere o ofertă|contact|înscrie|încearcă)/iu.test(e.text.trim()))?.text.trim().slice(0, 500);
+		return {
+			...product ? { product } : {},
+			...cta ? { cta } : {}
+		};
+	}
+	function fillBriefGaps(current, suggested) {
+		const next = { ...current };
+		for (const key of [
+			"product",
+			"audience",
+			"goal",
+			"cta"
+		]) if (next[key] === void 0 && suggested[key]?.trim()) next[key] = suggested[key];
+		return next;
+	}
 	// \0spire-critique-entry
 	globalThis.SpireCritique = {
 		critiquePage,
 		summarySentence,
 		modificationSuggestions,
 		briefQuestions,
+		briefSeed,
+		fillBriefGaps,
 		acceptAiCritiques,
 		critiqueAiRequest,
 		mergeAiCritiques

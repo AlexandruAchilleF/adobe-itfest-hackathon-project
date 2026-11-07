@@ -28,8 +28,8 @@ export async function buildCritiqueBundle() {
           id === ENTRY
             ? `import { critiquePage, summarySentence, modificationSuggestions } from ${JSON.stringify(SOURCE)};\n` +
               `import { acceptAiCritiques, critiqueAiRequest, mergeAiCritiques } from ${JSON.stringify(resolve(root, "src/lib/critiqueAi.ts"))};\n` +
-              `import { briefQuestions } from ${JSON.stringify(resolve(root, "src/lib/gaps.ts"))};\n` +
-              "globalThis.SpireCritique = { critiquePage, summarySentence, modificationSuggestions, briefQuestions, acceptAiCritiques, critiqueAiRequest, mergeAiCritiques };\n"
+              `import { briefQuestions, briefSeed, fillBriefGaps } from ${JSON.stringify(resolve(root, "src/lib/gaps.ts"))};\n` +
+              "globalThis.SpireCritique = { critiquePage, summarySentence, modificationSuggestions, briefQuestions, briefSeed, fillBriefGaps, acceptAiCritiques, critiqueAiRequest, mergeAiCritiques };\n"
             : null,
       },
     ],
