@@ -10,11 +10,15 @@ describe("mascotInstruction", () => {
     expect(t).toContain(sampleAnatomy.illustration!.style);
   });
   it("cere o imagine fără text, pe fundal uniform", () => {
-    expect(t).toMatch(/fără text/i);
-    expect(t).toMatch(/fundal uniform/i);
+    expect(t).toMatch(/no text/i);
+    expect(t).toMatch(/uniform.*background/i);
   });
   it("dă toate culorile mărcii", () => {
     for (const hex of brandPalette(demoBrand)) expect(t).toContain(hex);
+  });
+  it("numește cele două imagini, ca modelul să nu copieze subiectul", () => {
+    expect(t).toMatch(/image 1/i);
+    expect(t).toMatch(/image 2/i);
   });
   it("nu cere subiectul din referință", () => expect(t).not.toContain(sampleAnatomy.illustration!.subject));
   it("merge și fără ilustrație în anatomie", () => {
