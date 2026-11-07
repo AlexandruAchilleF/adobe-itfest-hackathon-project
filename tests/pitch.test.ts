@@ -19,13 +19,15 @@ const FILLED: PitchConfig = {
 
 describe("pitch deck", () => {
   for (const s of all) {
-    it(`„${s.id}”: 10 slide-uri, cu textele scenariului`, () => {
+    it(`„${s.id}”: 10 slide-uri, pe capitolele landing-ului, cu textele scenariului`, () => {
       const deck = buildDeck(s, PITCH, "http://localhost:5173");
-      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "people", "how", "difference", "demo", "architecture", "payer", "brief", "close"]);
+      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "how", "guard", "beforeAfter", "architecture", "payer", "brief", "demo", "close"]);
       const cover = deck[0];
-      expect(cover.kind === "cover" && cover.tagline).toBe(s.app.tagline);
+      expect(cover.kind === "cover" && cover.name).toBe(s.app.name);
+      const problem = deck[1];
+      expect(problem.kind === "problem" && problem.problem).toBe(s.business.problem);
       const how = deck.find((x) => x.kind === "how");
-      expect(how?.kind === "how" && how.steps.length).toBeGreaterThan(0);
+      expect(how?.kind === "how" && how.steps.map((x) => x.mock)).toEqual(["scan", "ask", "kit"]);
       const demo = deck.find((x) => x.kind === "demo");
       expect(demo?.kind === "demo" && demo.url).toBe("http://localhost:5173");
     });

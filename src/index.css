@@ -425,6 +425,9 @@ h1, h2, h3 {
 .pitch-slide { position: relative; width: 1600px; height: 900px; overflow: hidden; }
 .pitch-slide .ribbon { font-size: 24px; padding: 8px 54px 10px; clip-path: polygon(0 0, 100% 0, calc(100% - 18px) 50%, 100% 100%, 0 100%, 18px 50%); background-size: 24px 100%, 24px 100%, auto; }
 .pitch-in { animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+/* capitolele de pe landing, în deck: cerul din hero (uliul în stânga, ca pe pagină) și zorii lila */
+.pitch-hero-img { object-position: 30% 70%; transform: scale(1.08); transform-origin: 100% 100%; }
+.pitch-dawn { background: linear-gradient(180deg, #d0bfe8 0, #e9def0 38%, var(--color-cream) 100%); }
 @media (prefers-reduced-motion: reduce) { .pitch-in { animation: none; } }
 @media print {
   /* pagină cu nume: bate `@page { margin: 15mm }` de la fișa tipăribilă */
