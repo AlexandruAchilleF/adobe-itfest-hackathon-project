@@ -426,7 +426,6 @@ function Closing() {
       {/* apusul iese din lila secțiunii de deasupra, fără margine */}
       <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-[#d0bfe8] to-transparent" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-b from-transparent to-cream" />
-      <Ribbon>reSPIRĂ</Ribbon>
       <WordsIn text="N-ai designer azi?" className="mx-auto mt-6 max-w-3xl text-[2.6rem] leading-[1.02] font-semibold tracking-[-0.045em] text-ink sm:text-[4rem]" />
       <Reveal delay={300}>
         <p className="text-[2.6rem] leading-[1.05] tracking-[-0.03em] sm:text-[4rem]">

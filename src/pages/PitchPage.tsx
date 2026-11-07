@@ -401,7 +401,6 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
     case "close":
       return (
         <div className={`${PAD} items-center pt-[56px] pb-[96px] text-center`}>
-          <Ribbon>reSPIRĂ</Ribbon>
           <h1 className="mt-5 text-[80px] leading-[1.0] font-semibold tracking-[-0.045em] text-ink">{s.question}</h1>
           <p className="text-[80px] leading-[1.05] tracking-[-0.03em]">
             <span className="accent-serif">{s.answer}</span>
