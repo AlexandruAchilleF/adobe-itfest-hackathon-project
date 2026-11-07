@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { demoBrand } from "../src/lib/brand";
 import {
   campaignOrigin, campaignTransport, clarificationMock, contextSnapshot, enqueueAsset,
-  findDemoVideo, generationInstruction, isDemoVideoUrl, recoverJobs, restoreWorkspaceDraft, validateAssetResult,
+  generationInstruction, recoverJobs, restoreWorkspaceDraft, validateAssetResult,
   workspaceCollection,
 } from "../src/lib/campaignQueue";
 import type { CritiqueBrief } from "../src/lib/extensionBridge";
@@ -68,27 +68,29 @@ describe("coada explicită", () => {
   });
 });
 
-describe("clipuri de demo mapate explicit", () => {
-  const videos = { "marinapark.ro": "/samples/marina.mp4", "www.alt-site.ro": "https://cdn.example.com/alt.webm" };
-  it("normalizează doar www și hostname, nu domenii vecine", () => {
-    expect(findDemoVideo(brief.source.url, videos)).toBe("/samples/marina.mp4");
-    expect(findDemoVideo("https://marinapark.ro/alta-pagina", videos)).toBe("/samples/marina.mp4");
-    expect(findDemoVideo("https://alt-site.ro", videos)).toBe("https://cdn.example.com/alt.webm");
-    expect(findDemoVideo("https://marinapark.ro.evil.example", videos)).toBeNull();
-    expect(findDemoVideo("https://unknown.example", videos)).toBeNull();
-  });
-  it("respinge URL-uri nesigure și storyboard-uri", () => {
-    for (const url of ["javascript:alert(1)", "//evil.example/a.mp4", "http://cdn.example.com/a.mp4", "/../secret.mp4", "/samples/board.png", "https://user:password@cdn.example.com/a.mp4"]) expect(isDemoVideoUrl(url), url).toBe(false);
-    expect(findDemoVideo(brief.source.url, { "marinapark.ro": "javascript:alert(1)" })).toBeNull();
-  });
-  it("întoarce clipul instant ca demo, fără a inventa o generare", async () => {
-    const transport = campaignTransport(videos);
+describe("videoclipul generat", () => {
+  const plan = { scenes: [{ photo: 0, kicker: "", title: "Cazare în Vama Veche", seconds: 4, motion: "zoom-in" as const }, { photo: null, kicker: "", title: "Vino vara", seconds: 4, motion: "pan-left" as const }], cta: "Rezervă" };
+  const checks = [{ id: "durata" as const, label: "Durata", ok: true, detail: "11 s din maximum 30" }];
+  const made = { url: "blob:https://app.example/1", mimeType: "video/webm", plan, checks, model: "claude-opus-5-5", simulated: false };
+  it("trimite contextul, marca și fotografiile la generator și păstrează scenariul cu verificările", async () => {
+    let seen: { photos?: string[]; brand?: string } = {};
+    const transport = campaignTransport(async (_context, brand, photos) => { seen = { photos, brand: brand.name }; return made; });
     expect(transport.supports("video", snapshot())).toBe(true);
-    const result = await transport.generate("video", snapshot(), { brand: demoBrand });
-    expect(result).toMatchObject({ url: "/samples/marina.mp4", model: "demo-video", simulated: false, prerecorded: true });
-    const unknown = { ...snapshot(), source: { ...brief.source, url: "https://unknown.example" } };
-    expect(transport.supports("video", unknown)).toBe(false);
-    await expect(transport.generate("video", unknown, { brand: demoBrand })).rejects.toThrow(/Nu există/);
+    const result = await transport.generate("video", snapshot(), { brand: demoBrand, photos: ["data:image/jpeg;base64,AAAA"] });
+    expect(seen).toEqual({ photos: ["data:image/jpeg;base64,AAAA"], brand: demoBrand.name });
+    expect(result).toMatchObject({ url: made.url, model: "claude-opus-5-5", simulated: false, video: { plan, checks, type: "video/webm" } });
+  });
+  it("respinge un clip fără scenariu, un URL care nu e blob și o proveniență amestecată", () => {
+    expect(() => validateAssetResult({ url: "/samples/marina.mp4", model: "claude-opus-5-5", simulated: false, video: { plan, checks, type: "video/mp4" } }, "video")).toThrow(/randat/);
+    expect(() => validateAssetResult({ url: made.url, model: "claude-opus-5-5", simulated: false }, "video")).toThrow(/randat/);
+    expect(() => validateAssetResult({ url: made.url, model: "mock", simulated: false, video: { plan, checks, type: "video/mp4" } }, "video")).toThrow(/Proveniența/);
+  });
+  it("după reîncărcare, clipul cere o randare nouă, nu un link mort", () => {
+    const [job] = enqueueAsset([], "video", snapshot(), "v");
+    const ready = { ...job, status: "ready" as const, result: { url: made.url, model: made.model, simulated: false, video: { plan, checks, type: "video/webm" as const } } };
+    const [recovered] = recoverJobs([ready]);
+    expect(recovered).toMatchObject({ status: "error", result: undefined });
+    expect(recovered.error).toMatch(/Reîncearcă/);
   });
 });
 

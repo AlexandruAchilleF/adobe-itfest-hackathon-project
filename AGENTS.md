@@ -14,6 +14,7 @@ Prezentarea: 2 minute de pitch live (hook cu sala, business, arhitectură), apoi
   - `api/ai.ts`: un singur endpoint AI (Gemini, Claude sau `mock`, implicit fără chei).
   - `api/image.ts`: ilustrația generată în stilul referinței.
   - `api/video.ts` și `api/logo.ts`: contracte doar cu mock (`shared/media-contract.ts`, `server/media.ts`), fără furnizor legat. Video e job asincron: `POST` → `jobId`, `GET ?id=` → stare.
+  - Videoclipul din campanie nu trece prin `api/video.ts`: Claude scrie scenariul prin `ask()` (`src/lib/campaignVideo.ts`), `src/lib/videoPlan.ts` îl verifică (logică pură), `src/lib/videoRender.ts` îl randează în browser. Fotografiile vin din pagină, prin brief-ul extensiei (`photos`).
 - `src/lib/ai.ts`: `ask({ prompt, schema, files, mock })` → `{ data }` validat cu Zod. Folosește-l pentru orice apel AI.
 - `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`, SQL în `supabase/records.sql`) sau localStorage. Panoul extensiei e un iframe pe alt site, deci are alt `localStorage` decât un tab normal: în producție datele trebuie să stea în Supabase. Playwright oprește implicit partiționarea; proba reală e `npm run e2e:prod` (`playwright.prod.config.ts`), în afara lui `npm run check`.
 - Extensia pornește lucrul (decupare, întrebări, previzualizarea kitului), aplicația îl termină (retuș, export, campanii, marcă). Aceeași campanie, două intrări.

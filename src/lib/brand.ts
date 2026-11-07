@@ -45,3 +45,19 @@ export const demoBrand: Brand = {
     image: "/samples/spire/pip.svg",
   },
 };
+
+/** Marina Park, camping din Vama Veche (marcă reală, cu acordul proprietarului): culorile și logo-ul de pe marinapark.ro. */
+export const marinaParkBrand: Brand = {
+  name: "Marina Park",
+  logo: "/samples/spire/marina-park/logo.png",
+  colors: [
+    { role: "text", hex: "#1B2A1F" },
+    { role: "background", hex: "#F6F1E4" },
+    { role: "primary", hex: "#006633" },
+    { role: "accent", hex: "#D9AE3C" },
+  ],
+  fonts: { heading: "Fraunces", body: "Geist" },
+  tone: "Relaxat și prietenos, spiritul Vamii. Vorbim cu „tu”.",
+  mandatory: [],
+  mascot: { name: "Munții", description: "simbolul auriu din logo, doi munți stilizați din linii", image: "/samples/spire/marina-park/logo.png" },
+};

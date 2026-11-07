@@ -50,6 +50,8 @@ export const PageSummary = z.object({
 export type PageSummary = z.infer<typeof PageSummary>;
 
 const BriefAnswer = z.string().max(500);
+export const MAX_BRIEF_PHOTOS = 6;
+export const MAX_BRIEF_PHOTO = 400_000; // caractere; extensia le micșorează la 960 px
 export const CritiqueBrief = z.object({
   source: z.object({ url: z.url().refine((value) => /^https?:/.test(value)), title: z.string().max(300) }),
   answers: z.object({ product: BriefAnswer.optional(), audience: BriefAnswer.optional(), goal: BriefAnswer.optional(), cta: BriefAnswer.optional() }),
@@ -59,6 +61,8 @@ export const CritiqueBrief = z.object({
     items: z.array(z.object({ id: z.string().min(1).max(100), title: z.string().max(100), observation: z.string().max(120), proposal: z.string().max(180), elementId: z.string().max(100).nullable() })).max(5),
     screenshot: z.string().max(2 * 1024 * 1024).regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/).optional(),
   }).optional(),
+  /** Fotografiile mari din pagină, de pe același domeniu, micșorate de extensie: materialul pentru video. */
+  photos: z.array(z.string().max(MAX_BRIEF_PHOTO).regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/)).max(MAX_BRIEF_PHOTOS).optional(),
 });
 export type CritiqueBrief = z.infer<typeof CritiqueBrief>;
 

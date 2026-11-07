@@ -6,6 +6,8 @@ import { CritiqueBrief } from "./extensionBridge";
 import type { Answers } from "./gaps";
 import { createCollection, type Backend, type Rec } from "./store";
 import { toDataUrl } from "./spireImages";
+import { generateCampaignVideo, type VideoStage } from "./campaignVideo";
+import { VideoPlan } from "./videoPlan";
 
 export const MAX_CAMPAIGN_JOBS = 4;
 const Text = z.string().max(500);
@@ -24,7 +26,10 @@ export const CampaignContext = z.object({
 export type CampaignContext = z.infer<typeof CampaignContext>;
 export const AssetKind = z.enum(["image", "logo", "video"]);
 export type AssetKind = z.infer<typeof AssetKind>;
-const AssetResult = z.object({ url: z.string().min(1).max(650_000), model: z.string().min(1).max(200), simulated: z.boolean(), prerecorded: z.boolean().default(false) });
+const VideoCheckResult = z.object({ id: z.enum(["durata", "fotografii", "cifre"]), label: z.string().max(40), ok: z.boolean(), detail: z.string().max(300) });
+/** La video: scenariul scris de AI (sau cel de rezervă), verificările lui și motivul rezervei. */
+const VideoMeta = z.object({ plan: VideoPlan, checks: z.array(VideoCheckResult).max(5), fallback: z.string().max(500).optional(), type: z.enum(["video/mp4", "video/webm"]) });
+const AssetResult = z.object({ url: z.string().min(1).max(650_000), model: z.string().min(1).max(200), simulated: z.boolean(), video: VideoMeta.optional() });
 export type AssetResult = z.infer<typeof AssetResult>;
 const Job = z.object({
   id: z.string(), kind: AssetKind, createdAt: z.string(), context: CampaignContext,
@@ -59,7 +64,9 @@ export function enqueueAsset(jobs: CampaignJob[], kind: AssetKind, context: Camp
 }
 export function recoverJobs(jobs: CampaignJob[]): CampaignJob[] {
   return jobs.map((job) => ["queued", "generating"].includes(job.status)
-    ? { ...job, status: "error", error: "Generarea a fost întreruptă. Reîncearcă explicit pentru a crea materialul." } : job);
+    ? { ...job, status: "error", error: "Generarea a fost întreruptă. Reîncearcă explicit pentru a crea materialul." }
+    // clipul randat trăiește doar în sesiunea în care a fost făcut (blob URL)
+    : job.kind === "video" && job.result ? { ...job, status: "error", result: undefined, error: "Clipul se păstrează doar până la reîncărcare. Apasă Reîncearcă pentru a-l randa din nou." } : job);
 }
 /** Un reload păstrează editările; răspunsurile unui brief nou au prioritate la import. */
 export function restoreWorkspaceDraft(saved: WorkspaceDraft, brief: CritiqueBrief, answers: Answers): WorkspaceDraft {
@@ -116,9 +123,16 @@ export async function askCampaignClarifications(context: CampaignContext): Promi
   return { items: data.questions.map((question) => ({ question, answer: "" })), simulated: raw.provider === "mock" };
 }
 
+export interface AssetReferences {
+  screenshot?: string;
+  brand: Brand;
+  /** Fotografiile din pagină, trimise de extensie (data URL JPEG). */
+  photos?: string[];
+  onProgress?: (stage: VideoStage, progress: number) => void;
+}
 export interface CampaignTransport {
   supports(kind: AssetKind, context?: CampaignContext): boolean;
-  generate(kind: AssetKind, context: CampaignContext, references: { screenshot?: string; brand: Brand }): Promise<AssetResult>;
+  generate(kind: AssetKind, context: CampaignContext, references: AssetReferences): Promise<AssetResult>;
 }
 export function validateAssetResult(value: unknown, kind: AssetKind): AssetResult {
   const result = AssetResult.parse(value);
@@ -133,10 +147,11 @@ export function validateAssetResult(value: unknown, kind: AssetKind): AssetResul
   const mock = result.simulated && result.model === "mock" && result.url.startsWith("data:image/svg+xml,");
   if (kind !== "video" && !image && !mock) throw new Error("Generatorul nu a întors o imagine validă. Reîncearcă.");
   if (kind === "video") {
-    if (!result.prerecorded || result.simulated || result.model !== "demo-video" || !isDemoVideoUrl(result.url)) throw new Error("Videoclipul de demo nu este valid.");
+    if (!/^blob:https?:\/\//.test(result.url) || !result.video) throw new Error("Videoclipul randat nu este valid.");
+    if (result.simulated !== (result.model === "mock")) throw new Error("Proveniența scenariului nu poate fi verificată.");
     return result;
   }
-  if (result.prerecorded) throw new Error("Proveniența imaginii nu este validă.");
+  if (result.video) throw new Error("Proveniența imaginii nu este validă.");
   if (result.simulated !== (result.model === "mock")) throw new Error("Proveniența materialului nu poate fi verificată.");
   return result;
 }
@@ -144,27 +159,13 @@ function simulatedImage(brand: Brand, kind: AssetKind): string {
   const escape = (s: string) => s.replace(/[<>&"']/g, "");
   return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="640" height="480" fill="${brand.colors.find((c) => c.role === "background")?.hex || "#ffffff"}"/><text x="40" y="200" font-family="sans-serif" font-size="32" fill="#1b2350">${escape(brand.name).slice(0, 28)}</text><text x="40" y="250" font-family="sans-serif" font-size="24" fill="#1b2350">${kind === "logo" ? "Propunere logo" : "Imagine de campanie"}</text><text x="40" y="400" font-family="sans-serif" font-size="22" fill="#1b2350">SIMULARE · fără material generat</text></svg>`)}`;
 }
-/** Clipuri furnizate de echipă, mapate explicit la domeniu. Niciun clip inventat. */
-export const DEMO_VIDEOS: Readonly<Record<string, string>> = { "marinapark.ro": "/samples/spire/demo-videos/marina-park.mp4" };
-export function isDemoVideoUrl(url: string): boolean {
-  if (/^\/(?!\/)[^?#\\]*\.(?:mp4|webm)(?:\?[^#]*)?$/.test(url)) return !url.includes("..");
-  try { const parsed = new URL(url); return parsed.protocol === "https:" && !parsed.username && !parsed.password && /\.(mp4|webm)$/i.test(parsed.pathname); } catch { return false; }
-}
-export function findDemoVideo(source: string, videos: Readonly<Record<string, string>> = DEMO_VIDEOS): string | null {
-  try {
-    const host = new URL(source).hostname.toLowerCase().replace(/^www\./, "");
-    const found = Object.entries(videos).find(([key]) => key.toLowerCase().replace(/^www\./, "") === host)?.[1];
-    return found && isDemoVideoUrl(found) ? found : null;
-  } catch { return null; }
-}
-export function campaignTransport(videos: Readonly<Record<string, string>> = DEMO_VIDEOS): CampaignTransport {
+export function campaignTransport(video: typeof generateCampaignVideo = generateCampaignVideo): CampaignTransport {
  return {
-  supports: (kind, context) => kind !== "video" || !!(context && findDemoVideo(context.source.url, videos)),
+  supports: () => true,
   generate: async (kind, context, references) => {
     if (kind === "video") {
-      const url = findDemoVideo(context.source.url, videos);
-      if (!url) throw new Error("Nu există încă un video de demo pentru acest site.");
-      return validateAssetResult({ url, model: "demo-video", simulated: false, prerecorded: true }, "video");
+      const made = await video(context, references.brand, references.photos ?? [], references.onProgress);
+      return validateAssetResult({ url: made.url, model: made.model, simulated: made.simulated, video: { plan: made.plan, checks: made.checks, fallback: made.fallback, type: made.mimeType === "video/mp4" ? "video/mp4" : "video/webm" } }, "video");
     }
     const subjectSrc = kind === "logo" ? references.brand.logo || references.brand.mascot.image : references.brand.mascot.image;
     const styleSrc = references.screenshot || references.brand.logo || subjectSrc;

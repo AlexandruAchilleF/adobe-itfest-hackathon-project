@@ -552,8 +552,6 @@ test('sidebar: constatări, căutări AI, brief păstrat și materiale la cerere
   await expect(workspace.getByTestId('clarification-answer')).toHaveCount(0);
   await workspace.getByRole('button',{name:'Generează imagine'}).click();
   await expect(workspace.getByText('Rezultat simulat · fără generare de imagine')).toBeVisible();
-  await workspace.getByRole('button',{name:'Pregătește video'}).click();
-  await expect(workspace.getByText('Nu există încă un video de demo pentru acest site.')).toBeVisible();
   await reloadEmbedded(page);
   await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
   await send();
@@ -567,26 +565,31 @@ test('sidebar: constatări, căutări AI, brief păstrat și materiale la cerere
   await expect(workspace.getByLabel('Ce vrei să creăm?')).toHaveValue('O imagine cu o cană pentru profesori');
 });
 
-test('sidebar: Marina Park redă clipul local după randare, cu ecran complet', async ({page}) => {
-  await page.addInitScript(() => { (window as unknown as {__spireVideoMs:number}).__spireVideoMs = 1500; });
+test('sidebar: videoclipul se scrie din brief și fotografii și se randează în browser', async ({page}) => {
+  test.setTimeout(90_000);
   const base = new URL(page.url()).origin;
   await page.setContent(`<iframe id="spire" src="${base}/nou?din=extensie&hostOrigin=${encodeURIComponent('https://www.marinapark.ro')}"></iframe>`);
   const frame = page.frameLocator('#spire');
   await expect(frame.getByRole('button',{name:'Scanează pagina'})).toBeVisible();
-  await frame.locator('body').evaluate(() => window.dispatchEvent(new MessageEvent('message',{
-    source: window.parent, origin: 'https://www.marinapark.ro', data: { type: 'spire:brief', brief: {
-      source: {url:'https://www.marinapark.ro/',title:'Marina Park'}, answers: {product:'Cazare'},
-    }},
-  })));
+  await frame.locator('body').evaluate(() => {
+    const photo = (color: string) => { const c = document.createElement('canvas'); c.width = 480; c.height = 320; const x = c.getContext('2d')!; x.fillStyle = color; x.fillRect(0, 0, 480, 320); return c.toDataURL('image/jpeg', 0.7); };
+    window.dispatchEvent(new MessageEvent('message',{
+      source: window.parent, origin: 'https://www.marinapark.ro', data: { type: 'spire:brief', brief: {
+        source: {url:'https://www.marinapark.ro/',title:'Marina Park'}, answers: {product:'Camping în Vama Veche', cta:'Rezervă acum'},
+        photos: [photo('#2b5d3a'), photo('#c49b2e')],
+      }},
+    }));
+  });
   const workspace = frame.getByTestId('campaign-workspace');
   await workspace.getByLabel('Ce vrei să creăm?').fill('Un video de prezentare pentru Marina Park');
   await workspace.getByRole('button',{name:'Pregătește video'}).click();
-  await expect(workspace.getByRole('status',{name:/%/})).toBeVisible();
-  await expect(workspace.getByRole('button',{name:'Ecran complet'})).toBeVisible();
-  const video = workspace.locator('video');
-  await expect(video).toHaveAttribute('src','/samples/spire/demo-videos/marina-park.mp4');
-  await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).duration)).toBeGreaterThan(39);
-  expect(await video.evaluate(el => (el as HTMLVideoElement).duration)).toBeLessThan(41);
+  await expect(workspace.getByRole('status',{name:/Randez cadrele/})).toBeVisible({ timeout: 20_000 });
+  await expect(workspace.getByRole('button',{name:'Ecran complet'})).toBeVisible({ timeout: 60_000 });
+  await expect(workspace.locator('video')).toHaveAttribute('src', /^blob:/);
+  await expect(workspace.getByText(/Scenariu simulat · fără AI · \d scene/)).toBeVisible();
+  await workspace.getByText(/Scenariu simulat/).click();
+  await expect(workspace.getByText('Camping în Vama Veche', { exact: false }).first()).toBeVisible();
+  await expect(workspace.getByText('Cifrele: doar cele din brief')).toBeVisible();
 });
 
 

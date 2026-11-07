@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import type { HealthResponse } from "../../shared/ai-contract";
 import { aiHealth } from "../lib/ai";
+import { demoBrand, marinaParkBrand } from "../lib/brand";
+import { brands } from "../lib/campaigns";
 import { isDemoMode, setDemoMode } from "../lib/demoMode";
 import { useCollection } from "../lib/store";
 import { RecordButton } from "../modules/demo/RecordButton";
@@ -33,6 +35,8 @@ export function DevPanel() {
   const req = useCollection(requests);
   const rep = useCollection(reports);
   const sent = useCollection(outbox);
+  const brand = useCollection(brands);
+  const switchBrand = (next: typeof demoBrand) => { const rec = brand.items[0]; if (rec) void brand.update(rec.id, next); };
   useEffect(() => {
     void aiHealth().then(setAi);
   }, []);
@@ -65,6 +69,12 @@ export function DevPanel() {
             <button className="rounded-md bg-white/10 px-2.5 py-1 text-xs hover:bg-white/20" onClick={() => void Promise.all([req.reset(), rep.reset(), sent.reset()])}>
               Resetează datele demo
             </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="text-white/60">Marca:</span>
+            {[demoBrand, marinaParkBrand].map((b) => (
+              <button key={b.name} className={`rounded-md px-2.5 py-1 ${brand.items[0]?.data.name === b.name ? "bg-white/25" : "bg-white/10 hover:bg-white/20"}`} onClick={() => switchBrand(b)}>{b.name}</button>
+            ))}
           </div>
           <nav className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-white/80">
             {TEAM_NAV.map((n) => (

@@ -1122,10 +1122,67 @@
     Object.keys(answerInputs).forEach(function (key) { briefAnswers[key] = answerInputs[key].value.slice(0, 500); });
     return cleanAnswers(briefAnswers);
   }
-  function sendBrief() {
+  // Fotografiile pentru video: cele mai mari imagini din pagină (<img> și fundaluri CSS), de pe același
+  // domeniu, micșorate la 960 px. Cele de pe alt domeniu fără CORS murdăresc canvasul și se sar.
+  // Contractul: MAX_BRIEF_PHOTOS și MAX_BRIEF_PHOTO din src/lib/extensionBridge.ts.
+  var MAX_BRIEF_PHOTOS = 6, MAX_BRIEF_PHOTO = 400000, PHOTO_SIDE = 960;
+  var photosPromise = null;
+  // aceeași fotografie în altă mărime (WordPress: -655x545, -scaled) contează o singură dată
+  function photoKey(url) { return url.replace(/[?#].*$/, "").replace(/-(\d+x\d+|scaled)(?=\.\w+$)/g, ""); }
+  function photoCandidates() {
+    var seen = {}, out = [];
+    function add(url) {
+      if (!url) return;
+      try { url = new URL(url, location.href).href; } catch (_) { return; }
+      if (!/^https?:/i.test(url) || /\.(svg|gif)(\?|$)/i.test(url) || seen[photoKey(url)]) return;
+      seen[photoKey(url)] = true; out.push(url);
+    }
+    document.querySelectorAll("img").forEach(function (img) {
+      if (img.closest && img.closest("#" + ROOT_ID)) return;
+      if (img.complete && img.naturalWidth && (img.naturalWidth < 400 || img.naturalHeight < 260)) return;
+      // sliderele și încărcarea leneșă țin adresa în data-src până apare imaginea
+      add(img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || img.currentSrc || img.src);
+    });
+    var nodes = document.querySelectorAll("body *");
+    for (var i = 0; i < nodes.length && i < 4000; i++) {
+      var bg = getComputedStyle(nodes[i]).backgroundImage;
+      var m = bg && bg !== "none" && bg.match(/url\(["']?([^"')]+)["']?\)/);
+      var r = nodes[i].getBoundingClientRect();
+      if (m && r.width >= 300 && r.height >= 200) add(m[1]);
+    }
+    return out.slice(0, 16);
+  }
+  async function photoData(url) {
+    var img = new Image();
+    if (new URL(url).origin !== location.origin) img.crossOrigin = "anonymous";
+    img.src = url;
+    await img.decode();
+    var w = img.naturalWidth, h = img.naturalHeight;
+    if (w < 400 || h < 260 || w / h > 3 || h / w > 2.5) return null; // logo-uri, iconițe, benzi
+    var scale = Math.min(1, PHOTO_SIDE / Math.max(w, h));
+    var canvas = document.createElement("canvas");
+    canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    var data = canvas.toDataURL("image/jpeg", 0.78); // aruncă dacă imaginea e de pe alt domeniu fără CORS
+    if (data.length > MAX_BRIEF_PHOTO) data = canvas.toDataURL("image/jpeg", 0.6);
+    return data.length <= MAX_BRIEF_PHOTO ? { data: data, png: /\.png(\?|$)/i.test(url) } : null;
+  }
+  function collectPhotos() {
+    if (!photosPromise) photosPromise = (async function () {
+      var loaded = await Promise.all(photoCandidates().map(function (url) { return photoData(url).catch(function () { return null; }); }));
+      // în ordinea din pagină; PNG-urile (de obicei logo-uri și grafică) doar dacă lipsesc fotografiile
+      var ok = loaded.filter(Boolean);
+      return ok.filter(function (p) { return !p.png; }).concat(ok.filter(function (p) { return p.png; })).slice(0, MAX_BRIEF_PHOTOS).map(function (p) { return p.data; });
+    })();
+    return photosPromise;
+  }
+  async function sendBrief() {
     if (!campaignOpened || !appReady || !iframe.contentWindow || !/^https?:$/.test(location.protocol)) return;
+    var photos = await collectPhotos().catch(function () { return []; });
+    if (!iframe.contentWindow) return;
     iframe.contentWindow.postMessage({ type: "spire:brief", brief: {
-      source: { url: location.href, title: document.title.slice(0, 300) }, answers: currentAnswers(), critique: latestCritique || undefined
+      source: { url: location.href, title: document.title.slice(0, 300) }, answers: currentAnswers(), critique: latestCritique || undefined,
+      photos: photos.length ? photos : undefined
     } }, config.APP_ORIGIN);
   }
   // Brieful, ca o conversație: o singură întrebare pe ecran. Răspunsurile date rămân sus, ca

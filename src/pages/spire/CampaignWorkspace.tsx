@@ -8,35 +8,32 @@ import type { Answers } from "../../lib/gaps";
 import {
   askCampaignClarifications, campaignOrigin, contextSnapshot, enqueueAsset, imageCampaignTransport,
   restoreWorkspaceDraft, validateAssetResult, workspaceCollection,
-  type AssetKind, type CampaignJob, type WorkspaceDraft,
+  type AssetKind, type AssetResult, type CampaignJob, type WorkspaceDraft,
 } from "../../lib/campaignQueue";
+import { FALLBACK_MODEL, type VideoStage } from "../../lib/campaignVideo";
+import { totalSeconds } from "../../lib/videoPlan";
 
 type Props = { brief: CritiqueBrief; answers: Answers; brand: Brand; onAnswersChange?: (answers: Answers) => void };
 const KIND: Record<AssetKind, string> = { image: "Imagine", logo: "Logo", video: "Video" };
 const STATUS: Record<CampaignJob["status"], string> = { queued: "În coadă", generating: "Se pregătește", ready: "Gata", error: "Eroare", unavailable: "Indisponibil" };
 const fields = [{ id: "product", label: "Produs sau serviciu" }, { id: "audience", label: "Public" }, { id: "goal", label: "Obiectiv" }, { id: "cta", label: "Acțiunea dorită" }] as const;
-/** Cât durează randarea videoclipului pe ecran (testele o scurtează cu window.__spireVideoMs). */
-const videoRenderMs = () => (typeof window !== "undefined" && (window as { __spireVideoMs?: number }).__spireVideoMs) || 20_000;
-const RENDER_STAGES: Array<[number, string]> = [
-  [0.14, "Citesc brief-ul și observațiile"],
-  [0.34, "Scriu scenariul, scenă cu scenă"],
-  [0.55, "Pun culorile și fonturile mărcii"],
-  [0.8, "Randez cadrele"],
-  [1, "Finalizez videoclipul"],
-];
+/** Etapele reale: Claude scrie scenariul (durata se estimează), apoi browserul randează (durata se măsoară). */
+type VideoProgress = { stage: VideoStage; progress: number; startedAt: number };
+const PLAN_ESTIMATE_MS = 15_000;
+const PLAN_SHARE = 0.35;
 const FRAMES = 12;
 
-/** Randarea videoclipului: uliul lucrează, etapele se schimbă, cadrele se aprind pe rând. */
-function VideoRender({ startedAt }: { startedAt: number }) {
+/** Randarea videoclipului: uliul lucrează, etapa e cea reală, cadrele se aprind pe rând. */
+function VideoRender({ state }: { state: VideoProgress }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 120);
     return () => window.clearInterval(t);
   }, []);
-  const t = Math.min(1, Math.max(0, (now - startedAt) / videoRenderMs()));
-  // încetinește spre final și se oprește la 97 %: ultimul pas e apariția clipului
-  const progress = Math.min(0.97, 1 - Math.pow(1 - t, 1.6));
-  const stage = RENDER_STAGES.find(([upTo]) => progress < upTo)?.[1] ?? RENDER_STAGES[RENDER_STAGES.length - 1][1];
+  const planning = state.stage === "plan";
+  // cât scrie Claude nu știm dinainte: bara se apropie de 35 % fără să-l atingă
+  const progress = planning ? PLAN_SHARE * (1 - Math.exp(-(now - state.startedAt) / PLAN_ESTIMATE_MS)) : PLAN_SHARE + (1 - PLAN_SHARE) * state.progress;
+  const stage = planning ? "Scriu scenariul din brief și fotografii" : state.progress < 0.98 ? "Randez cadrele, cu culorile mărcii" : "Finalizez videoclipul";
   const lit = Math.floor(progress * FRAMES);
   return (
     <div className="video-render mt-3 overflow-hidden rounded-xl bg-ink text-white" role="status" aria-live="polite" aria-label={`${stage}, ${Math.round(progress * 100)} %`}>
@@ -59,6 +56,32 @@ function VideoRender({ startedAt }: { startedAt: number }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/** De unde vine scenariul: modelul care l-a scris, simularea sau rezerva din brief. */
+function scriptSource(result: AssetResult): string {
+  if (result.model === FALLBACK_MODEL) return "Scenariu de rezervă, construit din brief";
+  if (result.simulated) return "Scenariu simulat · fără AI";
+  return `Scenariu scris de ${result.model}`;
+}
+
+/** Scenariul și verificările codului, sub clip: ce a decis AI-ul și ce a verificat codul. */
+function VideoScript({ result }: { result: AssetResult }) {
+  const meta = result.video;
+  if (!meta) return null;
+  return (
+    <details className="mt-3 rounded-xl bg-paper p-3 text-[0.85rem]">
+      <summary className="cursor-pointer font-medium text-ink">{scriptSource(result)} · {meta.plan.scenes.length} scene, {Math.round(totalSeconds(meta.plan))} s</summary>
+      {meta.fallback && <p className="mt-2 text-muted">{meta.fallback}</p>}
+      <ol className="mt-2 space-y-1.5">
+        {meta.plan.scenes.map((scene, i) => <li key={i} className="text-ink-2"><span className="text-muted tabular-nums">{i + 1}.</span> {scene.kicker && <span className="text-muted">{scene.kicker} · </span>}{scene.title} <span className="text-muted">({scene.photo === null ? "culorile mărcii" : `fotografia ${scene.photo + 1}`}, {scene.seconds} s)</span></li>)}
+        <li className="text-ink-2"><span className="text-muted">Final:</span> {meta.plan.cta}</li>
+      </ol>
+      <ul className="mt-3 space-y-1 border-t border-line pt-2">
+        {meta.checks.map((check) => <li key={check.id} className="flex items-center gap-2 text-ink-2"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${check.ok ? "bg-ok" : "bg-bad"}`} />{check.label}: {check.detail}</li>)}
+      </ul>
+    </details>
   );
 }
 
@@ -93,7 +116,7 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
   const [asking, setAsking] = useState(false);
   const [clarificationIndex, setClarificationIndex] = useState(0);
   const [showAll, setShowAll] = useState(false);
-  const [renderStarts, setRenderStarts] = useState<Record<string, number>>({});
+  const [videoProgress, setVideoProgress] = useState<Record<string, VideoProgress>>({});
   const lock = useRef(false);
   const collection = useRef<ReturnType<typeof workspaceCollection> | null>(null);
   const rowId = useRef<string | null>(null);
@@ -168,16 +191,12 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
         next = { ...current.current, jobs: current.current.jobs.map((item) => item.id === job!.id ? { ...item, ...patch } : item) };
         change(next); return save(next);
       };
-      if (!imageCampaignTransport.supports(kind, context)) {
-        await updateJob({ status: "unavailable", error: "Nu există încă un video de demo pentru acest site." });
-        return;
-      }
       await updateJob({ status: "generating" });
-      const startedAt = Date.now();
-      if (kind === "video") setRenderStarts((all) => ({ ...all, [job!.id]: startedAt }));
-      const result = validateAssetResult(await imageCampaignTransport.generate(kind, context, { screenshot: brief.critique?.screenshot, brand }), kind);
-      // videoclipul apare după randare, nu dintr-odată
-      if (kind === "video") await new Promise((done) => window.setTimeout(done, Math.max(0, videoRenderMs() - (Date.now() - startedAt))));
+      const id = job.id;
+      const onProgress = (stage: VideoStage, progress: number) => {
+        if (mounted.current) setVideoProgress((all) => ({ ...all, [id]: { stage, progress, startedAt: all[id]?.stage === stage ? all[id].startedAt : Date.now() } }));
+      };
+      const result = validateAssetResult(await imageCampaignTransport.generate(kind, context, { screenshot: brief.critique?.screenshot, brand, photos: brief.photos, onProgress }), kind);
       if (mounted.current) await updateJob({ status: "ready", result, error: undefined });
     } catch (err) {
       if (mounted.current) {
@@ -272,15 +291,15 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
       {!!draft.jobs.length && <ol className="space-y-3">{draft.jobs.map((job) => <li key={job.id} className="card panel-job p-4">
         <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-ink">{KIND[job.kind]}</h3><span className="inline-flex items-center gap-2 text-[0.8rem] text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${job.status === "ready" ? "bg-ok" : job.status === "error" ? "bg-bad" : job.status === "unavailable" ? "bg-warn-dot" : "animate-pulse bg-ink-2"}`} />{job.kind === "video" && job.status === "generating" ? "Se generează" : STATUS[job.status]}</span></div>
         <p className="mt-1 line-clamp-2 break-words text-[0.85rem] text-muted">{job.context.description}</p>
-        {job.kind === "video" && job.status === "generating" && renderStarts[job.id] ? <VideoRender startedAt={renderStarts[job.id]} />
+        {job.kind === "video" && job.status === "generating" && videoProgress[job.id] ? <VideoRender state={videoProgress[job.id]} />
           : (job.status === "generating" || job.status === "queued") && <p className="mt-3 flex items-center gap-2 text-muted"><Spinner />Pregătim materialul din brief-ul confirmat…</p>}
         {job.error && <p className="mt-3 text-bad" role="alert">{job.error}</p>}
         {job.result && job.status === "ready" && <div className="mt-3">
           {job.kind !== "video" && <p className="mb-2 text-xs font-medium text-muted">{job.result.simulated ? "Rezultat simulat · fără generare de imagine" : "Imagine generată · propunere de verificat"}</p>}
-          {job.kind === "video" ? <VideoResult url={job.result.url} onError={() => setError("Videoclipul nu se poate reda. Reîncearcă sau verifică conexiunea.")} /> : <img className="max-h-80 w-full rounded-xl bg-paper object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
+          {job.kind === "video" ? <><VideoResult url={job.result.url} onError={() => setError("Clipul nu se mai poate reda. Apasă Reîncearcă pentru a-l randa din nou.")} /><VideoScript result={job.result} /></> : <img className="max-h-80 w-full rounded-xl bg-paper object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
         </div>}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {job.result && job.status === "ready" && <a className="btn btn-secondary !px-3 !py-1.5 text-xs" href={job.result.url} download={`${job.kind}-${job.id}`} target="_blank" rel="noreferrer">Descarcă {job.kind === "video" ? "videoclipul" : "propunerea"}</a>}
+          {job.result && job.status === "ready" && <a className="btn btn-secondary !px-3 !py-1.5 text-xs" href={job.result.url} download={job.kind === "video" ? `${job.context.brand.name}-video.${job.result.video?.type === "video/mp4" ? "mp4" : "webm"}` : `${job.kind}-${job.id}`} target="_blank" rel="noreferrer">Descarcă {job.kind === "video" ? "videoclipul" : "propunerea"}</a>}
           {(job.status === "error" || job.status === "unavailable") && <Button className="!px-3 !py-1.5 text-xs" disabled={busy || asking} onClick={() => void run(job.kind, job)}>Reîncearcă</Button>}
           <Button variant="ghost" className="ml-auto !px-2.5 !py-1.5 text-xs" disabled={busy || asking} onClick={() => { const next = { ...current.current, jobs: current.current.jobs.filter((item) => item.id !== job.id) }; change(next); void save(next).catch(() => {}); }}>Elimină {KIND[job.kind].toLowerCase()}</Button>
         </div>
