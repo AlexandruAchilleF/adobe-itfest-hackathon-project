@@ -57,10 +57,17 @@ Codul scris dinainte e permis la ITFest × Adobe 2026. Îl declarăm, ca juriul 
 
 **Construit azi, la hackathon:**
 
-| Ce | Fișiere | Commit-uri |
+| Ce | Fișiere | Starea |
 |---|---|---|
-| Scenariul din brief: roluri, pași, reguli, date | `src/scenario/scenarios/<nume>.ts` | `git log --since="2026-11-07"` |
-| _(completați)_ | | |
+| Brief-ul Adobe, criteriile cu ponderi din prezentare, cerințele, ideile notate | `docs/BRIEF.md`, `docs/JURIU.md`, `docs/PLAN-12H.md` | gata |
+| Spec-ul produsului (Spire): fluxul, arhitectura, garda, planul pentru doi oameni | `docs/superpowers/specs/2026-11-07-spire-stil-pe-marca-design.md` | gata |
+| Scenariul Spire: texte, marca de demo, fluxul campaniilor | `src/scenario/scenarios/spire.ts` | urmează |
+| Motorul: anatomia, întrebările, kitul, garda, bucla de agent | `src/lib/` (`anatomy`, `gaps`, `compose`, `campaign`, `restyle`, `guard`, `agentLoop`, `color`, `similarity`) | urmează |
+| Generarea mascotei cu Gemini | `api/image.ts` | urmează |
+| Extensia de Chrome: Spire peste pagină, scanarea, decupajul, citirea paginii | `chrome-extension/` | urmează |
+| Aplicația web: landing page, marca, campanie nouă, campaniile | `src/pages/` | urmează |
+
+Toate commit-urile de azi: `git log --since="2026-11-07"`.
 
 **Cu cine am vorbit azi:** _(câți oameni, ce cifre au spus; vezi `docs/BRIEF.md`)_
 

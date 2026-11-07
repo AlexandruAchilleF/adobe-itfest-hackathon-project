@@ -1,6 +1,6 @@
 # Spire: stilul care îți place, pe marca ta (spec)
 
-Data: 7 noiembrie 2026 (ITFest × Adobe). Starea: de aprobat de echipă. Echipa: 2 oameni.
+Data: 7 noiembrie 2026 (ITFest × Adobe). Starea: direcția validată cu mentorii (10:xx). Echipa: 2 oameni: colegul pe extensie (Omul A), Alexandru pe motor (Omul B).
 Numele: **Spire** (de la „inspire”) e și mascota, și produsul. Spire e uliul desenat din template (`src/modules/mascot/MascotFigure.tsx`), aici agentul care apare peste site.
 Brief-ul, criteriile și deciziile: `docs/BRIEF.md`, `docs/JURIU.md`.
 
@@ -77,7 +77,17 @@ Apelurile AI, fiecare cu `mock` realist:
 4. `api/image.ts` (nou) → modelul de imagine Gemini, cu referința (stilul) + mascota mărcii (subiectul) și o instrucțiune scrisă de cod: fundal transparent sau uniform, fără text. Mock: o mascotă generată dinainte, în `public/samples/`.
 5. `ask()` verificarea „seamănă cu mascota mărcii”.
 
-Paginile (în locul celor din scenariul vechi): `/marca`, `/nou` (referință → anatomie → întrebări → rezultat + gardă → export), `/materiale` (lista). Secțiunea de site se previzualizează într-un iframe izolat (`sandbox`), iar PNG-ul se face din previzualizare. Refolosim `DesignCanvas`, exportul, QR-ul, `store.ts`, mascota (`src/modules/mascot/`).
+Paginile (în locul celor din scenariul vechi):
+
+| Ruta | Ce e | Pentru cine |
+|---|---|---|
+| `/` | **landing page-ul** produsului: ce face Spire într-o frază, cămila → pinguinul (sau kitul) ca imagine-erou, cei 3 pași, garda, butonul „Instalează extensia” și „Încearcă fără extensie” (spre `/nou`). Construit din `ScenarioHome.tsx` și din textele scenariului | juriul, oricine vine din QR |
+| `/marca` | profilul mărcii (formular, precompletat pentru demo) | omul de marketing |
+| `/nou` | referință → anatomie → întrebări → kit + gardă → export; aceeași pagină se încarcă în extensie (`?din=extensie`) | omul de marketing, juriul de pe telefon |
+| `/campanii` | **interfața în care ajung rezultatele din extensie**: lista campaniilor (referința, kitul, starea gărzii, data, site-ul de unde vine) | omul de marketing |
+| `/campanii/:id` | o campanie: postarea, story-ul și hero-ul unul lângă altul, editare pe straturi, garda, exportul (PNG, Express, cod HTML/CSS) | omul de marketing |
+
+Rezultatele ajung în `/campanii` prin `store.ts`: extensia încarcă aplicația din aceeași origine, deci ce salvează în extensie apare în aplicația web din același browser; cu Supabase, apare și pe alte dispozitive. Secțiunea de site se previzualizează într-un iframe izolat (`sandbox`), iar PNG-ul se face din previzualizare. Refolosim `DesignCanvas`, exportul, QR-ul, `store.ts`, mascota (`src/modules/mascot/`).
 
 ### 4.2 Extensia (`chrome-extension/`, Manifest V3)
 
@@ -92,10 +102,10 @@ Paginile (în locul celor din scenariul vechi): `/marca`, `/nou` (referință �
 
 | Integrare | Ce schimbă | Rezervă |
 |---|---|---|
-| Gemini (text, vedere, imagine) | analiza, textele, mascota | Claude pentru text/vedere; mock pentru tot |
+| Gemini (text, vedere, imagine): **prima integrare, de azi** | analiza, textele, mascota | Claude pentru text/vedere; mock pentru tot |
 | Chrome (extensia) | agentul peste orice site | aplicația web cu încărcare |
 | Adobe Express | rezultatul editabil în Express | PNG (SVG doar pentru straturile vectoriale, cu ilustrația ca imagine; spus explicit) |
-| Firefly Services (de verificat accesul) | generare „commercially safe”, Style Reference | Gemini |
+| Firefly Services (mai târziu, dacă obținem acces) | generare „commercially safe”, Style Reference | Gemini rămâne implicit |
 
 Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic până la ora 3, încercăm Embed SDK (cere înregistrare și domeniu aprobat); altfel rămânem la PNG.
 
@@ -122,19 +132,19 @@ Express: în prima oră testăm add-on-ul existent; dacă nu desenează nimic p�
 
 ## 8. Scenariul din template
 
-Config-ul de scenariu rămâne stratul de texte, pitch și verificări (`/start`, `/pitch`, `tests/urme.test.ts`): un scenariu nou `src/scenario/scenarios/spire.ts` (id `spire`) cu `app`, `business` (dovezile goale până la interviuri), `roles` (omul de marketing), `flow` minim pentru materiale (ciornă → verificat → exportat, cu „garda a respins”), `mascot` (Spire, ca agent al produsului), `features` cu harta, punctele, rapoartele și modulele opționale oprite. Meniul juriului: Marca, Material nou, Materiale.
+Config-ul de scenariu rămâne stratul de texte, pitch și verificări (`/start`, `/pitch`, `tests/urme.test.ts`): un scenariu nou `src/scenario/scenarios/spire.ts` (id `spire`) cu `app`, `business` (dovezile goale până la interviuri), `roles` (omul de marketing), `flow` minim pentru materiale (ciornă → verificat → exportat, cu „garda a respins”), `mascot` (Spire, ca agent al produsului), `features` cu harta, punctele, rapoartele și modulele opționale oprite. Meniul juriului: Campanie nouă, Campanii, Marca (landing page-ul e `/`).
 
 ## 9. Ordinea de lucru și pragurile (echipă de 2)
 
 Asistentul de cod scrie o mare parte din cod; cei doi oameni conduc câte o jumătate, testează pe date reale și fac validarea.
 
-| Când | Omul A: extensia și pagina | Omul B: motorul și AI-ul |
+| Când | Omul A (colegul): extensia și pagina | Omul B (Alexandru): motorul, AI-ul și aplicația web |
 |---|---|---|
 | Ora 1 | stratul cu Spire peste pagină, scanarea cu chenare, decupajul | testul de generare (10 × „stil + mascota mărcii”, prag ≥ 5/10); marca de demo (seed cu pinguin) |
 | Orele 2–4 | citirea paginii (elemente, stiluri, texte), legătura cu aplicația prin `postMessage` | `anatomy`, `gaps`, `compose` (postarea), `api/image.ts`, pagina `/nou` |
-| Orele 4–6 | `campaign` (elementele utile), apoi `restyle` pentru hero | `guard`, `agentLoop`, story-ul din aceeași anatomie, export PNG; o încercare de 30 de minute cu add-on-ul Express |
+| Orele 4–6 | `campaign` (elementele utile), apoi `restyle` pentru hero | `guard`, `agentLoop`, story-ul din aceeași anatomie, `/campanii` și `/campanii/:id`, export PNG; o încercare de 30 de minute cu add-on-ul Express |
 | Ora 6 | **prag:** drumul postare cu mascota merge cap-coadă cu mock, din extensie și din web. Ce nu merge iese din demo. | |
-| Orele 6–9 | interviurile și testul cu cronometrul pe hol (amândoi, câte 30–45 de minute), cifrele în `business.evidence`; calitate, rezerve, cazurile în care AI-ul greșește | |
+| Orele 6–9 | interviurile și testul cu cronometrul pe hol (amândoi, câte 30–45 de minute), cifrele în `business.evidence`; calitate, rezerve, cazurile în care AI-ul greșește | landing page-ul `/` (texte din scenariu, imaginea-erou din testul de generare); Firefly, dacă avem acces |
 | Ora 9 | deploy, laptopul de juriu cu extensia instalată, video de rezervă, `/pitch` | |
 
 Ce se taie primul dacă rămânem în urmă, în ordine: secțiunea hero, add-on-ul Express (rămâne PNG), story-ul, citirea fonturilor din pagină. Nu se taie: Spire peste pagină, postarea cu mascota, garda, rezervele.

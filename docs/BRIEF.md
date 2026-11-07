@@ -144,7 +144,7 @@ Notele 1–5 sunt pe cele 9 întrebări din `docs/JURIU.md`; nota ponderată e c
 
 | Cine | Ce a spus (cifre) |
 |---|---|
-| | |
+| Mentorii ITFest (10:xx) | „e top ideea”. Validare de direcție, nu dovadă de durere: încă nicio cifră de la un om de marketing |
 
 ## Jurnal de decizii
 
@@ -156,6 +156,7 @@ Notele 1–5 sunt pe cele 9 întrebări din `docs/JURIU.md`; nota ponderată e c
 | 08:xx | Respinsă: aprobarea agenție ↔ client (AI ar fi add-on) | AI-Driven Innovation |
 | 09:xx | Aleasă: „stilul altcuiva, conținutul tău” (referință → stil; mascota, culorile și textele mărcii), verificat de cod | AI-Driven Innovation, Problem Solving, Demo |
 | 09:xx | Scop: static acum, video (storyboard + animatic) după ora 6; logo scos; interfața site-ului după hackathon | Demo, Technical Excellence |
+| 10:xx | După mentori: direcția rămâne; Gemini acum, Firefly mai târziu dacă obținem acces; colegul pe extensie, Alexandru pe motor; în plus landing page (`/`) și interfața de rezultate (`/campanii`) | Integrations, Product Experience |
 | 10:xx | Mascota și produsul se numesc **Spire** (de la „inspire”); echipa e de 2 oameni, plan pe două jumătăți (extensia / motorul) | Demo (memorabil) |
 | 10:xx | Scanarea site-ului e pentru campanie, nu pentru site: Spire alege elementele utile, din stilul ales iese kitul (postare + story + hero), cu reguli de conversie în gardă; site-ul întreg nu se reface | Problem Solving, Brief („optimizează conversii”) |
 | 10:xx | Al doilea consiliu + decizia echipei: extensia rămâne, ca „corpul” agentului (Spire apare peste site, se uită, întreabă); referința din demo e licențiată sau propria campanie, nu concurentul; buclă de agent cu garda; spec: `docs/superpowers/specs/2026-11-07-spire-stil-pe-marca-design.md` | AI-Driven Innovation, Demo |
