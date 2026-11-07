@@ -26,7 +26,7 @@ Ciornă scrisă la 10:30, refăcută la 12:30 după discuția cu organizatorii, 
 | Până la 14:00 | Decizia despre buclă și despre costul calculat (`cost.ts` nu există încă) | Problem Solving, bonusul +10 |
 | 14:00 | Primul `/juriu`, pe aplicația reală | Toate |
 | 14:00–17:00 | Același test cu cronometrul, în Spire, cu cheia reală. Fiecare își ia partea din arhitectură și o spune fără foaie | Cifra din video, Technical Excellence |
-| 16:00 | Schema de arhitectură și slide-urile care lipsesc. `/pitch` nu are încă niciun slide de arhitectură sau de cost | Technical Excellence |
+| 16:00 | Schema de arhitectură și slide-urile care lipsesc. Slide-ul de arhitectură e `/pitch#7`; schema din video se poate lua de acolo. `/pitch` nu are încă slide de cost | Technical Excellence |
 | **17:00** | **Îngheț pe drumul din video.** Ce se schimbă pe ecran după captură face video-ul să mintă | Demo |
 | 17:00–18:00 | Capturile, cu cheia reală, pe versiunea publicată; deploy | Demo, Technical Excellence |
 | 18:00–19:00 | Vocea și montajul. În paralel, celălalt repetă întrebările grele | Toate |

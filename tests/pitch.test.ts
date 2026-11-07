@@ -19,9 +19,9 @@ const FILLED: PitchConfig = {
 
 describe("pitch deck", () => {
   for (const s of all) {
-    it(`„${s.id}”: 9 slide-uri, cu textele scenariului`, () => {
+    it(`„${s.id}”: 10 slide-uri, cu textele scenariului`, () => {
       const deck = buildDeck(s, PITCH, "http://localhost:5173");
-      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "people", "how", "difference", "demo", "payer", "brief", "close"]);
+      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "people", "how", "difference", "demo", "architecture", "payer", "brief", "close"]);
       const cover = deck[0];
       expect(cover.kind === "cover" && cover.tagline).toBe(s.app.tagline);
       const how = deck.find((x) => x.kind === "how");
@@ -38,6 +38,16 @@ describe("pitch deck", () => {
     expect(todo.some((t) => t.includes("business.evidence"))).toBe(true);
     expect(todo.some((t) => t.includes("PITCH.team"))).toBe(true);
     expect(isTodo(deck[1].kind === "problem" && deck[1].evidence)).toBe(true);
+  });
+
+  it("arhitectura: fără ea apare ca lipsă; cu ea arată AI-ul, codul și omul, plus ce se întâmplă când pică", () => {
+    const s = all[0];
+    expect(missing(buildDeck(s, { ...PITCH, architecture: undefined })).some((t) => t.includes("PITCH.architecture"))).toBe(true);
+    const slide = buildDeck(s, PITCH).find((x) => x.kind === "architecture");
+    const system = slide?.kind === "architecture" ? slide.system : undefined;
+    if (!system || isTodo(system)) throw new Error("PITCH.architecture lipsește");
+    expect(new Set(system.steps.map((x) => x.owner))).toEqual(new Set(["AI", "cod", "om"]));
+    expect(system.failures.length).toBeGreaterThan(0);
   });
 
   it("completat, nu mai cere nimic; linkul din PITCH bate adresa locală", () => {

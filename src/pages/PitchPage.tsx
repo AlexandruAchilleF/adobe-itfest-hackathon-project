@@ -135,6 +135,8 @@ const H2 = "mt-8 leading-[1.06] font-semibold tracking-[-0.035em] text-ink";
 const LEAD = "leading-snug text-ink-2";
 const PAD = "flex h-full flex-col px-[120px] pt-[96px] pb-[130px]";
 
+const OWNER_DOT = { AI: "bg-coral-bright", cod: "bg-ink", om: "bg-ok" };
+
 function SlideBody({ s }: { s: Slide }) {
   switch (s.kind) {
     case "cover":
@@ -247,6 +249,47 @@ function SlideBody({ s }: { s: Slide }) {
           <div className="shrink-0 text-center">
             <Qr url={s.url} />
             <p className="mt-6 text-[26px] font-medium text-white/85">{s.url.replace(/^https?:\/\//, "")}</p>
+          </div>
+        </div>
+      );
+
+    case "architecture":
+      return (
+        <div className={`${PAD} pb-[110px]`}>
+          <div>
+            <Ribbon>{s.ribbon}</Ribbon>
+          </div>
+          <h2 className={`${H2} text-[60px]`}>
+            <Accent text={s.title} />
+          </h2>
+          <div className="mt-auto">
+            <Show v={s.system}>
+              {(a) => (
+                <>
+                  <ol className="grid grid-cols-6 gap-4">
+                    {a.steps.map((step) => (
+                      <li key={step.title} className="card flex flex-col px-5 py-5">
+                        <span className="flex items-center gap-2 text-[20px] font-medium tracking-[0.06em] text-muted uppercase">
+                          <span className={`h-3 w-3 rounded-full ${OWNER_DOT[step.owner]}`} aria-hidden />
+                          {step.owner}
+                        </span>
+                        <p className="mt-3 text-[27px] font-semibold tracking-[-0.02em] text-ink">{step.title}</p>
+                        <p className="mt-2 text-[21px] leading-snug text-muted">{step.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-5 text-[25px] font-medium text-ink">{a.loop}</p>
+                  <ul className="mt-5 grid grid-cols-3 gap-8 border-t border-line pt-5">
+                    {a.failures.map((f) => (
+                      <li key={f.when} className="text-[23px] leading-snug text-muted">
+                        <span className="block font-medium text-ink">{f.when}</span>
+                        {f.then}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </Show>
           </div>
         </div>
       );

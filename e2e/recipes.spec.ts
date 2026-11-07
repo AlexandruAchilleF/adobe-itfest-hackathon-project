@@ -122,7 +122,7 @@ test("pitch deck: slide-urile din scenariu, cu săgețile; la tipărire, toate",
   await expect(page.getByTestId("slide-1")).toBeHidden();
   await expect(page).toHaveURL(/#2$/);
   await page.emulateMedia({ media: "print" });
-  await expect(page.getByTestId("slide-9")).toBeVisible();
+  await expect(page.getByTestId("slide-10")).toBeVisible();
 });
 
 test("mascota: vorbești cu ea și face lucruri în aplicație", async ({ page }) => {

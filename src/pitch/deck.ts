@@ -6,6 +6,14 @@
 import { happyPath } from "../lib/flow";
 import type { Scenario } from "../scenario/types";
 
+export interface Architecture {
+  /** cine face pasul: se vede pe slide, pentru că asta e ideea arhitecturii */
+  steps: Array<{ owner: "AI" | "cod" | "om"; title: string; text: string }>;
+  /** bucla de agent, sub pași */
+  loop: string;
+  failures: Array<{ when: string; then: string }>;
+}
+
 export interface PitchConfig {
   /** „Ana · produs și interviuri”, câte unul pe rând */
   team: string[];
@@ -21,6 +29,8 @@ export interface PitchConfig {
   builtToday: string[];
   /** ce urmează după hackathon (intenția de a construi mai departe e un criteriu Adobe) */
   next: string[];
+  /** drumul prin sistem și ce se întâmplă când pică ceva; doar ce există în cod (docs/PITCH.md) */
+  architecture?: Architecture;
   /** uliul de pază, desenat ca graf, pe copertă (src/pitch/HawkMark.tsx); false = copertă fără el */
   coverMark: boolean;
 }
@@ -34,6 +44,22 @@ export const PITCH: PitchConfig = {
   market: "",
   builtToday: [],
   next: [],
+  architecture: {
+    steps: [
+      { owner: "cod", title: "Extensia", text: "Citește pagina doar la clic, cu activeTab, scripting și sidePanel." },
+      { owner: "AI", title: "Analiza", text: "Gemini scrie anatomia și textele, validate cu Zod." },
+      { owner: "AI", title: "Ilustrația", text: "FLUX.2 pe Cloudflare, printr-un singur endpoint." },
+      { owner: "cod", title: "Compunerea", text: "Designul pe straturi, din anatomie și marcă." },
+      { owner: "cod", title: "Garda", text: "Preț, Delta E, dHash, contrast, mențiuni." },
+      { owner: "om", title: "Omul", text: "Editează, vede garda din nou și descarcă." },
+    ],
+    loop: "Bucla de agent: ce pică reparabil la gardă se întoarce la AI, de cel mult două ori.",
+    failures: [
+      { when: "Gemini e supraîncărcat", then: "alt model, după 429, eroare de server sau 20 s" },
+      { when: "Ilustrația pică", then: "mascota originală, iar garda o spune" },
+      { when: "Fără cheie sau rețea", then: "mod demo, spus ca atare" },
+    ],
+  },
   coverMark: true,
 };
 
@@ -54,11 +80,12 @@ export type Slide =
   | { kind: "how"; theme: Theme; ribbon: string; title: string; steps: Array<{ role: string; label: string; done: boolean }>; failed?: { role: string; label: string } }
   | { kind: "difference"; theme: Theme; ribbon: string; title: string; columns: Array<{ title: string; text: string }> }
   | { kind: "demo"; theme: Theme; title: string; text: string; url: string }
+  | { kind: "architecture"; theme: Theme; ribbon: string; title: string; system: Maybe<Architecture> }
   | { kind: "payer"; theme: Theme; ribbon: string; payer: string; evidence: string[]; market: Maybe<string> }
   | { kind: "brief"; theme: Theme; ribbon: string; title: string; rows: Maybe<Array<{ need: string; where: string }>> }
   | { kind: "close"; theme: Theme; headline: string; tagline: string; builtToday: Maybe<string[]>; next: Maybe<string[]>; team: Maybe<string[]>; url: string };
 
-/** Slide-urile, în ordinea pitch-ului de 3 minute (docs/JURIU.md: omul → durerea → demo → diferența → plătitorul → brief-ul). */
+/** Slide-urile, în ordinea pitch-ului de 3 minute (docs/PITCH.md: omul → durerea → diferența → demo → arhitectura → plătitorul → brief-ul). */
 export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
   const roleLabel = (id: string) => s.roles[id]?.label ?? id;
   const path = happyPath(s.flow);
@@ -118,6 +145,13 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       title: "Încercați *voi.*",
       text: `Scanați codul cu telefonul și intrați ca ${roleLabel(s.flow.requester).toLowerCase()}.`,
       url,
+    },
+    {
+      kind: "architecture",
+      theme: "paper",
+      ribbon: "Arhitectura",
+      title: "AI-ul propune, *codul verifică,* omul aprobă.",
+      system: orTodo(p.architecture, "drumul prin sistem și ce se întâmplă când pică ceva (PITCH.architecture)"),
     },
     {
       kind: "payer",
