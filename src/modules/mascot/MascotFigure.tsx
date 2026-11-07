@@ -78,6 +78,50 @@ function Wing({ shade }: { shade?: boolean }) {
   );
 }
 
+// aripile strânse, când stă pe un element (extensia, poza „perched”): cad pe lângă corp, cu vârful
+// remigelor spre coadă. Fiecare aripă: pana lungă, acoperitoarele, marginea luminată, festonul
+// dintre ele și trei dungi pe remige.
+const FOLDED_FAR = {
+  flight: "M 72.2 43.4 C 77 45.6 79.4 51.6 79 58.2 C 78.4 66 74.4 74.4 67.8 81.2 C 67.2 74.6 66.2 66.4 66.4 58.2 C 66.6 52 67.6 47.4 69.2 44.8 Z",
+  coverts: "M 72 44 C 76 46.2 78 51 77.8 56.4 C 75 58.4 70.6 58.2 66.8 56.6 C 67 51.6 67.8 47.4 69.4 45 Z",
+  rim: "M 72.2 43.4 C 76.6 45.6 78.6 50.4 78.8 55.4 C 77.6 51.2 75.2 48 71.2 46.2 Z",
+  scallop: "M 77.6 56.2 C 76.2 58.4 74.6 58.6 73.4 57.4 C 72 59 70.2 59 68.8 57.6 C 68 58.4 67.2 58.2 66.6 57.4",
+  bars: ["M 76 61 C 74.6 67 72.2 72.6 68.6 78", "M 73.2 60.2 C 72 66 70.2 71.2 67.6 75.6", "M 70.2 59.6 C 69.4 64.6 68.2 69 66.8 72.6"],
+};
+const FOLDED_NEAR = {
+  flight: "M51 43.4 C46.2 45.6 43.8 51.6 44.2 58.2 C44.8 66 48.8 74.4 55.4 81.2 C56 74.6 57 66.4 56.8 58.2 C56.6 52 55.6 47.4 54 44.8 Z",
+  coverts: "M51.2 44 C47.2 46.2 45.2 51 45.4 56.4 C48.2 58.4 52.6 58.2 56.4 56.6 C56.2 51.6 55.4 47.4 53.8 45 Z",
+  rim: "M51 43.4 C46.6 45.6 44.6 50.4 44.4 55.4 C45.6 51.2 48 48 52 46.2 Z",
+  scallop: "M45.6 56.2 C47 58.4 48.6 58.6 49.8 57.4 C51.2 59 53 59 54.4 57.6 C55.2 58.4 56 58.2 56.6 57.4",
+  bars: ["M47.2 61 C48.6 67 51 72.6 54.6 78", "M50 60.2 C51.2 66 53 71.2 55.6 75.6", "M53 59.6 C53.8 64.6 55 69 56.4 72.6"],
+};
+
+function FoldedWing({ d, shade }: { d: typeof FOLDED_NEAR; shade?: boolean }) {
+  // aripa din spate e cu o treaptă mai închisă, ca la zbor
+  const [flight, coverts, rim] = shade ? [C.dark, C.ink, C.mid] : [C.ink, C.mid, C.rim];
+  return (
+    <>
+      <path d={d.flight} fill={flight} />
+      <path d={d.coverts} fill={coverts} />
+      <path d={d.rim} fill={rim} />
+      <path d={d.scallop} fill="none" stroke={flight} strokeWidth="1.1" strokeLinecap="round" />
+      {d.bars.map((bar) => (
+        <path key={bar} d={bar} fill="none" stroke={rim} strokeWidth="0.9" strokeLinecap="round" />
+      ))}
+    </>
+  );
+}
+
+/** Aripile strânse pe lângă corp: întâi cea din spate (oglindită, în umbră), apoi cea apropiată. */
+function FoldedWings() {
+  return (
+    <g className="mascot-folded">
+      <FoldedWing d={FOLDED_FAR} shade />
+      <FoldedWing d={FOLDED_NEAR} />
+    </g>
+  );
+}
+
 // coada în evantai, văzută din față: se vede doar marginea în feste, de sub corp
 const TAIL =
   "M45.07 59 L45.07 66.47 Q44.19 69.02 47.46 70.14 Q47.59 72.85 51.33 73.06 Q52.51 75.79 56.28 74.95 Q58.56 77.42 61.8 75.6 Q65.04 77.42 67.32 74.95 Q71.09 75.79 72.27 73.06 Q76.01 72.85 76.14 70.14 Q79.41 69.02 78.53 66.47 L78.53 59 Z";
@@ -99,7 +143,23 @@ const EYES = [
   [68.8, 38.4, 2.5],
 ] as const;
 
-export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood?: MascotMood; size?: number; color?: string }) {
+/**
+ * Poza: „flying” (implicit, ca în aplicație) cu aripile deschise, sau „perched”, așezat pe un element,
+ * cu aripile strânse (extensia, când critică un element din pagină).
+ */
+export type MascotPose = "flying" | "perched";
+
+export function MascotFigure({
+  mood = "idle",
+  size = 96,
+  color = COLOR,
+  pose = "flying",
+}: {
+  mood?: MascotMood;
+  size?: number;
+  color?: string;
+  pose?: MascotPose;
+}) {
   const anim = mood === "worried" ? "mascot-shake" : mood === "celebrate" || mood === "happy" ? "mascot-jump" : "mascot-bob";
   const a = WING_ANGLE[mood];
   const searching = mood === "searching";
@@ -116,16 +176,26 @@ export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood
         <path d={TAIL} fill={darker(color)} />
         <path d={TAIL} fill={color} transform="translate(61.8 63) scale(0.9 0.84) translate(-61.8 -63)" />
 
-        {/* aripa din dreapta: mai departe, oglindită și scurtată în perspectivă, în umbră */}
-        <g transform="translate(73 1) scale(-0.74 0.96) translate(-51 0)">
-          <g transform={`rotate(${a} 51 50)`}>
-            <Wing shade />
-          </g>
-        </g>
-        {/* aripa din stânga, cea apropiată */}
-        <g transform={`rotate(${a} 51 50)`}>
-          <Wing />
-        </g>
+        {/* aripile deschise, doar în zbor. `mascot-wing` stă pe un <g> interior: o animație CSS pe
+            `transform` ar înlocui atributul `transform` (unghiul din stare); fără animație nu face nimic */}
+        {pose === "flying" && (
+          <>
+            {/* aripa din dreapta: mai departe, oglindită și scurtată în perspectivă, în umbră */}
+            <g transform="translate(73 1) scale(-0.74 0.96) translate(-51 0)">
+              <g transform={`rotate(${a} 51 50)`}>
+                <g className="mascot-wing">
+                  <Wing shade />
+                </g>
+              </g>
+            </g>
+            {/* aripa din stânga, cea apropiată */}
+            <g transform={`rotate(${a} 51 50)`}>
+              <g className="mascot-wing">
+                <Wing />
+              </g>
+            </g>
+          </>
+        )}
 
         {/* corpul, scurtat în perspectivă: pieptul crem cu striații, ghearele strânse */}
         <path d="M50.6 46 C48.6 56 53.6 66.6 61.6 71.4 C69.6 66.6 74.6 56 72.6 46 Z" fill={C.ink} />
@@ -136,6 +206,9 @@ export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood
         ))}
         <path d="M57.4 68 C56.8 71.6 58 73.6 60 73.4 L60.6 69.4 Z M65.8 68 C66.4 71.6 65.2 73.6 63.2 73.4 L62.6 69.4 Z" fill={C.gold} />
         <path d="M57 72.4 l0.6 2 l1 -1.6 Z M59.4 73 l0.4 2 l1 -1.8 Z M63.8 73 l-0.4 2 l-1 -1.8 Z M66.2 72.4 l-0.6 2 l-1 -1.6 Z" fill={C.dark} />
+
+        {/* așezat: aripile strânse, după gheare, peste corp și sub cap */}
+        {pose === "perched" && <FoldedWings />}
 
         {/* capul: creștet turtit, gușa crem, ciocul încovoiat */}
         <g transform={headTilt}>

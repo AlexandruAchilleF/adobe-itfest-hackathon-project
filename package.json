@@ -12,7 +12,8 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "check": "npm run typecheck && npm run test && npm run e2e",
-    "addon:schema": "node scripts/export-design-schema.mjs"
+    "addon:schema": "node scripts/export-design-schema.mjs",
+    "ext:poses": "UPDATE_POSES=1 vitest run tests/mascotPoses.test.ts"
   },
   "engines": {
     "node": ">=20"
