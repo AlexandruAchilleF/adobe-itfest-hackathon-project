@@ -46,3 +46,26 @@ export function useTypewriter(text: string, { active = true, speed = 38, loop = 
   }, [active, n, erasing, text, speed, loop, pause]);
   return { typed: text.slice(0, n), done: n >= text.length && !erasing };
 }
+
+/**
+ * Fazele unei machete animate: cât `active` e true, trece prin faze la momentele date (ms de la start);
+ * cu `loop`, după ultima fază o ia de la capăt după `rest` ms. Când `active` devine false, revine la 0.
+ * Cu prefers-reduced-motion, sare direct la ultima fază (starea finală, fără mișcare).
+ */
+export function useSequence(active: boolean, at: number[], { loop = false, rest = 2600 } = {}): number {
+  const [phase, setPhase] = useState(0);
+  const key = at.join(",");
+  useEffect(() => {
+    if (!active) return setPhase(0);
+    if (reducedMotion()) return setPhase(at.length);
+    let timers: ReturnType<typeof setTimeout>[] = [];
+    const run = () => {
+      setPhase(0);
+      timers = at.map((ms, i) => setTimeout(() => setPhase(i + 1), ms));
+      if (loop) timers.push(setTimeout(run, (at.at(-1) ?? 0) + rest));
+    };
+    run();
+    return () => timers.forEach(clearTimeout);
+  }, [active, key, loop, rest]);
+  return phase;
+}

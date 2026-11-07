@@ -65,7 +65,7 @@ export function normalizeAnatomy(a: AnatomyRead): Anatomy {
   };
 }
 
-/** Exemplu de postare cu o cămilă; e și răspunsul de rezervă al analizei. */
+/** Exemplu de postare cu o cămilă (public/samples/spire/referinta.png); e și răspunsul de rezervă al analizei. */
 export const sampleAnatomy: Anatomy = {
   kind: "image",
   width: 1080,
@@ -79,8 +79,8 @@ export const sampleAnatomy: Anatomy = {
   ],
   colors: { background: "#F4E3C1", primary: "#B5472F", accent: "#2F6F73", text: "#2B1D14", source: "pixeli" },
   illustration: {
-    style: "desen plat, contururi groase și egale, culori saturate, umbre simple dintr-o singură bucată",
-    subject: "o cămilă cu ochelari de soare",
+    style: "randare 3D soft, ca din lut mat, forme rotunjite și pline, lumină difuză de studio, umbre moi",
+    subject: "o cămilă cu ochelari de soare, lângă un pahar de ceai rece",
   },
   why: [
     "Titlul mare e citit primul, iar ilustrația ține privirea pe mijloc.",

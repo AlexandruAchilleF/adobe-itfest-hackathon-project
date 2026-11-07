@@ -1,21 +1,21 @@
 // Landing page-ul Spire („/”): ce face produsul, în ordinea în care îl vede juriul (docs/JURIU.md, întrebarea 6).
 //  1. cerul pictat cu uliul: fraza produsului și Spire care vorbește în locul promptului
 //  2. problema: de ce un chat nu ajunge (aripile desenate pe margini)
-//  3. cei trei pași: se uită, întreabă, face (cu postarea reală din campania de exemplu)
-//  4. garda: verificările calculate de cod pe aceeași campanie
-//  5. cerul de noapte: referința lângă rezultat
+//  3. cei trei pași: se uită, întreabă, face; macheta din dreapta stă fixă și se schimbă la derulare
+//     (extensia pe site → întrebările → kitul cu bifele → exportul PNG), din LandingMockups.tsx
+//  4. garda: bucla reală (runAgentLoop + guardCampaign) prinde prețul greșit și îl corectează
+//  5. cerul de noapte: referința lângă rezultat, cu bifele calculate pe ilustrația măsurată
 //  6. apusul: îndemnul final
 // Imaginile din public/landing/ sunt generate cu Cloudflare Workers AI (FLUX.2 klein), ca restul ilustrațiilor Spire.
 
-import { Fragment, type ReactNode, useMemo, useRef } from "react";
+import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Accent, Ribbon } from "../../components/ui";
-import { seedCampaign } from "../../lib/campaigns";
 import { useInView, useTypewriter } from "../../lib/motion";
 import { useMascotPage } from "../../modules/mascot/page";
 import { scenario } from "../../scenario/config";
-import { DesignPreview } from "./DesignPreview";
-import { CheckList, useBrand } from "./parts";
+import { AfterMock, AskMock, ExportMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./LandingMockups";
+import { useBrand } from "./parts";
 
 const S = scenario;
 
@@ -176,39 +176,68 @@ function Problem() {
   );
 }
 
-function Step({ tag, title, text, children }: { tag: string; title: string; text: string; children: ReactNode }) {
+function StepText({ tag, title, text }: { tag: string; title: string; text: string }) {
   return (
-    <div className="grid items-center gap-10 py-12 md:grid-cols-[1fr_1.15fr] md:gap-16">
-      <Reveal>
-        <span className="rounded-md bg-coral-tint px-2.5 py-1 text-sm font-medium text-coral-deep">{tag}</span>
-        <h3 className="mt-4 text-[1.9rem] leading-[1.1] font-semibold tracking-[-0.035em] whitespace-pre-line text-ink sm:text-[2.3rem]">
-          <Accent text={title} />
-        </h3>
-        <p className="mt-3 max-w-md text-[1.05rem] leading-relaxed text-ink-2">{text}</p>
-      </Reveal>
-      <Reveal delay={120}>
-        <div className="land-frame p-3 sm:p-4">{children}</div>
-      </Reveal>
-    </div>
+    <Reveal>
+      <span className="rounded-md bg-coral-tint px-2.5 py-1 text-sm font-medium text-coral-deep">{tag}</span>
+      <h3 className="mt-4 text-[1.9rem] leading-[1.1] font-semibold tracking-[-0.035em] whitespace-pre-line text-ink sm:text-[2.3rem]">
+        <Accent text={title} />
+      </h3>
+      <p className="mt-3 max-w-md text-[1.05rem] leading-relaxed text-ink-2">{text}</p>
+    </Reveal>
   );
 }
 
-/** Zonele pe care Spire le găsește în referință, în procente din imagine (1080×1350). */
-const ZONES = [
-  { label: "titlul", x: 7, y: 8, w: 50, h: 9 },
-  { label: "oferta", x: 7, y: 22, w: 45, h: 8 },
-  { label: "ilustrația", x: 25, y: 42, w: 67, h: 37 },
-  { label: "îndemnul", x: 7, y: 79, w: 52, h: 10 },
-];
+/** Macheta pornește cât e pe ecran (pe telefon, sub textul pasului). */
+function InView({ children }: { children: (active: boolean) => ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const on = useInView(ref, { once: false, margin: "-10% 0px -10% 0px" });
+  return <div ref={ref}>{children(on)}</div>;
+}
 
-function HowItWorks() {
-  const campaign = useMemo(seedCampaign, []);
+const MOCK_W = 560;
+const MOCK_H = 470;
+
+/** Pasul activ: marcajul care trece de linia din mijlocul ecranului. */
+function useActiveMarker(count: number) {
+  const markers = useRef<Array<HTMLDivElement | null>>([]);
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(markers.current.indexOf(e.target as HTMLDivElement));
+      },
+      { rootMargin: "-50% 0px -50% 0px" },
+    );
+    markers.current.slice(0, count).forEach((m) => m && io.observe(m));
+    return () => io.disconnect();
+  }, [count]);
+  const mark = (i: number) => (el: HTMLDivElement | null) => {
+    markers.current[i] = el;
+  };
+  return { active, mark };
+}
+
+function HowItWorks({ data }: { data: LandingData }) {
   const brand = useBrand();
-  const { answers, designs } = campaign;
-  const questions: Array<{ q: string; options: string[]; picked: string[] }> = [
-    { q: "Ce oferă campania?", options: [answers.offer ?? "2 la preț de 1", "-20% azi", "Altceva"], picked: [answers.offer ?? "2 la preț de 1"] },
-    { q: "Ce îi spunem omului să facă?", options: [answers.cta ?? "Vino azi", "Comandă acum", "Altceva"], picked: [answers.cta ?? "Vino azi"] },
-    { q: "Ce formate vrei?", options: ["Postare", "Story", "Hero"], picked: ["Postare", "Story"] },
+  const { campaign } = data;
+  const { active, mark } = useActiveMarker(4);
+  const mocks = [
+    (on: boolean) => <ScanMock active={on} />,
+    (on: boolean) => <AskMock active={on} campaign={campaign} />,
+    (on: boolean) => <KitMock active={on} data={data} />,
+    (on: boolean) => <ExportMock active={on} campaign={campaign} />,
+  ];
+  const scaled = (i: number, on: boolean) => (
+    <Scaled width={MOCK_W} height={MOCK_H}>
+      {mocks[i](on)}
+    </Scaled>
+  );
+  const steps = [
+    { tag: "Se uită", title: "Spire *citește pagina*\npe care ești", text: "Apare peste site, alege ce e util pentru o campanie și îți spune de ce: așezarea, rolurile culorilor, tonul." },
+    { tag: "Întreabă", title: "Te întreabă\n*doar trei lucruri*", text: `Oferta, îndemnul și formatele. Culorile, fonturile și mascota le ia din marca ${brand.name}.` },
+    { tag: "Face", title: "Îți face\n*kitul de campanie*", text: `Postare și story, cu ${brand.mascot?.name ?? "mascota ta"} redesenat în stilul referinței. Straturile rămân editabile, iar tu ai ultimul cuvânt.` },
   ];
   return (
     <section id="cum" className="scroll-mt-24 bg-cream px-4 pb-16">
@@ -220,53 +249,52 @@ function HowItWorks() {
         <p className="mx-auto mt-4 max-w-xl text-[1.08rem] leading-relaxed text-ink-2">Fără prompt. Spire pornește de la pagina pe care o ai deja deschisă.</p>
       </Reveal>
 
-      <div className="mx-auto mt-6 max-w-5xl">
-        <Step tag="Se uită" title={"Spire *citește pagina*\npe care ești"} text="Apare peste site, alege ce e util pentru o campanie și îți spune de ce: așezarea, rolurile culorilor, tonul.">
-          <div className="relative mx-auto max-w-[300px] overflow-hidden rounded-xl">
-            <img src="/samples/spire/referinta.png" alt="Designul de referință: o postare pentru ceai rece, cu o cămilă desenată" className="block w-full" />
-            {ZONES.map((z) => (
-              <span key={z.label} className="land-zone absolute" style={{ left: `${z.x}%`, top: `${z.y}%`, width: `${z.w}%`, height: `${z.h}%` }}>
-                <span className="land-zone-label">{z.label}</span>
-              </span>
-            ))}
-          </div>
-        </Step>
-
-        <Step tag="Întreabă" title={"Te întreabă\n*doar trei lucruri*"} text={`Oferta, îndemnul și formatele. Culorile, fonturile și mascota le ia din marca ${brand.name}.`}>
-          <div className="space-y-4 rounded-xl bg-white p-5 sm:p-6">
-            <p className="flex items-center gap-2 text-sm font-medium text-coral-deep">
-              <img src="/landing/hawk-mark.svg" alt="" className="h-5 w-5" />
-              {S.app.name} întreabă
-            </p>
-            {questions.map(({ q, options, picked }) => (
-              <div key={q}>
-                <p className="font-medium text-ink">{q}</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {options.map((o) => (
-                    <span key={o} className={`rounded-full px-3 py-1 text-sm ${picked.includes(o) ? "bg-ink text-white" : "bg-paper-2 text-ink-2"}`}>
-                      {o}
-                    </span>
-                  ))}
+      <div className="mx-auto mt-6 max-w-6xl md:grid md:grid-cols-[0.85fr_1.15fr] md:gap-14 lg:gap-20">
+        <div>
+          {steps.map((step, i) => {
+            const last = i === steps.length - 1;
+            return (
+              // ultimul pas ține două machete (kitul, apoi exportul): textul stă fix cât trec amândouă
+              <div key={step.tag} className={`relative py-12 md:py-0 ${last ? "md:h-[150vh]" : "md:flex md:min-h-[90vh] md:items-center"}`}>
+                {last ? (
+                  <>
+                    <div ref={mark(2)} className="absolute inset-x-0 top-0 h-1/2" aria-hidden />
+                    <div ref={mark(3)} className="absolute inset-x-0 bottom-0 h-1/2" aria-hidden />
+                    <div className="md:sticky md:top-[34vh]">
+                      <StepText {...step} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div ref={mark(i)} className="absolute inset-0" aria-hidden />
+                    <StepText {...step} />
+                  </>
+                )}
+                <div className="mt-8 space-y-6 md:hidden">
+                  <InView>{(on) => scaled(i, on)}</InView>
+                  {last && <InView>{(on) => scaled(3, on)}</InView>}
                 </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="hidden md:block">
+          <div className="sticky top-[max(6.5rem,calc(50vh-15rem))] grid">
+            {mocks.map((_, i) => (
+              <div key={i} className="morph [grid-area:1/1]" data-on={active === i} aria-hidden={active !== i}>
+                {scaled(i, active === i)}
               </div>
             ))}
           </div>
-        </Step>
-
-        <Step tag="Face" title={"Îți face\n*kitul de campanie*"} text={`Postare și story, cu ${brand.mascot?.name ?? "mascota ta"} redesenat în stilul referinței. Straturile rămân editabile, iar tu ai ultimul cuvânt.`}>
-          <div className="flex items-end justify-center gap-4">
-            {designs.post && <DesignPreview design={designs.post} className="w-[58%] rounded-lg shadow-[0_18px_36px_-20px_rgb(27_35_80/0.5)]" />}
-            {designs.story && <DesignPreview design={designs.story} className="w-[33%] rounded-lg shadow-[0_18px_36px_-20px_rgb(27_35_80/0.5)]" />}
-          </div>
-        </Step>
+        </div>
       </div>
     </section>
   );
 }
 
-function Guard() {
-  const { checks } = useMemo(seedCampaign, []);
-  const passed = checks.filter((c) => c.ok).length;
+function Guard({ data }: { data: LandingData }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const on = useInView(ref, { once: false, margin: "-15% 0px -15% 0px" });
   return (
     <section id="garda" className="scroll-mt-24 bg-cream px-4 pt-10 pb-28">
       <Reveal className="mx-auto max-w-3xl text-center">
@@ -279,18 +307,11 @@ function Guard() {
         </p>
       </Reveal>
       <Reveal delay={120} className="mx-auto mt-12 max-w-4xl">
-        <div className="relative overflow-hidden rounded-[28px] px-4 py-10 sm:px-12 sm:py-14">
-          <img src="/landing/sky.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="relative mx-auto max-w-lg rounded-2xl bg-white/95 p-6 shadow-[0_24px_48px_-24px_rgb(27_35_80/0.45)] backdrop-blur sm:p-7">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-semibold text-ink">Campania de exemplu</p>
-              <p className="text-sm font-medium text-ok">
-                {passed} din {checks.length} verificări trec
-              </p>
-            </div>
-            <div className="mt-4">
-              <CheckList checks={checks.slice(0, 6)} />
-            </div>
+        <div ref={ref} className="land-stage px-3 py-8 sm:px-12 sm:py-12">
+          <div className="mx-auto max-w-[680px]">
+            <Scaled width={680} height={452}>
+              <GuardMock active={on} data={data} />
+            </Scaled>
           </div>
         </div>
       </Reveal>
@@ -298,7 +319,7 @@ function Guard() {
   );
 }
 
-function BeforeAfter() {
+function BeforeAfter({ data }: { data: LandingData }) {
   const brand = useBrand();
   return (
     <section className="relative isolate overflow-hidden px-4 pt-28 pb-44">
@@ -313,17 +334,17 @@ function BeforeAfter() {
         <p className="mx-auto mt-4 max-w-xl text-[1.08rem] leading-relaxed text-white/80">Preluăm doar felul în care e desenat. Ilustrația, textele și culorile sunt ale tale.</p>
       </Reveal>
       <Reveal delay={120} className="mx-auto mt-12 max-w-4xl">
-        <div className="land-frame grid items-center gap-4 p-4 sm:grid-cols-[1fr_auto_1fr] sm:p-6">
+        <div className="land-stage grid items-center gap-4 p-4 sm:grid-cols-[1fr_auto_1fr] sm:p-8">
           <figure>
-            <img src="/samples/spire/referinta.png" alt="Referința: o postare pentru ceai rece, cu o cămilă" className="aspect-[4/5] w-full rounded-xl object-cover" />
-            <figcaption className="mt-2 text-center text-sm text-muted">Referința văzută pe un site</figcaption>
+            <ReferenceMock alt="Referința: o postare pentru ceai rece, cu o cămilă" />
+            <figcaption className="mt-3 text-center text-sm text-ink-2">Referința văzută pe un site</figcaption>
           </figure>
           <svg width="40" height="24" viewBox="0 0 40 24" className="mx-auto rotate-90 text-coral sm:rotate-0" aria-hidden>
             <path d="M2 12h34M26 3l10 9-10 9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <figure>
-            <img src="/samples/spire/pip-in-stil.png" alt={`${brand.mascot?.name ?? "Mascota"}, redesenat în stilul referinței`} className="aspect-[4/5] w-full rounded-xl object-cover" />
-            <figcaption className="mt-2 text-center text-sm text-muted">
+            <AfterMock data={data} />
+            <figcaption className="mt-3 text-center text-sm text-ink-2">
               {brand.mascot?.name ?? "Mascota"}, pe marca {brand.name}
             </figcaption>
           </figure>
@@ -372,15 +393,16 @@ function Footer() {
 
 export function LandingPage() {
   useMascotPage({ title: "Start", context: () => "landing page-ul Spire" });
+  const data = useLandingData();
   return (
     <div className="bg-cream">
       <Nav />
       <main>
         <Hero />
         <Problem />
-        <HowItWorks />
-        <Guard />
-        <BeforeAfter />
+        <HowItWorks data={data} />
+        <Guard data={data} />
+        <BeforeAfter data={data} />
         <Closing />
       </main>
       <Footer />

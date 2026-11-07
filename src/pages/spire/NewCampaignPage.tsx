@@ -4,7 +4,7 @@ import { type ClipboardEvent as ReactClipboardEvent, useCallback, useEffect, use
 import { useLocation } from "wouter";
 import { Button, Card, ErrorNote, PageHeader, Spinner } from "../../components/ui";
 import type { Anatomy } from "../../lib/anatomy";
-import { campaigns, type DesignFormat, FORMAT_LABEL, type Kit, makeKit, saveCampaign } from "../../lib/campaigns";
+import { campaigns, type DesignFormat, FORMAT_LABEL, type Kit, kitVerdict, makeKit, saveCampaign } from "../../lib/campaigns";
 import { campaignCandidates } from "../../lib/campaign";
 import { DesignCanvas } from "../../modules/canvas/DesignCanvas";
 import type { Design } from "../../lib/design";
@@ -276,10 +276,8 @@ export function NewCampaignPage() {
       );
       setKit(next);
       setFormat((Object.keys(next.designs) as DesignFormat[])[0] ?? "post");
-      const passed = next.checks.filter((c) => c.ok).length;
-      const verdict = `${passed} din ${next.checks.length} verificări trec.`;
-      const message = next.attempts > 1 ? `Am refăcut de ${next.attempts - 1} ori ce a picat la gardă. ${verdict}` : verdict;
-      mascot.say(message, passed === next.checks.length ? "happy" : "worried");
+      const message = kitVerdict(next);
+      mascot.say(message, next.checks.every((c) => c.ok) ? "happy" : "worried");
       setSaid(message);
     } catch (err) {
       setError((err as Error).message);

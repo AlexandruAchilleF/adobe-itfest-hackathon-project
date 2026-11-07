@@ -137,6 +137,15 @@ export async function makeKit(input: { anatomy: Anatomy; brand: Brand; answers: 
   return { copy: value.copy, illustration: value.illustration, designs: value.designs, checks, attempts: loop.attempts.length };
 }
 
+/** Ce spune Spire după kit: câte verificări trec și, dacă bucla a corectat, de câte ori. */
+export function kitVerdict(kit: Pick<Kit, "checks" | "attempts">): string {
+  const passed = kit.checks.filter((c) => c.ok).length;
+  const verdict = `${passed} din ${kit.checks.length} verificări trec.`;
+  const fixes = kit.attempts - 1;
+  if (fixes < 1) return verdict;
+  return `Am refăcut ${fixes === 1 ? "o dată" : `de ${fixes} ori`} ce a picat la gardă. ${verdict}`;
+}
+
 const NO_SPACE = "Nu mai e loc în browser. Șterge o campanie veche.";
 
 /** Backend-ul local nu aruncă la spațiu plin, deci confirmăm citind înapoi: nu pierdem campania în tăcere. */
