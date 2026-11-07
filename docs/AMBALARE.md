@@ -43,6 +43,18 @@ Deck-ul se construiește singur din scenariu (`docs/DESIGN.md`, „Pitch deck-ul
 - [ ] Nicio casetă „De completat” rămasă: treceți prin `/pitch` cu săgețile.
 - [ ] PDF-ul (`P` pe deck) pe stick și pe telefon, ca rezervă.
 
+## 3b. Video-ul de prezentare (circa 3 minute, recomandat de organizatori)
+
+Textul, programul și producția sunt în `docs/PITCH.md`.
+
+- [ ] Drumul din video e înghețat înainte de captură; capturile sunt cu cheia reală, pe versiunea publicată.
+- [ ] Arhitectura e aproape jumătate din timp, cu schema și codul real pe ecran.
+- [ ] Fiecare fragment tehnic spune o decizie și motivul ei. Fiecare din echipă îl poate explica fără foaie.
+- [ ] Textul a fost verificat pe cod după îngheț: cifrele, numele fișierelor, numărul de teste.
+- [ ] Accelerările au etichetă; niciun cadru din modul demo nu e prezentat ca rulare reală.
+- [ ] Limitele și codul scris dinainte sunt spuse în video (secțiunea 5).
+- [ ] MP4-ul e pe laptop, stick, telefon și link; încercat cu sunet; QR-ul se poate scana de pe ultimul cadru.
+
 ## 4. README pentru juriu (ultima oră)
 
 Înlocuiți secțiunea de sus a `README.md` cu:
@@ -51,9 +63,9 @@ Deck-ul se construiește singur din scenariu (`docs/DESIGN.md`, „Pitch deck-ul
 2. **Problema, cu cifra** și cine a spus-o (din `docs/BRIEF.md`, „Dovezi de la oameni reali”).
 3. **Walkthrough cu capturi**, câte una pe pas: prima pagină → cererea scrisă de cel care primește → acceptarea → SMS-ul → „Am primit” → punctele și rangul → raportul de pe telefon pe hartă. Capturi cu `⏺ Rec` sau cu screenshot din browser, salvate în `docs/capturi/`.
 4. **Ce cere brief-ul și unde se vede** (tabelul din `docs/BRIEF.md`, fiecare rând bifat).
-5. **Construit înainte / construit azi**: completați tabelul din `README.md`. Fiecare commit din ziua hackathonului apare în `git log --since="2026-11-07"`.
+5. **Construit înainte / construit azi**: completați tabelul din `README.md`. Fiecare commit din ziua hackathonului apare în `git log --since="2026-11-07 00:00"`.
 6. Cum se rulează (`npm install`, `npm run dev`).
 
 ## 5. Ce spuneți dacă juriul întreabă de codul scris înainte
 
-„Am venit cu un schelet pe care îl folosim la hackathoane: hartă, roluri, ciclul unei cereri, puncte, notificări cu mock. Azi am scris scenariul vostru (lista din README), am vorbit cu N oameni și am adaptat textele la ce ne-au spus. Commit-urile de azi sunt în git log.” Spuneți asta înainte să fiți întrebați, la slide-ul cu tehnologia.
+„Am venit cu un schelet pe care îl folosim la hackathoane: hartă, roluri, ciclul unei cereri, puncte, notificări cu mock. Azi am scris scenariul vostru (lista din README), am vorbit cu N oameni și am adaptat textele la ce ne-au spus. Commit-urile de azi sunt în git log.” Spuneți asta înainte să fiți întrebați, în partea de arhitectură din video.

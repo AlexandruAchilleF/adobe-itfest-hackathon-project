@@ -5,7 +5,7 @@ disable-model-invocation: true
 ---
 
 1. Citește `docs/JURIU.md` și `docs/BRIEF.md`.
-2. Pornește aplicația și parcurge demo-ul ca un jurat care o vede prima dată: un singur drum, 3 minute. Notează secunda în care apare momentul wow și orice pas care pare stricat sau lent.
+2. Pornește aplicația și parcurge demo-ul ca un jurat care o vede prima dată: un singur drum, circa 3 minute. Notează secunda în care apare momentul wow și orice pas care pare stricat sau lent. Prezentarea e un video cu mult accent pe arhitectură (`docs/PITCH.md`): verifică pe cod fiecare afirmație tehnică din text și spune dacă se vede că echipa a înțeles ce a construit.
 3. Dă 1–5 la fiecare dintre cele nouă întrebări, cu dovada din aplicație sau din `docs/BRIEF.md`. O întrebare fără dovadă primește cel mult 2. Calculează nota ponderată pe criteriile oficiale (din 100, plus bonusul), ca în `docs/JURIU.md`.
 4. Verifică tabelul de cerințe: fiecare cerință din brief are un moment în demo? Listează-le pe cele fără.
 5. Pune cele 5 întrebări cele mai grele pe care le-ar pune un jurat Adobe la acest proiect, cu răspunsul pe care îl poate da echipa azi.

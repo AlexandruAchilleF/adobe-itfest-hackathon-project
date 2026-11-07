@@ -2,6 +2,8 @@
 
 Stare: propunere scrisă la 11:05, nimic implementat. Decide echipa. Estimările sunt aproximative.
 
+**Schimbare la 12:30:** organizatorii recomandă un video de prezentare de circa 3 minute, cu accent pe arhitectură (`docs/PITCH.md`). Într-un video, juriul nu poate alege referința, deci planul de mai jos rămâne valabil doar dacă organizatorii confirmă un moment live; altfel iese. Din el rămân utile indiferent de răspuns urma agentului (piesa 3) și costul pe pas (piesa 2), pentru că pot susține partea de arhitectură din video.
+
 ## Ideea
 
 Spire reface pe marca ta orice design care îți place. Până acum am demonstrat asta doar pe o referință aleasă de noi, deci juriul poate crede că e regizat. Aici **referința o alege juriul**, din sală, cu camera telefonului, iar marca rămâne aceeași: Gelateria Pip.
@@ -84,7 +86,7 @@ Piesa 3 merită făcută și dacă testul pică: urma agentului funcționează �
 | Fotografie proastă sau cu ceva nepotrivit | Doar operatorul pune o rulare pe ecranul mare |
 | Fotografia e a unei mărci protejate | Păstrăm doar stilul, comparăm amprentele, spunem pe scenă ce e preluat și ce e nou |
 | Juratul nu vrea să iasă telefonul | Îi dăm telefonul nostru, cu pagina deschisă |
-| Jurizare în alt format decât credem | De aflat acum de la organizatori |
+| Nu există moment live | De aflat acum de la organizatori (`docs/PITCH.md`, „Formatul”); atunci nu se construiesc piesele 1, 4 și 5 |
 
 ## Ce renunțăm
 

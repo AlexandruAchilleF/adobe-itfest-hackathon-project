@@ -68,7 +68,7 @@ Codul scris dinainte e permis la ITFest × Adobe 2026. Îl declarăm, ca juriul 
 | Extensia de Chrome: Spire peste pagină, scanarea, decupajul, citirea paginii | `chrome-extension/` | urmează |
 | Aplicația web: landing page, marca, campanie nouă, campaniile | `src/pages/` | urmează |
 
-Toate commit-urile de azi: `git log --since="2026-11-07"`.
+Toate commit-urile de azi: `git log --since="2026-11-07 00:00"`.
 
 **Cu cine am vorbit azi:** _(câți oameni, ce cifre au spus; vezi `docs/BRIEF.md`)_
 

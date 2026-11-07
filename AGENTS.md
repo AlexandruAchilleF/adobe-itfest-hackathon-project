@@ -2,6 +2,7 @@
 
 Template de hackathon (12 ore, juriu Adobe): Vite + React 19 + TypeScript + Tailwind v4, funcții serverless în `api/` (Vercel).
 UI-ul și comentariile sunt în română. Citește și `docs/PLAN-12H.md`. La start, echipa rulează `/brief`; înainte de pitch, `/juriu`.
+Prezentarea (de la organizatori): se recomandă un video de circa 3 minute, durata nu e fixată, cu mult accent pe arhitectură și partea tehnică, ca să se vadă că echipa a înțeles ce a construit. Textul și programul: `docs/PITCH.md`.
 
 ## Înainte de orice schimbare
 - Citește `docs/BRIEF.md`: brief-ul Adobe, ideea aleasă, cerințele și deciziile. Codul servește fraza de acolo și bifează cerințele din tabel.

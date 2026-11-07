@@ -24,6 +24,12 @@ Ce rezultă de aici:
 - **Integrările se notează separat** și trebuie să aibă sens (o integrare care nu schimbă rezultatul nu contează).
 - **Costul vs. valoarea e bonus:** o cifră calculată de cod (cât costă o rulare, cât aduce sau economisește), nu o estimare spusă din burtă.
 
+## Formatul prezentării (de la organizatori, 7 noiembrie)
+
+Organizatorii recomandă un **videoclip de prezentare**, de **circa 3 minute** (durata nu e fixată), în care se vorbește **mult despre arhitectură și partea tehnică**, ca să se vadă că echipa a înțeles ce a construit. Textul și programul: `docs/PITCH.md`.
+
+Ponderile de mai sus nu s-au schimbat. Se schimbă cum le apărăm: un video îngrijit nu ține loc de Technical Excellence, iar arhitectura e aproape jumătate din timp.
+
 ## Ce înseamnă „marketing” pentru Adobe (din prezentare)
 
 - **Adobe CXO** (Customer Experience Orchestration): „De la tool-uri operate manual la AI Agents care analizează, decid și execută procese de marketing.” Trei straturi: date despre clienți în timp real (AEP, Analytics, AJO, Target) → decizie și optimizare, unde agenții „analizează contextul, protejează brandul și aleg strategii” → execuție în timp real (Target, GenStudio), care „generează conținut, personalizează experiențe și optimizează conversii”.
@@ -41,10 +47,10 @@ Numerele 1–7 rămân aceleași ca înainte (codul le citează după număr); 8
 | 3 | **Costul și plătitorul** | Cât costă o rulare și cât aduce? Cine plătește? | codul calculează costul (AI, SMS, API-uri) și valoarea (vânzări, ore economisite) din cifre reale, iar plătitorul plătește deja pentru problemă |
 | 4 | **Diferența** | Fără AI, mai există produsul? Și ce face în plus față de un prompt în ChatGPT? | AI-ul analizează, decide sau creează partea centrală, **și** codul adaugă ce un chat nu are: date proprii sau live, protecția mărcii verificată de cod, o acțiune în lumea reală, mai mulți oameni conectați, aprobarea omului |
 | 5 | **Bucla** | Se închide bucla în lumea reală? | materialul ajunge la un client real și rezultatul se întoarce în aplicație (confirmat, măsurat), cu o cale pentru „n-a mers” |
-| 6 | **Demo-ul** | Se vede în 3 minute, pe un singur drum, intuitiv? | momentul wow apare în primele 90 de secunde și juriul poate încerca singur (QR, telefon) |
+| 6 | **Demo-ul** | Se vede în circa 3 minute de video, pe un singur drum, intuitiv? | momentul wow apare în primul minut, montajul nu arată ce nu există (accelerarea are etichetă) și juriul poate încerca singur (QR, telefon) |
 | 7 | **Brief-ul** | E marketing „reimagined”, „next generation”? | fiecare cerință din `docs/BRIEF.md` are o bifă și un moment în demo |
 | 8 | **Integrările** | Ce API-uri și servicii externe folosim, și ce ar pierde produsul fără fiecare? | fiecare integrare din demo schimbă rezultatul (Adobe Express, PDF Embed, AI, date live, SMS/email) și are o cale de rezervă dacă pică |
-| 9 | **Fiabilitatea** | Arhitectura ține? Merge și când AI-ul, rețeaua sau o cheie pică? | logică pură testată, AI cu schemă validată și mock, verificări deterministe lângă AI, `npm run check` verde, oricine din echipă explică orice fișier |
+| 9 | **Fiabilitatea** | Arhitectura ține? Merge și când AI-ul, rețeaua sau o cheie pică? Și se vede în video că am înțeles-o? | logică pură testată, AI cu schemă validată și mock, verificări deterministe lângă AI, `npm run check` verde, oricine din echipă explică orice fișier, iar video-ul spune decizii și motivele lor, nu o listă de tehnologii |
 
 Câștigătorul ITFest × Adobe 2023 (ResourceMe) a implementat toate funcționalitățile opționale din brief și a închis bucla (SMS către adăpost, „nu am primit”, ban). Alte echipe cu aceeași idee, fără buclă, n-au câștigat.
 
@@ -60,7 +66,7 @@ Fără dovadă (cifră, test, ecran în demo), o întrebare primește cel mult 2
 - „Ce se întâmplă când AI-ul greșește?” → verificarea deterministă îl prinde și omul confirmă înainte de orice publicare sau trimitere.
 - „Cât costă o rulare și cât aduce?” → întrebarea 3, cu cifra calculată în aplicație.
 - „Ce faceți dacă pică API-ul X?” → întrebarea 8: calea de rezervă (alt furnizor AI, mod demo, pdf.js, localStorage).
-- „Puteți explica arhitectura?” → oricine din echipă explică orice fișier din demo, iar testele arată ce garantăm.
+- „Puteți explica arhitectura?” → video-ul o explică pe rularea reală, oricine din echipă explică orice fișier din demo, iar testele arată ce garantăm.
 
 ## Cum aplici lentila
 
@@ -73,9 +79,9 @@ Fără dovadă (cifră, test, ecran în demo), o întrebare primește cel mult 2
 
 ## Semnale bune
 
-- O cifră reală în prima jumătate de minut a pitch-ului.
+- O cifră reală în prima jumătate de minut a video-ului.
 - Un singur flux care merge cap-coadă, cu pasul în care omul confirmă vizibil.
-- Un slide cu arhitectura și integrările, și unul cu costul pe rulare vs. valoarea adusă.
+- Arhitectura ocupă aproape jumătate din video, cu schema și codul real pe ecran; plus integrările și costul pe rulare vs. valoarea adusă.
 - Juriul ține un telefon în mână în timpul demo-ului.
 - Cuvintele din UI sunt cele din brief și din interviuri.
 - README-ul spune ce a existat înainte (template-ul) și ce s-a construit azi.
