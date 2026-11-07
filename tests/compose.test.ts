@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sampleAnatomy } from "../src/lib/anatomy";
 import { brandColor, brandPalette, demoBrand } from "../src/lib/brand";
-import { compose, FORMATS } from "../src/lib/compose";
+import { compose, copyFromAnswers, FORMATS } from "../src/lib/compose";
 import { contrastRatio, estimateTextHeight } from "../src/lib/accessibility";
 import { Design, type DesignElement } from "../src/lib/design";
 
@@ -81,5 +81,20 @@ describe("compose", () => {
   it("o zonă fără text nu lasă un buton gol", () => {
     const d = compose(sampleAnatomy, demoBrand, { title: "x" }, null, "post");
     expect(d.elements.some((e) => e.id === "cta-bg" || e.id === "offer-bg")).toBe(false);
+  });
+});
+
+describe("copyFromAnswers", () => {
+  const answers = { product: "Gelato de iarnă", offer: "-20% azi", cta: "Comandă acum" };
+  it("pune răspunsurile pe zonele lor", () => {
+    expect(copyFromAnswers(sampleAnatomy, answers)).toEqual({ title: "Gelato de iarnă", offer: "-20% azi", cta: "Comandă acum" });
+  });
+  it("oferta conține prețul exact, dacă există", () => {
+    expect(copyFromAnswers(sampleAnatomy, { ...answers, price: "49 lei" }).offer).toBe("-20% azi, 49 lei");
+  });
+  it("taie titlul la lungimea zonei, nu și oferta sau butonul", () => {
+    const copy = copyFromAnswers(sampleAnatomy, { ...answers, product: "x".repeat(100), cta: "y".repeat(30) });
+    expect(copy.title).toHaveLength(sampleAnatomy.zones[0].maxChars);
+    expect(copy.cta).toHaveLength(30);
   });
 });

@@ -4,6 +4,7 @@ import { contrastRatio, estimateTextHeight } from "./accessibility";
 import type { Anatomy, Zone } from "./anatomy";
 import { type Brand, brandColor } from "./brand";
 import type { Design, DesignElement } from "./design";
+import type { Answers } from "./gaps";
 
 /** Textul fiecărei zone; cheia e `zone.id`. */
 export type Copy = Record<string, string>;
@@ -12,6 +13,17 @@ export const FORMATS = {
   post: { width: 1080, height: 1350 },
   story: { width: 1080, height: 1920 },
 } as const;
+
+/** Textele care nu au voie să difere de ce a spus omul: oferta, prețul și butonul sunt exacte; titlul e produsul. */
+export function copyFromAnswers(a: Anatomy, ans: Answers): Copy {
+  const copy: Copy = {};
+  for (const z of a.zones) {
+    if (z.role === "headline" && ans.product) copy[z.id] = ans.product.slice(0, z.maxChars || undefined);
+    if (z.role === "offer" && (ans.offer || ans.price)) copy[z.id] = [ans.offer, ans.price].filter(Boolean).join(", ");
+    if (z.role === "cta" && ans.cta) copy[z.id] = ans.cta;
+  }
+  return copy;
+}
 
 const MIN_FONT = 18;
 const MANDATORY_FONT = 26;
