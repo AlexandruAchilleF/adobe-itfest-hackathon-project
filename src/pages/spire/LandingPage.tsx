@@ -389,9 +389,9 @@ function ExtensionSection() {
   return (
     <section id="extensie" className="scroll-mt-24 px-4 pt-14 pb-36">
       <Reveal className="mx-auto max-w-3xl text-center">
-        <Ribbon>Extensia</Ribbon>
+        <Ribbon>inSPIRE</Ribbon>
         <h2 className="mt-6 text-[2.2rem] leading-[1.05] font-semibold tracking-[-0.04em] whitespace-pre-line text-ink sm:text-[3.2rem]">
-          <Accent text={"Ce te inSPIRĂ pe net\n*ajunge pe marca ta.*"} />
+          <Accent text={"Ce te inspiră pe net\n*ajunge pe marca ta.*"} />
         </h2>
       </Reveal>
       <Reveal delay={120} className="land-frame mx-auto mt-10 max-w-xl p-7 text-center sm:p-10">
