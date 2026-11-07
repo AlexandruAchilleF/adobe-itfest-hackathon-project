@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1350" role="img" aria-label="Postare de exemplu cu o cămilă">
+  <rect width="1080" height="1350" fill="#F4E3C1"/>
+  <text x="86" y="210" font-family="Georgia, serif" font-size="108" font-weight="700" fill="#2B1D14">Ceai rece</text>
+  <rect x="86" y="300" width="470" height="96" rx="14" fill="#2F6F73"/>
+  <text x="118" y="366" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF">-30% azi</text>
+  <g stroke="#2B1D14" stroke-width="14" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M360 960 L350 1040 M450 960 L460 1040 M630 960 L620 1040 M720 960 L730 1040" fill="none"/>
+    <path d="M290 900 C290 800 360 760 420 780 C460 690 520 690 550 770 C590 680 650 680 690 780 C740 790 780 830 780 900 C780 960 720 975 640 975 L420 975 C340 975 290 960 290 900 Z" fill="#B5472F"/>
+    <path d="M770 860 C820 830 830 740 830 650 C830 610 860 590 900 590 L950 600 C975 610 975 650 950 660 L900 670 C890 750 870 880 790 930 Z" fill="#B5472F"/>
+    <circle cx="896" cy="622" r="11" fill="#2B1D14"/>
+  </g>
+  <rect x="86" y="1080" width="540" height="108" rx="16" fill="#B5472F"/>
+  <text x="130" y="1152" font-family="Arial, sans-serif" font-size="52" font-weight="700" fill="#FFFFFF">Comandă acum</text>
+  <circle cx="900" cy="1134" r="62" fill="#2F6F73"/>
+</svg>

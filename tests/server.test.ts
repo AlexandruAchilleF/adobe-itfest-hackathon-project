@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { activeProvider, handleAi, parseJsonLoose } from "../server/ai";
-import { firstInlineImage, handleImage } from "../server/image";
+import { handleImage, imageFromResult } from "../server/image";
 import { fakeFromSchema, normalizeSchema } from "../server/schema";
 import { AiDesign } from "../src/lib/design";
 
@@ -97,49 +97,91 @@ describe("CORS pentru add-on-uri Adobe Express", async () => {
 });
 
 describe("/api/image", () => {
-  const old = { key: process.env.GEMINI_API_KEY, provider: process.env.AI_PROVIDER };
+  const old = { account: process.env.CLOUDFLARE_ACCOUNT_ID, token: process.env.CLOUDFLARE_API_TOKEN, provider: process.env.AI_PROVIDER };
   afterEach(() => {
-    process.env.GEMINI_API_KEY = old.key ?? "";
+    process.env.CLOUDFLARE_ACCOUNT_ID = old.account ?? "";
+    process.env.CLOUDFLARE_API_TOKEN = old.token ?? "";
     process.env.AI_PROVIDER = old.provider ?? "";
+    vi.unstubAllGlobals();
   });
+  const withKeys = () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = "cont";
+    process.env.CLOUDFLARE_API_TOKEN = "token";
+    process.env.AI_PROVIDER = "";
+  };
+  const withoutKeys = () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = "";
+    process.env.CLOUDFLARE_API_TOKEN = "";
+    process.env.AI_PROVIDER = "";
+  };
   const part = { mimeType: "image/png", data: "AAAA" };
   const call = (body: unknown) =>
     handleImage(new Request("http://x/api/image", { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body), headers: { "content-type": "application/json" } }));
+  const answer = (body: unknown, status = 200) => vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify(body), { status }));
 
-  it("fără cheie întoarce imaginea de rezervă", async () => {
-    process.env.GEMINI_API_KEY = "";
+  it("fără credențiale întoarce imaginea de rezervă", async () => {
+    withoutKeys();
     const res = await call({ style: part, subject: part, instruction: "x", mock: "/samples/spire/pip-in-stil.png" });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ image: "/samples/spire/pip-in-stil.png", model: "mock" });
   });
-  it("cu AI_PROVIDER=mock nu cheamă Gemini, chiar dacă are cheie", async () => {
-    process.env.GEMINI_API_KEY = "cheie";
+  it("cu AI_PROVIDER=mock nu cheamă furnizorul, chiar dacă are credențiale", async () => {
+    withKeys();
     process.env.AI_PROVIDER = "mock";
-    const res = await call({ style: part, subject: part, instruction: "x", mock: "/m.png" });
-    expect(await res.json()).toMatchObject({ image: "/m.png", model: "mock" });
+    const fetchMock = answer({});
+    vi.stubGlobal("fetch", fetchMock);
+    expect(await (await call({ style: part, subject: part, instruction: "x", mock: "/m.png" })).json()).toMatchObject({ image: "/m.png", model: "mock" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
   it("fără imaginea de rezervă, în mock, spune ce lipsește", async () => {
-    process.env.GEMINI_API_KEY = "";
+    withoutKeys();
     expect((await call({ style: part, subject: part, instruction: "x" })).status).toBe(400);
   });
   it("respinge JSON-ul stricat", async () => {
     expect((await call("{nu e json")).status).toBe(400);
   });
-  it("cu cheie, cere stilul, subiectul și instrucțiunea", async () => {
-    process.env.GEMINI_API_KEY = "cheie";
-    process.env.AI_PROVIDER = "";
+  it("cu credențiale, cere stilul, subiectul și instrucțiunea", async () => {
+    withKeys();
     expect((await call({ style: part, instruction: "x" })).status).toBe(400);
     expect((await call({ style: part, subject: part })).status).toBe(400);
   });
+  it("trimite stilul primul, subiectul al doilea, și întoarce imaginea", async () => {
+    withKeys();
+    const fetchMock = answer({ success: true, result: { image: "iVBORw0KGgo=" } });
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await call({ style: part, subject: { mimeType: "image/png", data: "BBBB" }, instruction: "desenează" });
+    expect(await res.json()).toMatchObject({ image: "data:image/png;base64,iVBORw0KGgo=", model: expect.stringContaining("flux-2-klein-4b") });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toContain("/accounts/cont/ai/run/@cf/black-forest-labs/flux-2-klein-4b");
+    expect(new Headers(init.headers).get("authorization")).toBe("Bearer token");
+    const form = init.body as FormData;
+    expect(form.get("prompt")).toBe("desenează");
+    expect(Buffer.from(await (form.get("input_image_0") as Blob).arrayBuffer()).toString("base64")).toBe("AAAA");
+    expect(Buffer.from(await (form.get("input_image_1") as Blob).arrayBuffer()).toString("base64")).toBe("BBBB");
+  });
+  it("cota gratuită terminată are mesaj clar", async () => {
+    withKeys();
+    vi.stubGlobal("fetch", answer({ success: false, errors: [{ code: 4006, message: "you have used up your daily free allocation" }] }, 429));
+    const res = await call({ style: part, subject: part, instruction: "x" });
+    expect(res.status).toBe(429);
+    expect((await res.json()).error).toMatch(/cota gratuită/i);
+  });
+  it("tokenul greșit are mesaj clar", async () => {
+    withKeys();
+    vi.stubGlobal("fetch", answer({ success: false, errors: [{ code: 10000, message: "Authentication error" }] }, 401));
+    const res = await call({ style: part, subject: part, instruction: "x" });
+    expect(res.status).toBe(401);
+    expect((await res.json()).error).toContain("CLOUDFLARE_API_TOKEN");
+  });
 });
 
-describe("firstInlineImage", () => {
-  it("ia prima imagine din răspuns, ca data URL", () => {
-    const parts = [{ text: "uite" }, { inlineData: { mimeType: "image/png", data: "AAA" } }, { inlineData: { mimeType: "image/png", data: "BBB" } }];
-    expect(firstInlineImage([{ content: { parts } }])).toBe("data:image/png;base64,AAA");
+describe("imageFromResult", () => {
+  it("recunoaște formatul din conținut", () => {
+    expect(imageFromResult({ result: { image: "iVBORw0KGgo=" } })).toBe("data:image/png;base64,iVBORw0KGgo=");
+    expect(imageFromResult({ result: { image: "/9j/4AAQ" } })).toBe("data:image/jpeg;base64,/9j/4AAQ");
   });
-  it("null când modelul n-a întors imagine", () => {
-    expect(firstInlineImage([{ content: { parts: [{ text: "nu pot" }] } }])).toBeNull();
-    expect(firstInlineImage(undefined)).toBeNull();
+  it("null când răspunsul n-are imagine", () => {
+    expect(imageFromResult({ result: {} })).toBeNull();
+    expect(imageFromResult(null)).toBeNull();
   });
 });

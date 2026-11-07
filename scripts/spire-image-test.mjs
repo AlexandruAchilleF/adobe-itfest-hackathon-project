@@ -20,32 +20,29 @@ if (!referencePath) {
 }
 
 for (const [key, value] of Object.entries(loadEnv("development", process.cwd(), ""))) process.env[key] ??= value;
-if (!process.env.GEMINI_API_KEY) {
-  console.error("Lipsește GEMINI_API_KEY: pune-o în .env (fișierul nu intră în git).");
+if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_TOKEN) {
+  console.error("Lipsesc CLOUDFLARE_ACCOUNT_ID sau CLOUDFLARE_API_TOKEN: pune-le în .env (fișierul nu intră în git).");
   process.exit(1);
 }
 
-const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp" };
+const MIME = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".svg": "image/svg+xml" };
 
-/** Modelul nu primește SVG, deci îl desenăm mai întâi într-un PNG, cu Chromium-ul din Playwright. */
-async function svgToPng(path) {
+/** Orice imagine devine un PNG de cel mult 512 px, cu Chromium-ul din Playwright (SVG-ul nu e primit de model). */
+async function attachment(path) {
+  const mime = MIME[extname(path).toLowerCase()];
+  if (!mime) throw new Error(`Format necunoscut: ${path}. Folosește PNG, JPEG, WEBP sau SVG.`);
   const { chromium } = await import("@playwright/test");
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1024, height: 1024 } });
-  await page.setContent(`<!doctype html><body style="margin:0">${readFileSync(path, "utf8")}</body>`);
+  const page = await browser.newPage({ viewport: { width: 512, height: 512 } });
+  const src = `data:${mime};base64,${readFileSync(path).toString("base64")}`;
+  await page.setContent(`<!doctype html><body style="margin:0"><img src="${src}" style="width:512px;height:512px;object-fit:contain;display:block"></body>`);
+  await page.waitForFunction(() => document.images[0].complete);
   const png = await page.screenshot();
   await browser.close();
-  return png;
+  return { mimeType: "image/png", data: png.toString("base64") };
 }
 
-async function attachment(path) {
-  const ext = extname(path).toLowerCase();
-  if (ext === ".svg") return { mimeType: "image/png", data: (await svgToPng(path)).toString("base64") };
-  if (!MIME[ext]) throw new Error(`Format necunoscut: ${ext}. Folosește PNG, JPEG, WEBP sau SVG.`);
-  return { mimeType: MIME[ext], data: readFileSync(path).toString("base64") };
-}
-
-const vite = await createServer({ configFile: false, server: { middlewareMode: true }, appType: "custom", logLevel: "error" });
+const vite = await createServer({ configFile: false, server: { middlewareMode: true }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 try {
   const { generateImage, imageModel } = await vite.ssrLoadModule("/server/image.ts");
   const { mascotInstruction } = await vite.ssrLoadModule("/src/lib/mascotPrompt.ts");
