@@ -16,7 +16,8 @@
     "ext:critique": "node scripts/build-critique.mjs",
     "ext:poses": "UPDATE_POSES=1 vitest run tests/mascotPoses.test.ts",
     "ext:icons": "node scripts/build-extension-icons.mjs",
-    "ext:zip": "node scripts/build-extension-zip.mjs"
+    "ext:zip": "node scripts/build-extension-zip.mjs",
+    "ui:bg": "node scripts/build-workspace-bg.mjs"
   },
   "engines": {
     "node": ">=20"

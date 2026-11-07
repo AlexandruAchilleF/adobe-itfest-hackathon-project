@@ -1,14 +1,15 @@
-// O campanie: formatele, retușul pe straturi, garda recalculată la fiecare schimbare, exportul.
-import { useEffect, useMemo, useRef, useState } from "react";
+// Pagina de lucru a unei campanii: designul încape pe ecran, textele stau în dreapta, exportul e mereu la vedere.
+// Garda se recalculează la fiecare schimbare.
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "wouter";
-import { Button, Card, ErrorNote, PageHeader } from "../../components/ui";
+import { Button, Card, ErrorNote } from "../../components/ui";
 import { type Campaign, campaigns, type DesignFormat, guardCampaign, updateCampaign } from "../../lib/campaigns";
 import type { Design } from "../../lib/design";
 import type { Check, CheckId } from "../../lib/guard";
 import { useCollection } from "../../lib/store";
 import { DesignCanvas, type DesignCanvasHandle } from "../../modules/canvas/DesignCanvas";
 import { useMascotPage } from "../../modules/mascot/page";
-import { CheckList, FormatTabs, useBrand, WhatIsNew } from "./parts";
+import { FormatTabs, GuardLine, useBrand, WhatIsNew } from "./parts";
 
 // ilustrația nu se schimbă la retuș, deci verificările ei rămân cele de la generare
 const KEPT_CHECKS: CheckId[] = ["illustration-palette", "not-copy", "mascot"];
@@ -68,22 +69,29 @@ function Editor({ id, initial }: { id: string; initial: Campaign }) {
   };
 
   return (
-    <div className="space-y-5">
-      <PageHeader title={draft.title} description={draft.source ? `Stilul vine de pe ${draft.source.title}.` : "Stilul vine dintr-o imagine încărcată."}>
-        <Link href="/campanii" className="btn btn-ghost">
-          Toate campaniile
+    <div className="work-page">
+      <div className="work-bar card flex flex-wrap items-center gap-x-3 gap-y-1.5 px-2 py-2 sm:px-3">
+        <Link href="/campanii" className="btn btn-ghost !min-h-9 !gap-1.5 !px-2 !py-1 text-[0.9rem]">
+          <svg width="8" height="12" viewBox="0 0 8 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <path d="M6.5 1 1.5 6l5 5" />
+          </svg>
+          Campanii
         </Link>
-      </PageHeader>
+        <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-ink sm:text-lg">{draft.title}</h1>
+        <div className="ml-auto flex items-center gap-2 max-sm:w-full max-sm:justify-between">
+          <FormatTabs formats={formats} value={format} onChange={setFormat} />
+          <Button variant="ink" className="!min-h-9 !py-1.5 whitespace-nowrap max-sm:ml-auto" disabled={!design} onClick={download}>
+            Descarcă PNG
+          </Button>
+        </div>
+      </div>
       <ErrorNote error={error} />
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
-        <Card title="Retușează pe straturi" actions={<FormatTabs formats={formats} value={format} onChange={setFormat} />}>
-          {design && <DesignCanvas ref={canvas} design={design} onChange={change} />}
-          {draft.hero && <iframe title="Secțiunea hero" sandbox="" srcDoc={draft.hero.html} className="mt-4 h-96 w-full rounded-lg border border-line bg-white" />}
-        </Card>
-        <div className="space-y-5">
-          <Card title="Garda">
-            <CheckList checks={draft.checks} />
-          </Card>
+      <div className="work-body grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px] lg:grid-rows-[minmax(0,1fr)]">
+        <section className="card min-h-0 min-w-0 p-3" aria-label="Designul, pe straturi" style={{ "--design-ratio": design ? design.height / design.width : 1.25 } as CSSProperties}>
+          <div className="work-stage">{design && <DesignCanvas ref={canvas} design={design} onChange={change} fitHeight />}</div>
+        </section>
+        <div className="work-side min-w-0 space-y-3">
+          <GuardLine checks={draft.checks} />
           {design && (
             <Card title="Textele">
               <div className="space-y-3">
@@ -98,14 +106,11 @@ function Editor({ id, initial }: { id: string; initial: Campaign }) {
               </div>
             </Card>
           )}
-          <Card title="Exportul">
-            <div className="space-y-3">
-              <WhatIsNew />
-              <Button variant="primary" disabled={!design} onClick={download}>
-                Descarcă PNG
-              </Button>
-            </div>
-          </Card>
+          <div className="card space-y-1.5 px-4 py-3">
+            <p className="text-sm text-ink-2">{draft.source ? `Stilul vine de pe ${draft.source.title}.` : "Stilul vine dintr-o imagine încărcată."}</p>
+            <WhatIsNew />
+          </div>
+          {draft.hero && <iframe title="Secțiunea hero" sandbox="" srcDoc={draft.hero.html} className="h-96 w-full rounded-lg border border-line bg-white" />}
         </div>
       </div>
     </div>

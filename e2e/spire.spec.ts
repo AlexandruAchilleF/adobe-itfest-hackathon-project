@@ -1,4 +1,4 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 import { critiqueStops } from "../src/lib/landingCritique";
 
@@ -132,6 +132,15 @@ async function embedded(page: Page) {
 }
 const IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
+test("din extensie: panoul rămâne îngust, fără fundal, fără header și fără pași", async ({ page }) => {
+  await page.goto("/nou?din=extensie");
+  await expect(page.getByRole("button", { name: "Scanează pagina" })).toBeVisible();
+  await expect(page.getByTestId("app-sky")).toHaveCount(0);
+  await expect(page.getByRole("banner")).toHaveCount(0);
+  await expect(page.getByTestId("pasii")).toHaveCount(0);
+  await expect(page.getByTestId("reference-drop")).toHaveCount(0);
+});
+
 test("din extensie: mesajul cu referința deschide analiza", async ({ page }) => {
   const frame = await embedded(page);
   await page.evaluate((image) => {
@@ -173,11 +182,282 @@ test("marca se schimbă din formular și rămâne salvată", async ({ page }) =>
   await expect(page.getByLabel("Numele mărcii")).toHaveValue("Altă marcă");
 });
 
-test("landing page-ul spune ce face Spire și duce la campania nouă", async ({ page }) => {
+test("landing page-ul spune ce face Spire și duce la Acasă", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Spire îl face pe marca ta.");
   // verdictul gărzii, calculat de cod pe campania de exemplu (macheta din secțiunea „Garda”)
   await expect(page.locator("#garda").getByText(/^\d+ din \d+ verificări trec$/)).toBeAttached();
+  // subsolul își păstrează textele, deși meniul aplicației s-a schimbat
+  await expect(page.getByRole("navigation", { name: "Subsol" }).getByRole("link", { name: "Campanie nouă" })).toHaveAttribute("href", "/nou");
   await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Încearcă acum" }).click();
+  await expect(page).toHaveURL(/\/acasa$/);
+});
+
+test("meniul: Acasă, Campanii, Marca; „Campanie nouă” e butonul din dreapta", async ({ page }) => {
+  await page.goto("/acasa");
+  const nav = page.getByRole("navigation", { name: "Principal" });
+  await expect(nav.getByRole("link")).toHaveText(["Acasă", "Campanii", "Marca"]);
+  await expect(nav.getByRole("link", { name: "Acasă" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("banner").getByRole("link", { name: "Campanie nouă" }).click();
   await expect(page).toHaveURL(/\/nou$/);
+  await expect(page.getByTestId("pasii").locator('[aria-current="step"]')).toContainText("Referință");
+  await page.getByRole("banner").getByRole("link", { name: "Spire" }).click();
+  await expect(page).toHaveURL(/\/acasa$/);
+});
+
+test("pe telefon: meniul se deschide, se închide și nu apare scroll orizontal", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const path of ["/acasa", "/campanii", "/nou", "/marca"]) {
+    await page.goto(path);
+    await expect(page.getByRole("banner").getByRole("link", { name: "Campanie nouă" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), path).toBe(0);
+  }
+  const menu = page.getByRole("button", { name: "Meniu" });
+  await menu.click();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+  await menu.click();
+  await page.getByRole("banner").getByRole("link", { name: "Campanii" }).click();
+  await expect(page).toHaveURL(/\/campanii$/);
+  await expect(menu).toHaveAttribute("aria-expanded", "false");
+});
+
+test("fundalul apare doar în ecranele de lucru", async ({ page }) => {
+  const requested: string[] = [];
+  page.on("request", (r) => requested.push(r.url()));
+  for (const path of ["/", "/pitch", "/view", "/s", "/nou?din=extensie"]) {
+    await page.goto(path);
+    await expect(page.locator("#root > *").first()).toBeAttached();
+    await expect(page.getByTestId("app-sky"), path).toHaveCount(0);
+  }
+  expect(requested.filter((u) => u.includes("workspace.webp"))).toEqual([]);
+  for (const path of ["/acasa", "/campanii", "/nou", "/marca"]) {
+    await page.goto(path);
+    await expect(page.getByTestId("app-sky"), path).toHaveCount(1);
+  }
+});
+
+test("pe fundal, textul secundar are contrast de cel puțin 4,5:1", async ({ page }) => {
+  await page.goto("/acasa");
+  const minContrast = await page.evaluate(async () => {
+    const img = new Image();
+    img.src = "/landing/workspace.webp";
+    await img.decode();
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0);
+    const { data } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const luminance = (r: number, g: number, b: number) => {
+      const f = (v: number) => (v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    };
+    const muted = luminance(0x64, 0x69, 0x85);
+    let min = 21;
+    for (let i = 0; i < data.length; i += 4) min = Math.min(min, (luminance(data[i], data[i + 1], data[i + 2]) + 0.05) / (muted + 0.05));
+    return min;
+  });
+  expect(minContrast).toBeGreaterThanOrEqual(4.5);
+});
+
+test("Acasă: duce la o campanie recentă și la Toate campaniile", async ({ page }) => {
+  await page.goto("/acasa");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("De la ce pornim?");
+  await expect(page.getByRole("heading", { name: "Gelateria Pip" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Culorile mărcii" }).getByRole("listitem")).toHaveCount(4);
+  await expect(page.getByRole("link", { name: "Editează" })).toHaveAttribute("href", "/marca");
+  await page.getByRole("link", { name: /Weekend cu 2 cupe/ }).click();
+  await expect(page).toHaveURL(/\/campanii\/.+/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Weekend cu 2 cupe");
+  await page.goto("/acasa");
+  await page.getByRole("link", { name: "Toate campaniile" }).click();
+  await expect(page).toHaveURL(/\/campanii$/);
+});
+
+test("Acasă: arată cel mult 4 campanii, cele mai noi, în ordine", async ({ page }) => {
+  await page.goto("/acasa");
+  await expect(page.getByRole("link", { name: /Weekend cu 2 cupe/ })).toBeVisible();
+  await page.evaluate(() => {
+    const key = "hackathon:db:spire:campanii";
+    const [base] = JSON.parse(localStorage.getItem(key)!);
+    const rows = ["Unu", "Doi", "Trei", "Patru", "Cinci"].map((title, i) => ({ id: title, created_at: "", data: { ...base.data, title, createdAt: `2026-12-0${i + 1}T10:00:00.000Z` } }));
+    localStorage.setItem(key, JSON.stringify(rows));
+  });
+  await page.reload();
+  await expect(page.locator("main li a span.truncate.font-medium")).toHaveText(["Cinci", "Patru", "Trei", "Doi"]);
+});
+
+test("Acasă: exemplul și imaginea trasă ajung în fluxul din /nou", async ({ page }) => {
+  await page.goto("/acasa");
+  await page.getByRole("button", { name: "Folosește exemplul" }).click();
+  await expect(page).toHaveURL(/\/nou$/);
+  await expect(page.getByText("Ce am văzut")).toBeVisible();
+  await expect(page.getByTestId("pasii").locator('[aria-current="step"]')).toContainText("Întrebări");
+
+  await page.goto("/acasa");
+  await page.setInputFiles("input[type=file]", REFERENCE);
+  await expect(page).toHaveURL(/\/nou$/);
+  await expect(page.getByText("Ce am văzut")).toBeVisible();
+
+  await page.goto("/acasa");
+  const drop = async (name: string, type: string) => {
+    const transfer = await page.evaluateHandle(
+      ([n, t]) => {
+        const data = new DataTransfer();
+        // un PNG de 1×1
+        const bytes = Uint8Array.from(atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="), (c) => c.charCodeAt(0));
+        data.items.add(new File([bytes], n, { type: t }));
+        return data;
+      },
+      [name, type],
+    );
+    await page.getByTestId("reference-drop").dispatchEvent("drop", { dataTransfer: transfer });
+  };
+  await drop("note.txt", "text/plain");
+  await expect(page.getByRole("alert")).toContainText("nu e o imagine");
+  await expect(page).toHaveURL(/\/acasa$/);
+  await drop("ref.png", "image/png");
+  await expect(page).toHaveURL(/\/nou$/);
+  await expect(page.getByText("Ce am văzut")).toBeVisible();
+});
+
+test("Campanii: miniatura e designul, iar clicul duce la pagina de lucru", async ({ page }) => {
+  await page.goto("/campanii");
+  const card = page.getByRole("link", { name: /Weekend cu 2 cupe/ });
+  await expect(card.locator("svg image")).toHaveAttribute("href", "/samples/spire/pip-in-stil.png");
+  await expect(card.locator('img[src*="referinta"]')).toHaveCount(0);
+  // totul trece: pe card nu apare nicio stare
+  await expect(card).not.toContainText("revăzut");
+  await expect(card).not.toContainText("verificat");
+  await card.click();
+  await expect(page).toHaveURL(/\/campanii\/.+/);
+  await expect(page.getByRole("button", { name: "Descarcă PNG" })).toBeVisible();
+});
+
+test("Campanii: starea apare doar când cere ceva", async ({ page }) => {
+  await page.goto("/campanii");
+  await expect(page.getByRole("link", { name: /Weekend cu 2 cupe/ })).toBeVisible();
+  await page.evaluate(() => {
+    const key = "hackathon:db:spire:campanii";
+    const rows = JSON.parse(localStorage.getItem(key)!);
+    rows[0].data.checks[0].ok = false;
+    rows[0].data.checks[1].ok = false;
+    localStorage.setItem(key, JSON.stringify(rows));
+  });
+  await page.reload();
+  await expect(page.getByRole("link", { name: /Weekend cu 2 cupe/ })).toContainText("2 verificări de revăzut");
+});
+
+test("Campanii: ștergerea are undo, iar lista goală are text pe Campanii și pe Acasă", async ({ page }) => {
+  await page.goto("/campanii");
+  await page.getByRole("button", { name: "Șterge Weekend cu 2 cupe" }).click();
+  await expect(page.getByTestId("campanii-gol")).toBeVisible();
+  await page.getByRole("button", { name: "Anulează" }).click();
+  await expect(page.getByRole("link", { name: /Weekend cu 2 cupe/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Anulează" })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("link", { name: /Weekend cu 2 cupe/ })).toBeVisible();
+
+  await page.getByRole("button", { name: "Șterge Weekend cu 2 cupe" }).click();
+  await expect(page.getByRole("button", { name: "Anulează" })).toBeVisible();
+  // fără undo, bara dispare singură, iar ștergerea rămâne
+  await expect(page.getByRole("button", { name: "Anulează" })).toHaveCount(0, { timeout: 10_000 });
+  await expect(page.getByTestId("campanii-gol")).toBeVisible();
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Acasă" }).click();
+  await expect(page.getByTestId("acasa-gol")).toBeVisible();
+});
+
+test("pagina de lucru: designul încape pe ecran, iar exportul e la mărime reală", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/campanii");
+  await page.getByRole("link", { name: /Weekend cu 2 cupe/ }).click();
+  const canvas = page.locator(".upper-canvas");
+  await expect(canvas).toBeVisible();
+  const fits = async () => {
+    await page.waitForTimeout(300);
+    const box = (await canvas.boundingBox())!;
+    expect(box.y + box.height).toBeLessThanOrEqual(900);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(900);
+    return box;
+  };
+  const size = async () => {
+    const download = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Descarcă PNG" }).click();
+    const png = readFileSync(await (await download).path());
+    return [png.readUInt32BE(16), png.readUInt32BE(20)];
+  };
+  const post = await fits();
+  expect(post.height / post.width).toBeCloseTo(1350 / 1080, 1);
+  expect(await size()).toEqual([1080, 1350]);
+  await page.getByRole("button", { name: "Story" }).click();
+  await expect(page.getByRole("button", { name: "Story" })).toHaveAttribute("aria-pressed", "true");
+  const story = await fits();
+  expect(story.height / story.width).toBeCloseTo(1920 / 1080, 1);
+  expect(await size()).toEqual([1080, 1920]);
+  await expect(page.getByRole("button", { name: "Descarcă PNG" })).toBeInViewport();
+});
+
+test("pagina de lucru: un strat tras pe pânza micșorată se mută cât trebuie în design", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/campanii");
+  await page.getByRole("link", { name: /Weekend cu 2 cupe/ }).click();
+  const canvas = page.locator(".upper-canvas");
+  await expect(canvas).toBeVisible();
+  await page.waitForTimeout(500);
+  const box = (await canvas.boundingBox())!;
+  const stored = () =>
+    page.evaluate(() => {
+      const id = location.pathname.split("/").pop();
+      const rows = JSON.parse(localStorage.getItem("hackathon:db:spire:campanii")!);
+      const design = rows.find((r: { id: string }) => r.id === id).data.designs.post;
+      const cta = design.elements.find((e: { id: string }) => e.id === "cta-bg");
+      return { x: cta.x as number, y: cta.y as number };
+    });
+  const before = await stored();
+  const scale = box.width / 1080;
+  // mijlocul butonului din design, în pixeli de ecran
+  const x = box.x + (before.x + 40) * scale;
+  const y = box.y + (before.y + 10) * scale;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + 30, y + 20, { steps: 5 });
+  await page.mouse.up();
+  await page.waitForTimeout(900);
+  const after = await stored();
+  expect(after.x - before.x).toBeCloseTo(30 / scale, -1);
+  expect(after.y - before.y).toBeCloseTo(20 / scale, -1);
+});
+
+test("pagina de lucru: garda e o linie care se deschide la cerere și singură când pică ceva", async ({ page }) => {
+  await page.goto("/campanii");
+  await page.getByRole("link", { name: /Weekend cu 2 cupe/ }).click();
+  const guard = page.getByTestId("guard");
+  await expect(guard.locator("summary")).toContainText(/\d+ din \d+ trec/);
+  await expect(page.getByTestId("check-price")).toBeHidden();
+  await guard.locator("summary").click();
+  await expect(page.getByTestId("check-price")).toBeVisible();
+  await guard.locator("summary").click();
+  await expect(page.getByTestId("check-price")).toBeHidden();
+  await page.getByLabel("Ofertă").fill("59 lei");
+  await expect(page.getByTestId("check-price")).toBeVisible();
+  await expect(page.getByTestId("check-price")).toContainText("nu trece");
+});
+
+test("marca: postarea de exemplu urmărește formularul, iar butoanele sunt în română", async ({ page }) => {
+  await page.goto("/marca");
+  const sample = page.getByTestId("marca-exemplu");
+  await expect(sample).toBeVisible();
+  await page.getByLabel("Culoarea Principală").fill("#112233");
+  await expect(sample.locator('rect[fill="#112233"]')).toHaveCount(1);
+  await page.getByLabel("Mențiuni obligatorii").fill("Doar azi, cât ține stocul.");
+  await expect(sample).toContainText("Doar azi, cât ține stocul.");
+  await page.getByLabel("Numele mărcii").fill("Altă marcă");
+  await expect(sample).toContainText("Altă marcă");
+  await expect(page.getByText("Alege un logo")).toBeVisible();
+  await expect(page.getByText("Schimbă poza")).toBeVisible();
+  // inputurile native sunt ascunse sub butoane
+  for (const input of await page.locator("input[type=file]").all()) expect(await input.evaluate((e) => e.clientWidth)).toBeLessThanOrEqual(1);
+  await page.setInputFiles('input[aria-label="Poza mascotei"]', REFERENCE);
+  await expect(sample.locator("svg image")).toHaveAttribute("href", /^data:image\/png/);
 });

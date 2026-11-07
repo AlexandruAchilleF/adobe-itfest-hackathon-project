@@ -1,14 +1,17 @@
 // Campanie nouă: referință → ce a văzut Spire → întrebări → kit verificat → salvare.
 // Aceeași pagină se încarcă și în extensie (?din=extensie), într-un panou îngust.
-import { type ClipboardEvent as ReactClipboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ClipboardEvent as ReactClipboardEvent, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
-import { Button, Card, ErrorNote, PageHeader, Spinner } from "../../components/ui";
+import { Button, Card, ErrorNote, Spinner } from "../../components/ui";
 import type { Anatomy } from "../../lib/anatomy";
+import { NEW_CAMPAIGN_STEPS, newCampaignStep } from "../../lib/campaignList";
 import { campaigns, type DesignFormat, FORMAT_LABEL, type Kit, kitVerdict, makeKit, saveCampaign } from "../../lib/campaigns";
 import { campaignCandidates } from "../../lib/campaign";
 import { DesignCanvas } from "../../modules/canvas/DesignCanvas";
 import type { Design } from "../../lib/design";
 import { revealDelay, SCAN_TIMEOUT_MS, scanRequest } from "../../lib/extensionPanel";
+import { reducedMotion } from "../../lib/motion";
+import { hasPendingReference, takePendingReference } from "../../lib/pendingReference";
 import { isFromExtension, type PageElement, type PageSummary, parseExtensionMessage, type SectionNode } from "../../lib/extensionBridge";
 import { type Answers, type FormatId, type Question, questionsFor } from "../../lib/gaps";
 import { analyzeReference, checkMascot, generateMascot, summarizePage, writeCopy } from "../../lib/spireAi";
@@ -17,43 +20,40 @@ import { mascot } from "../../modules/mascot/mascot";
 import { MascotFigure } from "../../modules/mascot/MascotFigure";
 import { useMascotPage } from "../../modules/mascot/page";
 import { CheckList, FormatTabs, useBrand, WhatIsNew } from "./parts";
+import { ReferenceDrop } from "./ReferenceDrop";
 
 const ROLE_LABEL: Record<Anatomy["zones"][number]["role"], string> = { headline: "titlu", offer: "ofertă", cta: "buton", body: "text", illustration: "ilustrație", logo: "logo", photo: "fotografie" };
 const COLOR_LABEL = { background: "fundal", primary: "principală", accent: "accent", text: "text" } as const;
-const SAMPLE = "/samples/spire/referinta.png";
+
+const READING = "Mă uit la imagine…";
 
 const isEmbedded = () => new URLSearchParams(window.location.search).get("din") === "extensie";
 
-function ReferencePicker({ onPick }: { onPick: (image: string) => void }) {
+function Steps({ current }: { current: number }) {
   return (
-    <Card title="De la ce pornim?" label="Referința">
-      <p className="mb-4 text-[0.95rem] text-ink-2">Alege o imagine cu un stil care îți place, pe care ai dreptul să o folosești, sau lipește-o aici cu Ctrl+V.</p>
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="btn btn-primary cursor-pointer">
-          Alege o imagine
-          <input
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void readFile(file).then(onPick);
-            }}
-          />
-        </label>
-        <Button variant="ghost" onClick={() => onPick(SAMPLE)}>
-          Folosește exemplul
-        </Button>
-      </div>
-    </Card>
+    <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.95rem]" aria-label="Pașii" data-testid="pasii">
+      {NEW_CAMPAIGN_STEPS.map((label, i) => (
+        <li key={label} className="flex items-center gap-2" aria-current={i === current ? "step" : undefined}>
+          {i > 0 && (
+            <svg className="text-muted" width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="m1 1 5 5-5 5" />
+            </svg>
+          )}
+          <span className={`grid h-6 w-6 place-items-center rounded-full text-[0.8rem] font-medium ${i <= current ? "bg-ink text-white" : "bg-white text-ink-2 ring-1 ring-line"}`} aria-hidden>
+            {i + 1}
+          </span>
+          <span className={i === current ? "font-medium text-ink" : "text-ink-2"}>{label}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
-function WhatISaw({ reference, anatomy }: { reference: string; anatomy: Anatomy }) {
+function WhatISaw({ reference, anatomy, compact }: { reference: string; anatomy: Anatomy; compact: boolean }) {
   return (
     <Card title="Ce am văzut" label="Anatomia">
-      <div className="grid gap-5 sm:grid-cols-[minmax(0,240px)_1fr]">
-        <div className="relative self-start overflow-hidden rounded-lg border border-line">
+      <div className="space-y-4">
+        <div className={`relative overflow-hidden rounded-lg border border-line ${compact ? "max-lg:mx-auto max-lg:max-w-[240px]" : ""}`}>
           <img src={reference} alt="Referința aleasă" className="block w-full" />
           {anatomy.zones.map((z) => (
             <span
@@ -138,7 +138,8 @@ export function NewCampaignPage() {
   const [answers, setAnswers] = useState<Answers>({});
   const [kit, setKit] = useState<Kit | null>(null);
   const [format, setFormat] = useState<DesignFormat>("post");
-  const [busy, setBusy] = useState<string | null>(null);
+  // când imaginea vine de pe Acasă, zona de pornire nu mai apare deloc
+  const [busy, setBusy] = useState<string | null>(() => (hasPendingReference() ? READING : null));
   const [error, setError] = useState<string | null>(null);
   const [said, setSaid] = useState("");
   // scanarea din extensie: începe la clic, se încheie după răspuns (cel puțin SCAN_MIN_MS) sau la timeout
@@ -164,7 +165,7 @@ export function NewCampaignPage() {
     setKit(null);
     setSavedId(null);
     setError(null);
-    setBusy("Mă uit la imagine…");
+    setBusy(READING);
     try {
       const read = await analyzeReference(image.startsWith("data:") ? image : await toDataUrl(image), extra);
       setAnatomy(read);
@@ -181,10 +182,22 @@ export function NewCampaignPage() {
 
   const pick = useCallback(
     (image: string) => {
-      void (image.startsWith("data:") ? toDataUrl(image) : Promise.resolve(image)).then((small) => analyze(small));
+      (image.startsWith("data:") ? toDataUrl(image) : Promise.resolve(image)).then(
+        (small) => analyze(small),
+        (err: Error) => {
+          setError(err.message);
+          setBusy(null);
+        },
+      );
     },
     [analyze],
   );
+
+  // imaginea venită de pe /acasa intră pe același drum ca una aleasă aici
+  useEffect(() => {
+    const image = takePendingReference();
+    if (image) pick(image);
+  }, [pick]);
 
   // legătura cu extensia: doar mesaje de la fereastra părinte, care trec schema
   useEffect(() => {
@@ -315,13 +328,20 @@ export function NewCampaignPage() {
     }
   };
 
+  // pe pagina întreagă, kitul iese sub întrebări: îl aducem la vedere
+  const kitCard = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (kit && !embedded) kitCard.current?.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "start" });
+  }, [kit, embedded]);
+
   const questions = anatomy ? questionsFor(anatomy, brand, {}) : [];
   const ready = Boolean(answers.product?.trim());
   const formats = kit ? (Object.keys(kit.designs) as DesignFormat[]) : [];
   const design = kit?.designs[format];
+  const showPicker = !anatomy && !busy && !embedded;
 
   return (
-    <div onPaste={onPaste} className={embedded ? "mx-auto max-w-[420px] space-y-4 p-3" : "space-y-5"}>
+    <div onPaste={showPicker ? undefined : onPaste} className={embedded ? "mx-auto max-w-[420px] space-y-4 p-3" : "space-y-5"}>
       {embedded ? (
         <div className="space-y-3">
           <div className="flex items-start gap-2">
@@ -333,7 +353,10 @@ export function NewCampaignPage() {
           </Button>
         </div>
       ) : (
-        <PageHeader title="Campanie nouă" description="Spire ia stilul din imaginea aleasă și îl pune pe marca ta. Rezultatul e verificat înainte să-l vezi." />
+        <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <h1 className="text-[1.6rem] leading-tight font-semibold text-ink sm:text-[1.9rem]">Campanie nouă</h1>
+          <Steps current={newCampaignStep({ anatomy, kit })} />
+        </header>
       )}
 
       {error && (
@@ -347,22 +370,24 @@ export function NewCampaignPage() {
         </div>
       )}
 
-      {!reference && !embedded && <ReferencePicker onPick={pick} />}
-      {reference && anatomy && <WhatISaw reference={reference} anatomy={anatomy} />}
+      {showPicker && <ReferenceDrop onPick={pick} action="primary" />}
 
-      {anatomy && (
-        <Card title="Câteva lucruri de la tine" label="Întrebările">
-          <div className="space-y-5">
-            {questions.map((q) => (
-              <QuestionBlock key={q.id} q={q} answers={answers} onAnswer={setAnswers} />
-            ))}
-          </div>
-          <div className="mt-6">
-            <Button variant={kit ? "secondary" : "primary"} disabled={!ready || Boolean(busy)} onClick={() => void run()}>
-              {kit ? "Refă campania" : "Fă campania"}
-            </Button>
-          </div>
-        </Card>
+      {reference && anatomy && (
+        <div className={embedded ? "space-y-4" : "grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start"}>
+          <WhatISaw reference={reference} anatomy={anatomy} compact={!embedded} />
+          <Card title="Câteva lucruri de la tine" label="Întrebările">
+            <div className="space-y-5">
+              {questions.map((q) => (
+                <QuestionBlock key={q.id} q={q} answers={answers} onAnswer={setAnswers} />
+              ))}
+            </div>
+            <div className="mt-6">
+              <Button variant={kit ? "secondary" : "primary"} disabled={!ready || Boolean(busy)} onClick={() => void run()}>
+                {kit ? "Refă campania" : "Fă campania"}
+              </Button>
+            </div>
+          </Card>
+        </div>
       )}
 
       {busy && !embedded && (
@@ -372,29 +397,37 @@ export function NewCampaignPage() {
       )}
 
       {kit && (
-        <Card title="Kitul tău" label="Rezultatul" actions={<FormatTabs formats={formats} value={format} onChange={setFormat} />}>
-          <div className={embedded ? "space-y-4" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]"}>
-            {design && (
-              <div className="pointer-events-none min-w-0">
-                <DesignCanvas design={design} />
-              </div>
-            )}
-            <div className="space-y-4">
-              <CheckList checks={kit.checks} />
-              <WhatIsNew />
-              {kit.error && <p className="text-sm text-muted">AI-ul n-a răspuns ({kit.error}), așa că textele sunt chiar răspunsurile tale.</p>}
-              {savedId ? (
-                <a className="btn btn-secondary" href={`/campanii/${savedId}`} target="_blank" rel="noreferrer">
-                  Deschide în Campanii
-                </a>
-              ) : (
-                <Button variant="primary" disabled={Boolean(busy)} onClick={() => void save()}>
-                  Salvează campania
-                </Button>
+        <div ref={kitCard} className="scroll-mt-24">
+          <Card title="Kitul tău" label="Rezultatul" actions={<FormatTabs formats={formats} value={format} onChange={setFormat} />}>
+            <div className={embedded ? "space-y-4" : "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]"}>
+              {design && (
+                <div className="pointer-events-none min-w-0">
+                  {embedded ? (
+                    <DesignCanvas design={design} />
+                  ) : (
+                    <div className="kit-stage" style={{ "--design-ratio": design.height / design.width } as CSSProperties}>
+                      <DesignCanvas design={design} fitHeight />
+                    </div>
+                  )}
+                </div>
               )}
+              <div className="space-y-4">
+                <CheckList checks={kit.checks} />
+                <WhatIsNew />
+                {kit.error && <p className="text-sm text-muted">AI-ul n-a răspuns ({kit.error}), așa că textele sunt chiar răspunsurile tale.</p>}
+                {savedId ? (
+                  <a className="btn btn-secondary" href={`/campanii/${savedId}`} target="_blank" rel="noreferrer">
+                    Deschide în Campanii
+                  </a>
+                ) : (
+                  <Button variant="primary" disabled={Boolean(busy)} onClick={() => void save()}>
+                    Salvează campania
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       )}
     </div>
   );

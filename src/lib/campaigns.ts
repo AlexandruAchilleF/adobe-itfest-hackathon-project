@@ -161,9 +161,14 @@ export async function updateCampaign(collection: Collection<Campaign>, id: strin
   if (JSON.stringify(saved?.data.designs) !== JSON.stringify(data.designs)) throw new Error(NO_SPACE);
 }
 
+const SAMPLE_ANSWERS: Answers = { product: "Weekend cu 2 cupe", offer: "2 la preț de 1", cta: "Vino azi", formats: ["post", "story"] };
+
+/** Postarea de exemplu de pe /marca: aceeași compunere ca în kit, cu marca din formular. */
+export const brandSample = (brand: Brand): Design => compose(sampleAnatomy, brand, copyFromAnswers(sampleAnatomy, SAMPLE_ANSWERS), brand.mascot.image, "post");
+
 /** O campanie de exemplu, cu verificările de cod calculate pe bune. */
 export function seedCampaign(): Campaign {
-  const answers: Answers = { product: "Weekend cu 2 cupe", offer: "2 la preț de 1", cta: "Vino azi", formats: ["post", "story"] };
+  const answers = SAMPLE_ANSWERS;
   const copy = copyFromAnswers(sampleAnatomy, answers);
   const illustration = "/samples/spire/pip-in-stil.png";
   const designs: Designs = { post: compose(sampleAnatomy, demoBrand, copy, illustration, "post"), story: compose(sampleAnatomy, demoBrand, copy, illustration, "story") };

@@ -3,5 +3,5 @@ import { mainNav } from "../src/scenario/nav";
 import { spire } from "../src/scenario/scenarios/spire";
 
 it("meniul Spire vine din scenariu", () => {
-  expect(mainNav(spire).map((i) => i.href)).toEqual(["/nou", "/campanii", "/marca"]);
+  expect(mainNav(spire).map((i) => i.href)).toEqual(["/acasa", "/campanii", "/marca"]);
 });

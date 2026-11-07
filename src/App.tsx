@@ -1,4 +1,4 @@
-import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
+import { type ComponentType, lazy, Suspense, useEffect, useRef, useState } from "react";
 import { Link, Route, Switch, useLocation } from "wouter";
 import type { HealthResponse } from "../shared/ai-contract";
 import { DevPanel, isDevMode } from "./components/DevPanel";
@@ -23,6 +23,7 @@ const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
 const PitchPage = page(() => import("./pages/PitchPage"), "PitchPage");
+const AcasaPage = page(() => import("./pages/spire/AcasaPage"), "AcasaPage");
 const NewCampaignPage = page(() => import("./pages/spire/NewCampaignPage"), "NewCampaignPage");
 const CampaignsPage = page(() => import("./pages/spire/CampaignsPage"), "CampaignsPage");
 const CampaignPage = page(() => import("./pages/spire/CampaignPage"), "CampaignPage");
@@ -37,6 +38,9 @@ const S = scenario;
 const MAIN_NAV = mainNav(S);
 const TEAM_NAV = teamNav(S);
 export const NAV_GROUPS = [{ label: "", items: MAIN_NAV }, ...(TEAM_NAV.length ? [{ label: "Pentru echipă", items: TEAM_NAV }] : [])];
+
+/** Unde poate duce asistentul: meniul, plus „Campanie nouă”, care stă pe butonul din header. */
+const MASCOT_ROUTES = [{ href: "/", label: "Start" }, { href: "/nou", label: "Campanie nouă" }, ...NAV_GROUPS.flatMap((g) => g.items)];
 
 /** Paginile deschise pe telefon din QR și deck-ul de pitch: fără meniu. */
 const BARE: Array<[string, ComponentType]> = [
@@ -64,15 +68,6 @@ export function App() {
   );
 }
 
-/** Semnul aplicației: un pătrat bleumarin cu un punct coral (înlocuiți-l cu logo-ul vostru). */
-function Mark() {
-  return (
-    <span className="grid h-6 w-6 place-items-center rounded-md bg-ink" aria-hidden>
-      <span className="h-2.5 w-2.5 rounded-[3px] bg-coral-bright" />
-    </span>
-  );
-}
-
 function Shell() {
   const [location] = useLocation();
   const [dev] = useState(isDevMode);
@@ -82,6 +77,20 @@ function Shell() {
     void aiHealth().then(setAi);
   }, []);
   useEffect(() => setMenu(false), [location]);
+  const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenu(false);
+    const onClick = (e: MouseEvent) => {
+      if (!header.current?.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("click", onClick);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("click", onClick);
+    };
+  }, [menu]);
 
   // în extensie, /nou e un panou îngust, fără meniu: Spire stă peste pagina omului
   if (location === "/nou" && new URLSearchParams(window.location.search).get("din") === "extensie") {
@@ -110,13 +119,15 @@ function Shell() {
   }
   const status: AppStatus = { ai, supabase: Boolean(supabase), demo: isDemoMode() };
   const home = location === "/";
-  const active = (href: string) => location === href;
+  // pagina de lucru ține singură înălțimea ecranului
+  const workPage = /^\/campanii\/[^/]+$/.test(location);
+  const active = (href: string) => location === href || location.startsWith(`${href}/`);
   const navLinks = MAIN_NAV.map((n) => (
     <Link
       key={n.href}
       href={n.href}
       aria-current={active(n.href) ? "page" : undefined}
-      className={`flex items-center px-1 text-[0.95rem] transition-colors lg:h-full ${active(n.href) ? "font-medium text-ink lg:shadow-[inset_0_-2px_0_var(--color-ink)]" : "text-muted hover:text-ink"} max-lg:rounded-lg max-lg:px-3 max-lg:py-2.5`}
+      className={`rounded-lg px-3 py-2 text-[0.95rem] transition-colors max-md:py-2.5 ${active(n.href) ? "bg-paper-2 font-medium text-ink" : "text-ink-2 hover:text-ink"}`}
     >
       {n.label}
     </Link>
@@ -124,28 +135,41 @@ function Shell() {
 
   return (
     <div className="min-h-dvh">
-      <header className={`sticky top-0 z-[1100] print:hidden bg-white border-b border-line`}>
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-8 px-4">
-          <Link href="/" className="flex shrink-0 items-center gap-2.5 text-[1.05rem] font-semibold text-ink">
-            <Mark />
+      {/* doar în Shell: landing-ul, deck-ul, paginile de telefon și panoul din extensie ies mai sus, fără fundal */}
+      <div className="app-sky" data-testid="app-sky" aria-hidden />
+      <header ref={header} className="sticky top-3 z-[1100] px-3 print:hidden sm:px-4">
+        <div className="app-nav mx-auto flex h-14 max-w-6xl items-center gap-2 pr-2 pl-3 sm:gap-6 sm:pl-4">
+          <Link href="/acasa" className="flex shrink-0 items-center gap-2 text-[1.1rem] font-semibold tracking-[-0.02em] text-ink">
+            <img src="/landing/hawk-mark.svg" alt="" className="h-6 w-6" />
             {import.meta.env.VITE_APP_NAME || S.app.name}
           </Link>
-          <nav className="hidden h-full items-stretch gap-6 lg:flex">{navLinks}</nav>
+          <nav className="hidden items-center gap-1 md:flex" aria-label="Principal">
+            {navLinks}
+          </nav>
           <div className="ml-auto flex items-center gap-1">
             {!S.nav && <RoleSwitcher />}
-            <button className="grid h-10 w-10 place-items-center rounded-lg text-ink hover:bg-paper-2 lg:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
+            {/* pe /nou butonul duce la pagina deschisă, deci coralul rămâne pe pasul din pagină */}
+            <Link href="/nou" aria-current={location === "/nou" ? "page" : undefined} className={`btn whitespace-nowrap ${location === "/nou" ? "btn-secondary" : "btn-primary"}`}>
+              Campanie nouă
+            </Link>
+            <button className="grid h-10 w-10 place-items-center rounded-lg text-ink hover:bg-paper-2 md:hidden" onClick={() => setMenu((m) => !m)} aria-label="Meniu" aria-expanded={menu}>
               <svg width="20" height="14" viewBox="0 0 20 14" aria-hidden>
                 <path d={menu ? "M3 1l14 12M17 1L3 13" : "M1 1h18M1 7h18M1 13h18"} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
               </svg>
             </button>
           </div>
         </div>
-        {menu && <nav className="mx-auto flex max-w-6xl flex-col gap-0.5 border-t border-line px-2 py-2 lg:hidden">{navLinks}</nav>}
+        {menu && (
+          <nav className="app-nav mx-auto mt-2 flex max-w-6xl flex-col gap-0.5 p-2 md:hidden" aria-label="Principal">
+            {navLinks}
+          </nav>
+        )}
       </header>
-      <main className={home ? "print:p-0" : "mx-auto max-w-6xl px-4 pt-8 pb-24 print:max-w-none print:p-0"}>
+      <main className={home ? "print:p-0" : `mx-auto max-w-6xl px-4 print:max-w-none print:p-0 ${workPage ? "pt-4 pb-4 max-lg:pb-24" : "pt-7 pb-24"}`}>
         <Suspense fallback={<Loading />}>
         <Switch>
           <Route path="/" component={S.landing ? LandingPage : ScenarioHome} />
+          <Route path="/acasa" component={AcasaPage} />
           <Route path="/nou" component={NewCampaignPage} />
           <Route path="/campanii" component={CampaignsPage} />
           <Route path="/campanii/:id" component={CampaignPage} />
@@ -162,7 +186,7 @@ function Shell() {
         </Suspense>
       </main>
       {/* pe prima pagină asistentul nu apare: acolo vorbește povestea */}
-      {showMascot(S, location) && !home && <MascotDock routes={[{ href: "/", label: "Start" }, ...NAV_GROUPS.flatMap((g) => g.items)]} />}
+      {showMascot(S, location) && !home && <MascotDock routes={MASCOT_ROUTES} />}
       {dev && <DevPanel />}
     </div>
   );

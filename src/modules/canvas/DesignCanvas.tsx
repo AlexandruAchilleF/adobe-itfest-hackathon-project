@@ -41,10 +41,15 @@ interface Props {
   /** Apelat (debounced) după fiecare modificare făcută de utilizator. */
   onChange?: (design: Design) => void;
   className?: string;
+  /**
+   * Pânza încape și în înălțimea containerului, centrată. Containerul trebuie să aibă înălțimea stabilită din afară
+   * (altfel s-ar măsura pe sine). Scalarea e doar CSS: designul, coordonatele și exportul rămân la mărimea reală.
+   */
+  fitHeight?: boolean;
 }
 
 export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function DesignCanvas(
-  { design, onChange, className },
+  { design, onChange, className, fitHeight = false },
   ref,
 ) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -52,8 +57,10 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
   const canvasRef = useRef<Canvas | null>(null);
   const designRef = useRef(design);
   const onChangeRef = useRef(onChange);
+  const fitHeightRef = useRef(fitHeight);
   const loadingRef = useRef(false);
   onChangeRef.current = onChange;
+  fitHeightRef.current = fitHeight;
   // Istoric pentru undo/redo: instantanee JSON ale designului.
   const historyRef = useRef<Design[]>([design]);
   const indexRef = useRef(0);
@@ -132,7 +139,8 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
     if (!canvas || !wrap) return;
     const { width, height } = designRef.current;
     const maxW = wrap.clientWidth || width;
-    const scale = Math.min(1, maxW / width);
+    const maxH = fitHeightRef.current ? wrap.clientHeight || height : height;
+    const scale = Math.min(1, maxW / width, maxH / height);
     canvas.setDimensions({ width: `${width * scale}px`, height: `${height * scale}px` }, { cssOnly: true });
   }
   useEffect(() => {
@@ -261,7 +269,7 @@ export const DesignCanvas = forwardRef<DesignCanvasHandle, Props>(function Desig
   }
 
   return (
-    <div ref={wrapRef} tabIndex={-1} onKeyDown={onKeyDown} className={`w-full min-w-0 outline-none ${className ?? ""}`}>
+    <div ref={wrapRef} tabIndex={-1} onKeyDown={onKeyDown} className={`w-full min-w-0 outline-none ${fitHeight ? "flex h-full items-center justify-center" : ""} ${className ?? ""}`}>
       <canvas ref={elRef} />
     </div>
   );

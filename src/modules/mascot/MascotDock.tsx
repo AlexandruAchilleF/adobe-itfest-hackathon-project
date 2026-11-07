@@ -18,12 +18,14 @@ import { type MascotPage, mascotPage, matchRoute, type Route, tourReducer } from
 
 const HIGHLIGHT = "mascot-highlight";
 const CHARACTER = Boolean(scenario.mascot.character);
+/** Mic, ca să nu acopere conținutul din colț. */
+const DOCK_SIZE = 56;
 
 /** Asistentul fără personaj: un buton rotund; starea (ascultă, se gândește, a găsit o problemă) e un punct colorat. */
 function AssistantButton({ mood, open }: { mood: MascotState["mood"]; open: boolean }) {
   const dot = mood === "worried" ? "bg-warn-dot" : mood === "thinking" || mood === "listening" ? "animate-pulse bg-coral-bright" : mood === "happy" || mood === "celebrate" ? "bg-[#3f9d64]" : "";
   return (
-    <span className="relative grid h-12 w-12 place-items-center rounded-full bg-ink text-white shadow-[0_10px_24px_-10px_rgb(27_35_80/0.6)] transition hover:bg-[#262e5c]">
+    <span className="relative grid h-10 w-10 place-items-center rounded-full bg-ink text-white shadow-[0_10px_24px_-10px_rgb(27_35_80/0.6)] transition hover:bg-[#262e5c]">
       {open ? (
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
           <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -139,7 +141,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
   return (
     <div className="pointer-events-none fixed bottom-3 right-3 z-[1200] flex max-w-[calc(100vw-24px)] items-end gap-1 print:hidden" data-testid="mascot" data-mood={state.mood}>
       {/* doar bulele și uliul primesc click-uri; restul zonei lasă click-ul să treacă la pagină */}
-      <div className={`${CHARACTER ? "mb-14" : "mb-16"} flex w-[300px] max-w-full flex-col gap-2 [&>*]:pointer-events-auto`}>
+      <div className="mb-12 flex w-[300px] max-w-full flex-col gap-2 [&>*]:pointer-events-auto">
         {/* turul ghidat */}
         {step && tour && (
           <div className="rounded-xl bg-card text-sm text-ink shadow-[0_12px_32px_-14px_rgb(27_35_80/0.35)] ring-1 ring-line p-4" role="dialog" aria-label="Tur ghidat" data-testid="mascot-tour">
@@ -229,7 +231,7 @@ export function MascotDock({ routes }: { routes: Route[] }) {
         aria-label={open ? `Închide conversația cu ${MASCOT_NAME}` : `Vorbește cu ${MASCOT_NAME}`}
         aria-expanded={open}
       >
-        {CHARACTER ? <MascotFigure mood={state.mood} /> : <AssistantButton mood={state.mood} open={open} />}
+        {CHARACTER ? <MascotFigure mood={state.mood} size={DOCK_SIZE} /> : <AssistantButton mood={state.mood} open={open} />}
       </button>
     </div>
   );

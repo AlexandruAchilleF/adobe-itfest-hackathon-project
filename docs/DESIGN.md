@@ -2,7 +2,7 @@
 
 Tokenurile stau în `src/index.css`, componentele în `src/components/ui.tsx`. Două registre, aceleași culori:
 
-- **Ecranele de lucru** (cereri, fișă, cronometru, profil, telefon) arată ca un produs real: un lucru de făcut pe ecran, datele care contează la vedere, fără decor.
+- **Ecranele de lucru** (`/acasa`, `/campanii`, `/campanii/:id`, `/nou`, `/marca`) arată ca un spațiu de lucru: același limbaj ca landingul, mai simplu. Un lucru de făcut pe ecran, datele care contează la vedere.
 - **Prima pagină** (`/`) e povestea pentru juriu, în stilul deskfirst.com: cer pictat, titlu în două voci, mișcare la derulare. Am luat principiile lor, nu imaginile, textele sau logo-ul.
 
 ## Paleta și fonturile
@@ -27,17 +27,22 @@ Valorile exacte (din `src/index.css`), ca să le folosiți și în afara aplica�
 
 - **Geist** (sans, `font-sans`): tot textul. Titluri semibold, tracking strâns (−0,035…−0,045em).
 - **Fraunces** (serif, `font-serif`): doar cuvântul accentuat din titlu (`<Accent>`), panglica (`<Ribbon>`) și citatul cu cifra.
-- Semnul aplicației: pătrat bleumarin rotunjit cu un pătrățel coral în mijloc (`Mark` din `src/App.tsx`).
+- Semnul aplicației: uliul (`public/landing/hawk-mark.svg`), în header și pe landing.
 
 ## Ecranele de lucru
 
 | Regula | Cum o aplicați |
 |---|---|
-| **Un lucru odată** | Sus e cererea care te așteaptă (documentul, suma, verificările, butoanele pasului). Dedesubt, restul, pe câte un rând. Vezi `src/pages/BoardPage.tsx`. |
+| **Drumul** | Acasă → Campanii → o campanie → pagina de lucru. „Campanie nouă” e butonul din header, în afara meniului. |
+| **Fundalul** | `.app-sky`, doar în Shell-ul din `src/App.tsx`: cerul de pe landing, deja blurat și voalat în crem, care ajunge la `paper` jos (`public/landing/workspace.webp`, generat cu `npm run ui:bg`). Scriptul oprește generarea dacă textul `muted` coboară sub 4,5:1 pe vreun pixel. Nu apare pe `/`, `/pitch`, `/view`, `/s` și în panoul din extensie. Cardurile rămân albe și opace. |
+| **Headerul** | `.app-nav`: pastila de pe landing, opacă și fără blur. Stânga, uliul și numele, spre `/acasa`. Linkurile vin din `scenario.nav`. Dreapta, un buton. Pe telefon, linkurile stau în meniul de sub pastilă. |
+| **Un lucru odată** | Acasă are trei lucruri: pornirea, campaniile recente, marca. Fără statistici, grafice sau fluxuri de activitate, pentru care n-avem date reale. |
+| **Galeria** | `CampaignCard`: miniatura e designul făcut (`DesignPreview`), plus titlul, sursa și data. Starea apare doar când cere ceva („2 verificări de revăzut”). |
+| **Pagina de lucru** | Pe ecran mare încape în înălțime, fără scroll pe pagină (`.work-page`), cu textele derulând în coloana lor. Bara de sus rămâne la vedere. Garda e o linie (`GuardLine`) care se deschide la cerere și singură când pică ceva. |
 | **Un font, o scară** | Geist peste tot (`font-sans`). Text de bază 15px, meta 13–14px, titluri 20/28/32px. Cifre cu `tabular-nums`, aliniate la dreapta în liste. |
-| **Culori cu sens** | `paper` (fundal), `card` (alb), `line`, `ink` (text, bleumarin), `muted` (text secundar, contrast AA). **Coral doar pe acțiunea principală** (`btn-primary`), câte una pe ecran. Stările: `ok`, `warn`, `bad`, doar ca punct + text. |
+| **Culori cu sens** | `paper` (fundal), `card` (alb), `line`, `ink` (text, bleumarin), `muted` (text secundar, contrast AA). **Coral doar pe acțiunea principală** (`btn-primary`), câte una pe ecran. În aplicație, coralul e pe „Campanie nouă”, deci acțiunile paginii (Descarcă PNG, Salvează marca) sunt bleumarin (`btn-ink`). Pe `/nou`, butonul din header devine neutru și coralul trece pe pasul curent. Stările: `ok`, `warn`, `bad`, doar ca punct + text. |
 | **Starea** | `<StatusPill>`: punct de culoare + textul stării. Una pe rând, niciodată culoarea singură. |
-| **Componente** | `Button` (`primary`, `secondary`, `ghost`, `danger`), `Card`, `PageHeader` (titlu simplu, fără accent), `Tag`, `Pill`, `ErrorNote`. Rotunjire 10–14px, o singură umbră discretă. |
+| **Componente** | `Button` (`primary`, `ink`, `secondary`, `ghost`, `danger`), `Card`, `PageHeader` (titlu simplu, fără accent), `Tag`, `Pill`, `ErrorNote`. Rotunjire 10–14px, o singură umbră discretă. |
 | **Documentul ca obiect** | `<DocPaper>` desenează bonul/factura ca hârtie termică (singurul loc cu font monospațiat). După un pas făcut de om apare ștampila (`.stamp`) cu noua stare. |
 | **Stări goale** | Fiecare listă are text pentru „nimic aici”; cardul de focus are „Nimic nu te așteaptă acum”. |
 
@@ -72,7 +77,7 @@ Deck-ul e o pagină a aplicației, în același sistem: cer pentru deschidere, �
 
 ## Asistentul
 
-Implicit e un buton rotund bleumarin în colț (conversație, acțiuni, tur ghidat). Personajul desenat (Uli, `src/modules/mascot/MascotFigure.tsx`) apare doar cu `mascot.character: true`, pentru teme cu copii, vârstnici sau gamificare.
+Implicit e un buton rotund bleumarin în colț (conversație, acțiuni, tur ghidat), mic (40 px, personajul 56 px), ca să nu acopere conținutul. Personajul desenat (Uli, `src/modules/mascot/MascotFigure.tsx`) apare doar cu `mascot.character: true`, pentru teme cu copii, vârstnici sau gamificare.
 
 Uli e un uliu care zboară spre privitor, întors puțin spre dreapta. Ce îl face recognoscibil, de păstrat la orice retușare:
 
@@ -93,7 +98,8 @@ Stările se văd din postură, nu doar din față: bucuria ridică aripile, îng
 - coral pe altceva decât acțiunea principală (titlurile, cifrele și linkurile sunt bleumarin);
 - două semnale de stare pe același rând, pastile pe orice;
 - text gri sub contrastul 4,5:1, text sub 12px;
-- gradienți, sticlă (`backdrop-blur`), umbre colorate pe ecranele de lucru (cerul e doar pe prima pagină);
+- gradienți CSS, sticlă (`backdrop-blur`), `filter: blur` pe tot ecranul, umbre colorate pe ecranele de lucru. Singurul fundal pictat de acolo e `workspace.webp`, de mai sus;
+- pe ecranele de lucru: cerul clar, serif-ul coral, panglicile, ilustrațiile mari. Acestea rămân pe landing;
 - dark mode; `font-mono` pentru cifre (în afară de bonul desenat);
 - text intern sau pentru juriu vizibil în aplicație (notele pentru echipă apar doar cu `?dev=1`).
 

@@ -80,7 +80,7 @@ function Nav() {
           <span className="hidden sm:inline-flex md:hidden lg:inline-flex">
             <Link href="/campanii" className="btn btn-story btn-secondary land-btn-sm whitespace-nowrap">Vezi un exemplu</Link>
           </span>
-          <Link href="/nou" className="btn btn-story btn-primary land-btn-sm whitespace-nowrap">Încearcă acum</Link>
+          <Link href="/acasa" className="btn btn-story btn-primary land-btn-sm whitespace-nowrap">Încearcă acum</Link>
         </div>
       </nav>
     </header>
@@ -124,7 +124,7 @@ function Hero() {
       </div>
 
       <div className="land-rise mt-8 flex flex-wrap justify-center gap-3" style={{ animationDelay: "360ms" }}>
-        <Link href="/nou" className="btn btn-story btn-primary">Încearcă acum</Link>
+        <Link href="/acasa" className="btn btn-story btn-primary">Încearcă acum</Link>
         <Link href="/campanii" className="btn btn-story btn-secondary">Vezi un exemplu</Link>
       </div>
     </section>
@@ -433,7 +433,7 @@ function Closing() {
           <span className="accent-serif">Spire e aici.</span>
         </p>
         <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Link href="/nou" className="btn btn-story btn-primary">Încearcă acum</Link>
+          <Link href="/acasa" className="btn btn-story btn-primary">Încearcă acum</Link>
           <Link href="/campanii" className="btn btn-story btn-secondary">Vezi un exemplu</Link>
           <a href="#extensie" className="btn btn-story btn-secondary">Vezi extensia</a>
         </div>
@@ -442,12 +442,19 @@ function Closing() {
   );
 }
 
+// subsolul are lista lui: meniul aplicației (scenariul) nu mai conține „Campanie nouă”, iar textele de aici nu se schimbă
+const FOOTER_NAV = [
+  { href: "/nou", label: "Campanie nouă" },
+  { href: "/campanii", label: "Campanii" },
+  { href: "/marca", label: "Marca" },
+];
+
 function Footer() {
   return (
     <footer className="bg-cream px-4 pt-6 pb-12 text-center">
       <Logo className="text-[1.6rem]" />
       <nav className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[0.95rem] text-ink-2" aria-label="Subsol">
-        {S.nav?.map((n) => (
+        {FOOTER_NAV.map((n) => (
           <Link key={n.href} href={n.href} className="hover:text-coral-deep">
             {n.label}
           </Link>

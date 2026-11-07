@@ -64,7 +64,7 @@ export const spire = defineScenario({
     hiddenOn: ["/business", "/survey", "/start"],
   },
   nav: [
-    { href: "/nou", label: "Campanie nouă" },
+    { href: "/acasa", label: "Acasă" },
     { href: "/campanii", label: "Campanii" },
     { href: "/marca", label: "Marca" },
   ],

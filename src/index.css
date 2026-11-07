@@ -121,6 +121,10 @@ h1, h2, h3 {
 .btn-primary:hover:not(:disabled) { background: var(--color-coral-deep); }
 .btn-secondary { background: #fff; color: var(--color-ink); box-shadow: inset 0 0 0 1px var(--color-line); }
 .btn-secondary:hover:not(:disabled) { box-shadow: inset 0 0 0 1px #cfccc4; }
+/* acțiunea principală a paginii când coralul e deja pe „Campanie nouă”, în header: un singur coral pe ecran */
+.btn-ink { background: var(--color-ink); color: #fff; }
+.btn-ink:hover:not(:disabled) { background: #262e5c; }
+.btn:has(input[type="file"]:focus-visible) { outline: 2px solid var(--color-ink-2); outline-offset: 2px; }
 .btn-ghost { color: var(--color-ink-2); }
 .btn-ghost:hover:not(:disabled) { background: var(--color-paper-2); }
 .btn-danger { background: #fff; color: var(--color-bad); box-shadow: inset 0 0 0 1px var(--color-line); }
@@ -132,6 +136,50 @@ h1, h2, h3 {
   border: 1px solid var(--color-line);
   box-shadow: 0 1px 2px rgb(27 35 80 / 0.04);
 }
+
+/* cerul de pe landing, blurat și voalat dinainte (scripts/build-workspace-bg.mjs); jos, imaginea e exact `paper`.
+   Întins pe tot ecranul: e destul de blurat încât deformarea nu se vede. */
+.app-sky {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url("/landing/workspace.webp") center / 100% 100% no-repeat;
+}
+@media print { .app-sky { display: none; } }
+/* pastila din header: ca .land-nav de pe landing, opacă și fără blur */
+.app-nav {
+  background: #fff;
+  border: 1px solid var(--color-line);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px -18px rgb(27 35 80 / 0.3);
+}
+.app-nav .btn { min-height: 2.5rem; border-radius: 12px; }
+
+/* pagina de lucru: bara rămâne la vedere, iar pe ecran mare totul încape în înălțime; textele derulează în coloana lor */
+.work-page { display: flex; flex-direction: column; gap: 0.75rem; }
+.work-bar { position: sticky; top: 4.75rem; z-index: 20; }
+.work-stage { height: min(62dvh, calc((100vw - 3.75rem) * var(--design-ratio, 1.25))); }
+@media (min-width: 1024px) {
+  /* 6.25rem: headerul plutitor și marginile de sus și de jos */
+  .work-page { height: calc(100dvh - 6.25rem); min-height: 34rem; }
+  .work-body { flex: 1; min-height: 0; }
+  .work-stage { height: 100%; }
+  .work-side { height: 100%; overflow-y: auto; }
+}
+
+/* kitul de pe /nou: designul încape pe ecran */
+.kit-stage { height: min(68dvh, calc((100vw - 5rem) * var(--design-ratio, 1.25))); }
+@media (min-width: 1024px) { .kit-stage { height: 68dvh; } }
+
+/* zona în care tragi o imagine: card alb, cu chenar punctat */
+.drop-zone {
+  background: var(--color-card);
+  border-radius: 14px;
+  border: 1.5px dashed #cfccc4;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.drop-zone[data-over="true"] { border-color: var(--color-ink); box-shadow: 0 0 0 3px rgb(27 35 80 / 0.08); }
 
 /* eticheta mică de deasupra unui titlu de card: text secundar, fără majuscule */
 .label-caps {
