@@ -30,6 +30,8 @@ const REAL_SPEED = process.env.DEMO_VARIANT === "viteza-reala";
 const STOP_HOLD_MS = REAL_SPEED ? 1800 : 450;
 /** `DEMO_SCALE=1.25`: pagina e randată mai mare de browser, nu mărită la montaj. Video-ul rămâne 1920×1080. */
 const SCALE = Number(process.env.DEMO_SCALE) || 1;
+/** `DEMO_BIRD_SCALE=1.6`: uliul mai mare, doar în copia filmării. Extensia publică rămâne la 140 px. */
+const BIRD_SCALE = Number(process.env.DEMO_BIRD_SCALE) || 1;
 const VIEW = { width: Math.round(1920 / SCALE), height: Math.round(1080 / SCALE) };
 
 const ROOT = process.cwd();
@@ -79,6 +81,13 @@ function prepareExtension(dirs: string[]): string {
   let content = readFileSync(contentPath, "utf8");
   content = swap(content, "var S = 140, pos = { x: innerWidth - 180, y: 140 }", "var S = 140, pos = { x: innerWidth + 120, y: 90 }");
   content = swap(content, "(4000+Math.random()*4000)*speed", "(globalThis.__demoRoamed ? 7000 : (globalThis.__demoRoamed = true, 250))");
+  if (BIRD_SCALE !== 1) {
+    const size = Math.round(140 * BIRD_SCALE);
+    content = swap(content, "var S = 140,", `var S = ${size},`);
+    content = swap(content, ".spire-bird {position:fixed;top:0;left:0;width:140px;height:140px;", `.spire-bird {position:fixed;top:0;left:0;width:${size}px;height:${size}px;`);
+    // marginile în care zboară, ca uliul mare să nu iasă din ecran
+    content = swap(content, "return { x: Math.max(75, Math.min(panelLeft() - 75, p.x)), y: Math.max(115, Math.min(innerHeight - 30, p.y)) };", `return { x: Math.max(${Math.round(75 * BIRD_SCALE)}, Math.min(panelLeft() - ${Math.round(75 * BIRD_SCALE)}, p.x)), y: Math.max(${Math.round(115 * BIRD_SCALE)}, Math.min(innerHeight - 30, p.y)) };`);
+  }
   writeFileSync(contentPath, REAL_SPEED ? content : `globalThis.__spireTestSpeed = ${BIRD_SPEED};\n${content}`);
   return dir;
 }

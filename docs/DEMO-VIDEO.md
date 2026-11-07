@@ -1,6 +1,6 @@
 # Video-ul demo: Marina Park, filmat cu Playwright
 
-Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 2:14, cu extensia la viteza ei și pagina randată de browser la scara 1,25, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 2:14 în loc de 1:20, fiindcă echipa a păstrat clipul întreg, de 40 s, și animațiile uliului la viteză reală. Se filmează cu `DEMO_VARIANT=viteza-reala DEMO_SCALE=1.25`; fără variabilă, ies filmul accelerat și reperele lui. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
+Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 2:15, cu extensia la viteza ei, pagina randată de browser la scara 1,25 și uliul de 1,6 ori mai mare doar în copia filmării, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 2:15 în loc de 1:20, fiindcă echipa a păstrat clipul întreg, de 40 s, și animațiile uliului la viteză reală. Se filmează cu `DEMO_VARIANT=viteza-reala DEMO_SCALE=1.25 DEMO_BIRD_SCALE=1.6`; fără variabilă, ies filmul accelerat și reperele lui. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
 
 ## Povestea, într-o frază
 
@@ -12,7 +12,7 @@ Drumul: **site → critică → aplicarea ajustărilor → scanare → video din
 
 ## Formatul
 
-**Un singur video, 2:14**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
+**Un singur video, 2:15**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
 
 ## Regulile filmării
 
