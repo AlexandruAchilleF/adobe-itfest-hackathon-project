@@ -39,7 +39,8 @@ export async function elementToFabric(el: DesignElement): Promise<FabricObject> 
         fill: el.fill,
         fontWeight: el.fontWeight,
         textAlign: el.align,
-        fontFamily: "Inter, system-ui, sans-serif",
+        // fonturile din fontsource se numesc „X Variable”
+        fontFamily: el.fontFamily ? `${el.fontFamily}, ${el.fontFamily} Variable, system-ui, sans-serif` : "Inter, system-ui, sans-serif",
         angle,
       });
       break;

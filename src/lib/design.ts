@@ -78,7 +78,7 @@ const Rotation = { rotation: z.number().optional() };
 export const DesignElement = z.discriminatedUnion("type", [
   RectEl.extend(Rotation),
   CircleEl.extend(Rotation),
-  TextEl.extend(Rotation),
+  TextEl.extend({ ...Rotation, fontFamily: z.string().optional() }),
   LineEl.extend(Rotation),
   PathEl.extend(Rotation),
   ImageEl.extend(Rotation),
