@@ -8,7 +8,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { Accent, Ribbon } from "../components/ui";
 import { HawkMark } from "../pitch/HawkMark";
-import { buildDeck, isTodo, type Maybe, type Mock, PITCH, type Slide, type Theme } from "../pitch/deck";
+import { buildDeck, isTodo, type Fact, type Maybe, type Mock, PITCH, type Slide, type Theme } from "../pitch/deck";
 import { qrDataUrl } from "../lib/share";
 import { useTypewriter } from "../lib/motion";
 import { AfterMock, AskMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./spire/LandingMockups";
@@ -231,7 +231,15 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
             ))}
           </div>
           <div className="relative mt-auto text-center">
-            <Show v={s.evidence}>{(e) => <p className="accent-serif text-[36px] leading-snug">„{e}”</p>}</Show>
+            <Show v={s.evidence}>
+              {(e) =>
+                typeof e === "string" ? (
+                  <p className="accent-serif text-[36px] leading-snug">„{e}”</p>
+                ) : (
+                  <FactLine fact={e} className="mx-auto max-w-[1100px] text-[30px]" />
+                )
+              }
+            </Show>
           </div>
         </div>
       );
@@ -366,29 +374,10 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
                 „{e}”
               </p>
             ))}
-            <Show v={s.market}>{(m) => <p className="text-[30px] text-ink-2">{m}</p>}</Show>
-          </div>
-        </div>
-      );
-
-    case "brief":
-      return (
-        <div className={PAD}>
-          <Head ribbon={s.ribbon} title={s.title} center={false} size={64} />
-          <div className="mt-auto">
-            <Show v={s.rows}>
-              {(rows) => (
-                <ul className="land-frame divide-y divide-line px-9 py-2">
-                  {rows.map((r) => (
-                    <li key={r.need} className="flex items-baseline gap-5 py-5 text-[27px]">
-                      <span className="h-3.5 w-3.5 shrink-0 translate-y-[-3px] rounded-full bg-ok" aria-hidden />
-                      <span className="flex-1 font-medium text-ink">{r.need}</span>
-                      <span className="max-w-[45%] text-right text-ink-2">{r.where}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Show>
+            {s.facts.map((f) => (
+              <FactLine key={f.text} fact={f} className="text-[30px]" />
+            ))}
+            <Show v={s.market}>{(m) => <FactLine fact={m} className="text-[30px]" />}</Show>
           </div>
         </div>
       );
@@ -411,23 +400,23 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
 
     case "close":
       return (
-        <div className={`${PAD} items-center pt-[80px] text-center`}>
+        <div className={`${PAD} items-center pt-[56px] pb-[96px] text-center`}>
           <Ribbon>reSPIRĂ</Ribbon>
-          <h1 className="mt-7 text-[104px] leading-[1.0] font-semibold tracking-[-0.045em] text-ink">{s.question}</h1>
-          <p className="text-[104px] leading-[1.05] tracking-[-0.03em]">
+          <h1 className="mt-5 text-[80px] leading-[1.0] font-semibold tracking-[-0.045em] text-ink">{s.question}</h1>
+          <p className="text-[80px] leading-[1.05] tracking-[-0.03em]">
             <span className="accent-serif">{s.answer}</span>
           </p>
           <div className="mt-auto grid w-full grid-cols-2 gap-7 text-left">
-            <div className="land-frame px-8 py-6">
+            <div className="land-frame px-8 py-5">
               <p className={LABEL}>Construit azi</p>
               <Show v={s.builtToday}>{(l) => <List items={l} />}</Show>
             </div>
-            <div className="land-frame px-8 py-6">
+            <div className="land-frame px-8 py-5">
               <p className={LABEL}>Ce urmează</p>
               <Show v={s.next}>{(l) => <List items={l} />}</Show>
             </div>
           </div>
-          <div className="mt-6 flex w-full items-end justify-between gap-10 text-[22px] text-ink">
+          <div className="mt-4 flex w-full items-end justify-between gap-10 text-[22px] text-ink">
             <Show v={s.team}>{(team) => <p className="font-medium">{team.join(" · ")}</p>}</Show>
             {s.url && <p className="shrink-0 font-medium">{s.url.replace(/^https?:\/\//, "")}</p>}
           </div>
@@ -436,12 +425,22 @@ function SlideBody({ s, active, data }: { s: Slide; active: boolean; data: Landi
   }
 }
 
+/** O cifră de pe net, cu sursa sub ea: pe slide nu apare nicio cifră fără sursă. */
+function FactLine({ fact, className = "" }: { fact: Fact; className?: string }) {
+  return (
+    <div className={className}>
+      <p className="leading-snug font-medium text-ink">{fact.text}</p>
+      <p className="mt-1 text-[20px] text-ink-2">Sursa: {fact.source}</p>
+    </div>
+  );
+}
+
 function List({ items }: { items: string[] }) {
   return (
-    <ul className="mt-3 space-y-2 text-[26px] leading-snug text-ink">
+    <ul className="mt-3 space-y-1.5 text-[22px] leading-snug text-ink">
       {items.map((t) => (
         <li key={t} className="flex gap-3">
-          <span className="mt-[14px] h-2 w-2 shrink-0 rounded-full bg-coral" aria-hidden />
+          <span className="mt-[12px] h-2 w-2 shrink-0 rounded-full bg-coral" aria-hidden />
           {t}
         </li>
       ))}

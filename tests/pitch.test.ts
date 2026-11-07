@@ -11,17 +11,16 @@ const FILLED: PitchConfig = {
   ...PITCH,
   team: ["Ana · produs"],
   demoUrl: "https://exemplu.vercel.app",
-  brief: [{ need: "hartă", where: "minutul 1" }],
-  market: "o cifră",
+  market: { text: "o cifră", source: "o sursă" },
   builtToday: ["scenariul"],
   next: ["pilot"],
 };
 
 describe("pitch deck", () => {
   for (const s of all) {
-    it(`„${s.id}”: 10 slide-uri, pe capitolele landing-ului, cu textele scenariului`, () => {
-      const deck = buildDeck(s, PITCH, "http://localhost:5173");
-      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "how", "guard", "beforeAfter", "architecture", "payer", "brief", "demo", "close"]);
+    it(`„${s.id}”: 9 slide-uri, pe capitolele landing-ului, cu textele scenariului`, () => {
+      const deck = buildDeck(s, { ...PITCH, demoUrl: "" }, "http://localhost:5173");
+      expect(deck.map((x) => x.kind)).toEqual(["cover", "problem", "how", "guard", "beforeAfter", "architecture", "payer", "demo", "close"]);
       const cover = deck[0];
       expect(cover.kind === "cover" && cover.name).toBe(s.app.name);
       const problem = deck[1];
@@ -35,11 +34,20 @@ describe("pitch deck", () => {
 
   it("arată ce lipsește, ca să nu scape la pitch", () => {
     const s = all[0];
-    const deck = buildDeck({ ...s, business: { ...s.business, evidence: [] } }, PITCH);
+    const deck = buildDeck({ ...s, business: { ...s.business, evidence: [] } }, { ...PITCH, team: [], problemFact: undefined });
     const todo = missing(deck);
     expect(todo.some((t) => t.includes("business.evidence"))).toBe(true);
     expect(todo.some((t) => t.includes("PITCH.team"))).toBe(true);
     expect(isTodo(deck[1].kind === "problem" && deck[1].evidence)).toBe(true);
+  });
+
+  it("problema: cifra din interviuri bate cifra de pe net, iar cifra de pe net vine cu sursa", () => {
+    const s = all[0];
+    const fact = { text: "500–1.500 lei pe lună", source: "un ghid de prețuri" };
+    const web = buildDeck({ ...s, business: { ...s.business, evidence: [] } }, { ...PITCH, problemFact: fact })[1];
+    expect(web.kind === "problem" && web.evidence).toEqual(fact);
+    const people = buildDeck({ ...s, business: { ...s.business, evidence: ["„Pierd o zi pe postare.” (Ana)"] } }, { ...PITCH, problemFact: fact })[1];
+    expect(people.kind === "problem" && people.evidence).toBe("„Pierd o zi pe postare.” (Ana)");
   });
 
   it("arhitectura: fără ea apare ca lipsă; cu ea arată AI-ul, codul și omul, plus ce se întâmplă când pică", () => {

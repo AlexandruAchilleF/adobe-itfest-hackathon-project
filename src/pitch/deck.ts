@@ -13,6 +13,12 @@ export interface Architecture {
   failures: Array<{ when: string; then: string }>;
 }
 
+/** O cifră de pe net: doar cu sursa ei, verificată pe pagina sursei (nu din rezumate). */
+export interface Fact {
+  text: string;
+  source: string;
+}
+
 export interface PitchConfig {
   /** „Ana · produs și interviuri”, câte unul pe rând */
   team: string[];
@@ -20,10 +26,12 @@ export interface PitchConfig {
   event: string;
   /** linkul din QR; gol = adresa de pe care rulează deck-ul (pe Vercel, adresa publică) */
   demoUrl: string;
-  /** fiecare cerință din brief (docs/BRIEF.md) și momentul din demo în care se vede */
-  brief: Array<{ need: string; where: string }>;
-  /** cât de mare e problema dincolo de omul intervievat (ex: „1.200 de firme din București cu peste 20 de angajați”) */
-  market: string;
+  /** cât costă azi problema, cu sursa; apare pe slide-ul problemei cât timp nu avem cifra din interviuri */
+  problemFact?: Fact;
+  /** cât plătesc firmele azi pentru ce face Spire, cu sursa (slide-ul „Cine plătește”) */
+  payerFacts: Fact[];
+  /** cât de mare e piața, cu sursa */
+  market?: Fact;
   /** ce s-a scris azi, la hackathon (README.md, „Construit azi”) */
   builtToday: string[];
   /** ce urmează după hackathon (intenția de a construi mai departe e un criteriu Adobe) */
@@ -34,15 +42,31 @@ export interface PitchConfig {
   coverMark: boolean;
 }
 
-// ——— de completat mâine (docs/AMBALARE.md) ———
+// Cifrele de pe net sunt verificate pe pagina sursei la 7 noiembrie 2026. Cifra din interviuri, când o avem,
+// merge în scenario.business.evidence și ia locul lui problemFact.
 export const PITCH: PitchConfig = {
-  team: [],
+  team: ["Fork Exec", "Flueraru Alexandru Achille"],
   event: "ITFest × Adobe · 7 noiembrie 2026",
-  demoUrl: "",
-  brief: [],
-  market: "",
-  builtToday: [],
-  next: [],
+  demoUrl: "https://adobe-itfest-hackathon-project.vercel.app",
+  problemFact: {
+    text: "Cine nu face singur postările plătește azi 500–1.500 lei pe lună unui freelancer sau 1.500–3.500 lei unei agenții mici.",
+    source: "Trifu Media, „Cât costă administrarea social media în România”, 2026",
+  },
+  payerFacts: [{ text: "O agenție mică cere de la 99 €/lună pentru 8 postări cu design, până la 299 €/lună pentru 20, cu contract de minimum 3 luni.", source: "ESYS Agency, pachetele de social media" }],
+  market: { text: "Circa 930.000 de IMM-uri în România, aproape toate microîntreprinderi.", source: "Comisia Europeană, SME Country Fact Sheet 2025 (date din 2024)" },
+  builtToday: [
+    "Extensia Chrome: uliul peste site, scanarea și critica paginii",
+    "Anatomia referinței și întrebările, cu Gemini validat cu Zod",
+    "Mascota redesenată în stilul referinței, cu FLUX.2 pe Cloudflare",
+    "Compunerea pe straturi, garda deterministă și bucla de agent",
+    "Aplicația: campanii, marca, export PNG, datele în Supabase",
+  ],
+  next: [
+    "Generarea cu Adobe Firefly, sigură pentru uz comercial",
+    "Add-on publicat în marketplace-ul Adobe Express",
+    "Clienți-pilot printre firmele mici intervievate",
+    "Conturi și izolare între firme; costul pe rulare, calculat",
+  ],
   architecture: {
     steps: [
       { owner: "cod", title: "Extensia", text: "Citește pagina doar la clic, cu activeTab și scripting." },
@@ -77,13 +101,12 @@ export type Mock = "scan" | "ask" | "kit";
 
 export type Slide =
   | { kind: "cover"; theme: Theme; name: string; headline: string; notThis?: string; says: string; team: Maybe<string[]>; event: string; mark: boolean }
-  | { kind: "problem"; theme: Theme; ribbon: string; title: string; problem: string; pains: string[]; evidence: Maybe<string> }
+  | { kind: "problem"; theme: Theme; ribbon: string; title: string; problem: string; pains: string[]; evidence: Maybe<string | Fact> }
   | { kind: "how"; theme: Theme; ribbon: string; title: string; steps: Array<{ tag: string; title: string; text: string; mock: Mock }> }
   | { kind: "guard"; theme: Theme; ribbon: string; title: string; text: string }
   | { kind: "beforeAfter"; theme: Theme; ribbon: string; title: string; text: string }
   | { kind: "architecture"; theme: Theme; ribbon: string; title: string; system: Maybe<Architecture> }
-  | { kind: "payer"; theme: Theme; ribbon: string; payer: string; evidence: string[]; market: Maybe<string> }
-  | { kind: "brief"; theme: Theme; ribbon: string; title: string; rows: Maybe<Array<{ need: string; where: string }>> }
+  | { kind: "payer"; theme: Theme; ribbon: string; payer: string; evidence: string[]; facts: Fact[]; market: Maybe<Fact> }
   | { kind: "demo"; theme: Theme; title: string; text: string; url: string }
   | { kind: "close"; theme: Theme; question: string; answer: string; builtToday: Maybe<string[]>; next: Maybe<string[]>; team: Maybe<string[]>; url: string };
 
@@ -103,7 +126,7 @@ const STORY = {
   afterText: "Preluăm doar felul în care e desenat. Ilustrația, textele și culorile sunt ale tale, iar codul respinge ce e prea aproape de referință.",
 };
 
-/** Slide-urile, pe capitolele landing-ului și în ordinea video-ului (docs/PITCH.md: rezultatul → durerea → demo → arhitectura → plătitorul → închiderea). */
+/** Slide-urile, pe capitolele landing-ului și în ordinea video-ului (docs/PITCH.md: rezultatul → durerea → demo → arhitectura → plătitorul → închiderea). Cerințele brief-ului nu au slide: se văd în demo.. */
 export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
   const roleLabel = (id: string) => s.roles[id]?.label ?? id;
   const url = p.demoUrl || origin;
@@ -118,7 +141,7 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       title: STORY.problemTitle,
       problem: s.business.problem,
       pains: STORY.pains,
-      evidence: orTodo(s.business.evidence[0], "cifra spusă de un om real, cu numele lui (scenario.business.evidence)"),
+      evidence: orTodo<string | Fact>(s.business.evidence[0] ?? p.problemFact, "cifra spusă de un om real, cu numele lui (scenario.business.evidence)"),
     },
     { kind: "how", theme: "cream", ribbon: "Cum funcționează", title: "Se uită, întreabă *și face kitul.*", steps: STORY.steps },
     { kind: "guard", theme: "cream", ribbon: "Garda", title: STORY.guardTitle, text: STORY.guardText },
@@ -136,14 +159,8 @@ export function buildDeck(s: Scenario, p: PitchConfig, origin = ""): Slide[] {
       ribbon: "Cine plătește",
       payer: s.business.payer,
       evidence: s.business.evidence.slice(1),
-      market: orTodo(p.market, "cât de mare e problema: câte organizații, cât plătesc azi (PITCH.market)"),
-    },
-    {
-      kind: "brief",
-      theme: "cream",
-      ribbon: "Ce cere brief-ul",
-      title: "Fiecare cerință, *în demo.*",
-      rows: orTodo(p.brief, "cerințele din docs/BRIEF.md și unde se văd în demo (PITCH.brief)"),
+      facts: p.payerFacts,
+      market: orTodo(p.market, "cât de mare e piața, cu sursa (PITCH.market)"),
     },
     {
       kind: "demo",
