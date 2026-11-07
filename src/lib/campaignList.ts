@@ -13,6 +13,10 @@ export const recentCampaigns = (items: Array<Rec<Campaign>>, limit = 4): Array<R
 /** Designul făcut, pentru miniatură: postarea sau, dacă lipsește, story-ul. */
 export const previewDesign = (campaign: Campaign): Design | null => campaign.designs.post ?? campaign.designs.story ?? null;
 
+/** Semnul mic din galerie, doar când campania are și clip lângă afiș. */
+export const materialsLabel = (campaign: Pick<Campaign, "designs" | "video">): string | null =>
+  campaign.video && (campaign.designs.post ?? campaign.designs.story) ? "Afiș + clip" : null;
+
 /** Starea apare doar când cere ceva. */
 export function attentionLabel(checks: Check[]): string | null {
   const failed = checks.filter((c) => !c.ok).length;

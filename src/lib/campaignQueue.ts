@@ -159,11 +159,52 @@ function simulatedImage(brand: Brand, kind: AssetKind): string {
   const escape = (s: string) => s.replace(/[<>&"']/g, "");
   return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="640" height="480" fill="${brand.colors.find((c) => c.role === "background")?.hex || "#ffffff"}"/><text x="40" y="200" font-family="sans-serif" font-size="32" fill="#1b2350">${escape(brand.name).slice(0, 28)}</text><text x="40" y="250" font-family="sans-serif" font-size="24" fill="#1b2350">${kind === "logo" ? "Propunere logo" : "Imagine de campanie"}</text><text x="40" y="400" font-family="sans-serif" font-size="22" fill="#1b2350">SIMULARE · fără material generat</text></svg>`)}`;
 }
-export function campaignTransport(video: typeof generateCampaignVideo = generateCampaignVideo): CampaignTransport {
+
+/** Semnalul de filmare (scripts/demo/film.ts): fără el, panoul randează clipul din scenariu, ca de obicei. */
+export const DEMO_RESULTS_KEY = "spire:demo-rezultate";
+export function demoResultsOn(storage: Pick<Storage, "getItem"> | undefined = globalThis.localStorage): boolean {
+  try { return storage?.getItem(DEMO_RESULTS_KEY) === "1"; } catch { return false; }
+}
+export const DEMO_CLIP_URL = "/samples/spire/demo-videos/marina-park.mp4";
+/** Scenele reale ale clipului din repo (40 s). Schema plafonează scena la 6 s, deci duratele sunt rotunjite în jos. */
+export const DEMO_CLIP_PLAN: VideoPlan = {
+  scenes: [
+    { photo: null, kicker: "", title: "Marina Park", seconds: 4, motion: "zoom-in" },
+    { photo: null, kicker: "01 · Casa", title: "Stil dobrogean, din 2000", seconds: 6, motion: "pan-right" },
+    { photo: null, kicker: "02 · Căsuțe din lemn", title: "Bungalouri cu terasă", seconds: 4, motion: "pan-left" },
+    { photo: null, kicker: "03 · Foișorul", title: "Cafea, prieteni, umbră", seconds: 6, motion: "zoom-out" },
+    { photo: null, kicker: "04 · Camping & hamace", title: "Loc generos, la umbră", seconds: 4, motion: "pan-right" },
+    { photo: null, kicker: "05 · Marea, la 400 m", title: "Seara, pe nisip", seconds: 6, motion: "zoom-in" },
+  ],
+  cta: "marinapark.ro",
+};
+/** Descarcă clipul din repo, cu progresul real al descărcării, și îl dă panoului ca blob. */
+export async function demoClipResult(onProgress?: AssetReferences["onProgress"], request: typeof fetch = (...args) => fetch(...args)): Promise<AssetResult> {
+  const response = await request(DEMO_CLIP_URL);
+  if (!response.ok || !response.body) throw new Error("Clipul nu s-a putut descărca. Reîncearcă.");
+  const total = Number(response.headers.get("content-length")) || 0;
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let received = 0;
+  const reader = response.body.getReader();
+  onProgress?.("render", 0);
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value as Uint8Array<ArrayBuffer>);
+    received += value.length;
+    if (total) onProgress?.("render", Math.min(1, received / total));
+  }
+  onProgress?.("render", 1);
+  const url = URL.createObjectURL(new Blob(chunks, { type: "video/mp4" }));
+  return validateAssetResult({ url, model: "mock", simulated: true, video: { plan: DEMO_CLIP_PLAN, checks: [], type: "video/mp4" } }, "video");
+}
+
+export function campaignTransport(video: typeof generateCampaignVideo = generateCampaignVideo, demo: () => boolean = demoResultsOn, demoClip: typeof demoClipResult = demoClipResult): CampaignTransport {
  return {
   supports: () => true,
   generate: async (kind, context, references) => {
     if (kind === "video") {
+      if (demo()) return demoClip(references.onProgress);
       const made = await video(context, references.brand, references.photos ?? [], references.onProgress);
       return validateAssetResult({ url: made.url, model: made.model, simulated: made.simulated, video: { plan: made.plan, checks: made.checks, fallback: made.fallback, type: made.mimeType === "video/mp4" ? "video/mp4" : "video/webm" } }, "video");
     }

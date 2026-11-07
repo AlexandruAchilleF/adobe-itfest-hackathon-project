@@ -2402,6 +2402,14 @@
     return fit;
   }
   async function generateInspire(token) {
+    // DEMO_INSPIRE_RESULT există doar în copia temporară a filmării (scripts/demo/film.ts), niciodată în pachet.
+    if (config.DEMO_INSPIRE_RESULT) {
+      var demoStage = line(inspireShell("Afișul, pe marca ta"), "div", "", "spire-inspire-stage");
+      var demoPoster = document.createElement("img");
+      demoPoster.className = "spire-inspire-original"; demoPoster.alt = "Afișul rezultat"; demoPoster.src = config.DEMO_INSPIRE_RESULT;
+      demoStage.appendChild(demoPoster);
+      return;
+    }
     var shell = inspireShell("Recreez selecția…");
     var status = line(shell, "p", "Construiesc demo-ul din selecția ta.", "spire-inspire-status"); status.setAttribute("role", "status");
     var loading = line(shell, "div", "", "spire-inspire-loading");

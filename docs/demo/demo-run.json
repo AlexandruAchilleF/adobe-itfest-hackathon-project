@@ -1,0 +1,232 @@
+{
+  "recordedAt": "2026-11-07T17:49:22.664Z",
+  "provider": "mock",
+  "seed": 1107,
+  "clip": {
+    "src": "/samples/spire/demo-videos/marina-park.mp4",
+    "from": 28,
+    "ms": 6000
+  },
+  "brandNote": "Marca Marina Park a fost dată doar browserului filmării (context.route pe citirea spire:marca); în baza comună prima marcă era alta. Baza nu a fost atinsă.",
+  "filmNotes": [
+    "Filmat cu mock, la cererea echipei: Gemini a fost supraîncărcat pe 7 noiembrie (3 încercări, 502; gemini-3.8-flash n-a răspuns în 40 s, gemini-3.5-flash a dat 503). Critica și scanarea sunt simulate, iar pe ecran scrie „Analiză simulată”.",
+    "Copia extensiei are zborul uliului la ×2.86 (__spireTestSpeed = 0.35) și intrarea de pe marginea ecranului. Nu e accelerare de montaj.",
+    "Fără zoom, la cererea echipei: accentul îl pun spotlight-ul și inelele.",
+    "Întrebările de brief din balonul uliului sunt ascunse cu un stil pus de filmare în shadow root; logica lor rulează neschimbată.",
+    "Descărcarea clipului e încetinită la 5.0 MB/s din CDP, ca bara reală să se vadă."
+  ],
+  "skipped": [],
+  "critique": [
+    {
+      "level": "Important",
+      "title": "Linkul „+4 0723690941” abia se vede",
+      "body": "Scrisul se pierde pe fundal chiar în primul ecran."
+    },
+    {
+      "level": "De îmbunătățit",
+      "title": "Un element apăsabil n-are rol de buton",
+      "body": "Elementul pare apăsabil, dar nu are rol de buton sau link."
+    },
+    {
+      "level": "De îmbunătățit",
+      "title": "„Benven” nu e marcat ca titlu",
+      "body": "Textul arată ca un titlu, dar nu este marcat ca atare în structura paginii."
+    },
+    {
+      "level": "De îmbunătățit",
+      "title": "Linkul „CREATIV MGS” e scris prea mic",
+      "body": "Se citește greu, mai ales pe telefon și de către cei care nu mai văd bine."
+    }
+  ],
+  "brief": {
+    "product": "Vremea in Vama Veche",
+    "audience": "",
+    "goal": "",
+    "cta": "Rezervati acum"
+  },
+  "aiCalls": [
+    {
+      "status": 200,
+      "kind": "critica",
+      "provider": "mock",
+      "model": "mock"
+    },
+    {
+      "status": 200,
+      "kind": "citirea paginii (scanare)",
+      "provider": "mock",
+      "model": "mock"
+    }
+  ],
+  "tabs": [
+    {
+      "id": "deschidere",
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@6468c381b48a8ba14029b20b5aa2eb1e.webm",
+      "durationMs": 126320,
+      "lastSceneEndMs": 34454
+    },
+    {
+      "id": "site",
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@f9b404cce789fbd926304a2ac3f67d12.webm",
+      "durationMs": 92560,
+      "lastSceneEndMs": 58352
+    },
+    {
+      "id": "cautare",
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@3a3a38303b5767ae4ee556506145f234.webm",
+      "durationMs": 34520,
+      "lastSceneEndMs": 19693
+    },
+    {
+      "id": "campanie",
+      "file": "/Users/alexflueraru/adobe-itfest-hackathon-project/test-results-demo/page@a079f47bb467d7aa392d74e6b80d04e3.webm",
+      "durationMs": 15120,
+      "lastSceneEndMs": 15120
+    }
+  ],
+  "scenes": [
+    {
+      "id": 0,
+      "tab": "deschidere",
+      "wipeIn": false,
+      "start": 31448,
+      "end": 34454,
+      "realMs": 3006,
+      "marks": {},
+      "waits": []
+    },
+    {
+      "id": 1,
+      "tab": "site",
+      "wipeIn": false,
+      "start": 8453,
+      "end": 12169,
+      "realMs": 3716,
+      "marks": {},
+      "waits": []
+    },
+    {
+      "id": 2,
+      "tab": "site",
+      "wipeIn": false,
+      "start": 12169,
+      "end": 26407,
+      "realMs": 14238,
+      "marks": {},
+      "waits": [
+        {
+          "label": "Spire analizează pagina",
+          "start": 12170,
+          "end": 14981
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "tab": "site",
+      "wipeIn": false,
+      "start": 26407,
+      "end": 35319,
+      "realMs": 8912,
+      "marks": {
+        "ajustari": 29226
+      },
+      "waits": []
+    },
+    {
+      "id": 4,
+      "tab": "site",
+      "wipeIn": false,
+      "start": 35322,
+      "end": 44601,
+      "realMs": 9280,
+      "marks": {},
+      "waits": [
+        {
+          "label": "panoul Spire se încarcă",
+          "start": 37728,
+          "end": 37788
+        },
+        {
+          "label": "Spire citește pagina",
+          "start": 39665,
+          "end": 41576
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "tab": "site",
+      "wipeIn": false,
+      "start": 44601,
+      "end": 58352,
+      "realMs": 13751,
+      "marks": {
+        "clip": 49983
+      },
+      "waits": []
+    },
+    {
+      "id": 6,
+      "tab": "cautare",
+      "wipeIn": true,
+      "start": 1612,
+      "end": 5509,
+      "realMs": 3897,
+      "marks": {},
+      "waits": []
+    },
+    {
+      "id": 7,
+      "tab": "cautare",
+      "wipeIn": false,
+      "start": 5510,
+      "end": 11236,
+      "realMs": 5727,
+      "marks": {},
+      "waits": []
+    },
+    {
+      "id": 8,
+      "tab": "cautare",
+      "wipeIn": false,
+      "start": 11236,
+      "end": 19693,
+      "realMs": 8457,
+      "marks": {},
+      "waits": [
+        {
+          "label": "captura selecției",
+          "start": 11237,
+          "end": 12043
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "tab": "campanie",
+      "wipeIn": false,
+      "start": 3236,
+      "end": 12111,
+      "realMs": 8875,
+      "marks": {},
+      "waits": [
+        {
+          "label": "pagina campaniei se încarcă",
+          "start": 4784,
+          "end": 5578
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "tab": "campanie",
+      "wipeIn": false,
+      "start": 12116,
+      "end": 15120,
+      "realMs": 3004,
+      "marks": {},
+      "waits": []
+    }
+  ]
+}

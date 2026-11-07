@@ -19,3 +19,6 @@ tmp-spire
 # dovezile de la recrearea paginilor (cadre, capturi)
 .reanimate/
 docs/screenshots/
+
+# filmarea video-ului demo: cadrele brute ale fiecărui tab (scripts/demo/film.ts)
+test-results-demo/

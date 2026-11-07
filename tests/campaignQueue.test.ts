@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoBrand } from "../src/lib/brand";
 import {
-  campaignOrigin, campaignTransport, clarificationMock, contextSnapshot, enqueueAsset,
+  campaignOrigin, campaignTransport, clarificationMock, contextSnapshot, DEMO_CLIP_PLAN, DEMO_CLIP_URL, DEMO_RESULTS_KEY, demoClipResult, demoResultsOn, enqueueAsset,
   generationInstruction, recoverJobs, restoreWorkspaceDraft, validateAssetResult,
   workspaceCollection,
 } from "../src/lib/campaignQueue";
@@ -117,5 +117,47 @@ describe("persistența locală confirmată", () => {
     await expect(denied.add(data)).rejects.toThrow("Quota exceeded");
     const discarded = workspaceCollection(data.origin, { getItem: () => null, setItem: () => {} });
     await expect(discarded.add(data)).rejects.toThrow(/nu a putut fi păstrată/);
+  });
+});
+
+describe("clipul din repo, cu semnalul de filmare", () => {
+  const body = (sizes: number[]) => new Response(new ReadableStream({ start(c) { for (const size of sizes) c.enqueue(new Uint8Array(size)); c.close(); } }), { headers: { "content-length": String(sizes.reduce((a, b) => a + b, 0)) } });
+
+  it("semnalul pornește doar cu valoarea exactă și nu pică dacă stocarea e blocată", () => {
+    expect(demoResultsOn({ getItem: (key) => key === DEMO_RESULTS_KEY ? "1" : null })).toBe(true);
+    expect(demoResultsOn({ getItem: () => null })).toBe(false);
+    expect(demoResultsOn({ getItem: () => "0" })).toBe(false);
+    expect(demoResultsOn({ getItem: () => { throw new Error("blocat"); } })).toBe(false);
+    expect(demoResultsOn(undefined)).toBe(false);
+  });
+
+  it("descarcă fișierul cerut, raportează progresul real și trece de validare", async () => {
+    const seen: number[] = [];
+    const urls: string[] = [];
+    const created = URL.createObjectURL;
+    URL.createObjectURL = () => "blob:http://localhost/clip";
+    try {
+      const result = await demoClipResult((stage, value) => { expect(stage).toBe("render"); seen.push(value); }, (async (input: string) => { urls.push(input); return body([25, 75]); }) as unknown as typeof fetch);
+      expect(urls).toEqual([DEMO_CLIP_URL]);
+      expect(seen).toEqual([0, 0.25, 1, 1]);
+      expect(result).toMatchObject({ url: "blob:http://localhost/clip", model: "mock", simulated: true });
+      expect(result.video?.plan).toEqual(DEMO_CLIP_PLAN);
+    } finally { URL.createObjectURL = created; }
+  });
+
+  it("o descărcare eșuată e o eroare, nu un clip gol", async () => {
+    await expect(demoClipResult(undefined, (async () => new Response("nu", { status: 404 })) as unknown as typeof fetch)).rejects.toThrow("Clipul nu s-a putut descărca");
+  });
+
+  it("fără semnal, transportul randează; cu semnal, ia clipul din repo fără să cheme generatorul", async () => {
+    const made = { url: "blob:http://localhost/randat", model: "gemini", simulated: false, plan: DEMO_CLIP_PLAN, checks: [], mimeType: "video/webm" };
+    let renders = 0;
+    const render = (async () => { renders++; return made; }) as unknown as Parameters<typeof campaignTransport>[0];
+    const repo = { url: "blob:http://localhost/repo", model: "mock", simulated: true, video: { plan: DEMO_CLIP_PLAN, checks: [], type: "video/mp4" as const } };
+    const refs = { brand: demoBrand };
+    expect((await campaignTransport(render, () => false, async () => repo).generate("video", snapshot(), refs)).url).toBe(made.url);
+    expect(renders).toBe(1);
+    expect((await campaignTransport(render, () => true, async () => repo).generate("video", snapshot(), refs)).url).toBe(repo.url);
+    expect(renders).toBe(1);
   });
 });

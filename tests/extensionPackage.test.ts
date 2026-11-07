@@ -71,6 +71,12 @@ describe("ZIP-ul din public/", () => {
     expect(readFileSync(join(SRC, "config.js"), "utf8")).toContain('var APP_URL = "http://localhost:5173";');
   });
 
+  it("are critica, dar nu și semnalul de filmare", () => {
+    expect(files.has("critique.js")).toBe(true);
+    expect(files.get("config.js")?.toString()).not.toContain("DEMO_INSPIRE_RESULT");
+    expect(readFileSync(join(SRC, "config.js"), "utf8")).not.toContain("DEMO_INSPIRE_RESULT");
+  });
+
   it("e la zi cu chrome-extension/ (altfel: npm run ext:zip)", () => {
     // aceeași regulă ca scripts/build-extension-zip.mjs: fără documentație și fără teste (ex. tests/)
     const skip = /(^readme(\.|$)|\.md$|\.(test|spec)\.|^tests?$|^__tests__$)/i;

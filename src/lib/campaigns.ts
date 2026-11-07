@@ -39,6 +39,8 @@ export const Campaign = z.object({
   illustration: z.string().nullable(),
   designs: z.object({ post: Design.optional(), story: Design.optional() }),
   hero: z.object({ html: z.string() }).nullable(),
+  /** Clipul campaniei. Opțional: campaniile vechi nu îl au. */
+  video: z.object({ url: z.string(), poster: z.string() }).nullable().optional(),
   checks: z.array(CheckSchema),
   createdAt: z.string(),
 });

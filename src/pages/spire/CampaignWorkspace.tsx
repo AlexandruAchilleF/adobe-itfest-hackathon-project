@@ -6,7 +6,7 @@ import type { Brand } from "../../lib/brand";
 import type { CritiqueBrief } from "../../lib/extensionBridge";
 import type { Answers } from "../../lib/gaps";
 import {
-  askCampaignClarifications, campaignOrigin, contextSnapshot, enqueueAsset, imageCampaignTransport,
+  askCampaignClarifications, campaignOrigin, contextSnapshot, demoResultsOn, enqueueAsset, imageCampaignTransport,
   restoreWorkspaceDraft, validateAssetResult, workspaceCollection,
   type AssetKind, type AssetResult, type CampaignJob, type WorkspaceDraft,
 } from "../../lib/campaignQueue";
@@ -24,7 +24,7 @@ const PLAN_SHARE = 0.35;
 const FRAMES = 12;
 
 /** Randarea videoclipului: uliul lucrează, etapa e cea reală, cadrele se aprind pe rând. */
-function VideoRender({ state }: { state: VideoProgress }) {
+function VideoRender({ state, download }: { state: VideoProgress; download: boolean }) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 120);
@@ -32,8 +32,9 @@ function VideoRender({ state }: { state: VideoProgress }) {
   }, []);
   const planning = state.stage === "plan";
   // cât scrie Claude nu știm dinainte: bara se apropie de 35 % fără să-l atingă
-  const progress = planning ? PLAN_SHARE * (1 - Math.exp(-(now - state.startedAt) / PLAN_ESTIMATE_MS)) : PLAN_SHARE + (1 - PLAN_SHARE) * state.progress;
-  const stage = planning ? "Scriu scenariul din brief și fotografii" : state.progress < 0.98 ? "Randez cadrele, cu culorile mărcii" : "Finalizez videoclipul";
+  // la clipul din repo nu se randează nimic: bara e descărcarea, iar textul nu spune altceva
+  const progress = download ? state.progress : planning ? PLAN_SHARE * (1 - Math.exp(-(now - state.startedAt) / PLAN_ESTIMATE_MS)) : PLAN_SHARE + (1 - PLAN_SHARE) * state.progress;
+  const stage = download ? "Pregătesc videoclipul" : planning ? "Scriu scenariul din brief și fotografii" : state.progress < 0.98 ? "Randez cadrele, cu culorile mărcii" : "Finalizez videoclipul";
   const lit = Math.floor(progress * FRAMES);
   return (
     <div className="video-render mt-3 overflow-hidden rounded-xl bg-ink text-white" role="status" aria-live="polite" aria-label={`${stage}, ${Math.round(progress * 100)} %`}>
@@ -232,6 +233,7 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
   const items = brief.critique?.items ?? [];
   const shownItems = showAll ? items : items.slice(0, 3);
   const disabled = !loaded || busy || asking;
+  const demoClip = demoResultsOn();
   return <div className="space-y-9 text-sm" data-testid="campaign-workspace">
     <PanelSection id="observatii" title="Ce aș modifica" hint={brief.critique?.mode === "mock" ? "Analiză simulată" : brief.critique?.mode === "fallback" ? "Observații din verificări automate" : undefined}>
       <div className="card px-4 py-1">
@@ -289,14 +291,14 @@ function Workspace({ brief, answers, brand, onAnswersChange }: Props) {
         <div className="mt-3 empty:hidden"><ErrorNote error={error} /></div>
       </div>
       {!!draft.jobs.length && <ol className="space-y-3">{draft.jobs.map((job) => <li key={job.id} className="card panel-job p-4">
-        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-ink">{KIND[job.kind]}</h3><span className="inline-flex items-center gap-2 text-[0.8rem] text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${job.status === "ready" ? "bg-ok" : job.status === "error" ? "bg-bad" : job.status === "unavailable" ? "bg-warn-dot" : "animate-pulse bg-ink-2"}`} />{job.kind === "video" && job.status === "generating" ? "Se generează" : STATUS[job.status]}</span></div>
+        <div className="flex items-center justify-between gap-2"><h3 className="font-semibold text-ink">{KIND[job.kind]}</h3><span className="inline-flex items-center gap-2 text-[0.8rem] text-muted"><span aria-hidden className={`h-1.5 w-1.5 rounded-full ${job.status === "ready" ? "bg-ok" : job.status === "error" ? "bg-bad" : job.status === "unavailable" ? "bg-warn-dot" : "animate-pulse bg-ink-2"}`} />{job.kind === "video" && job.status === "generating" && !demoClip ? "Se generează" : STATUS[job.status]}</span></div>
         <p className="mt-1 line-clamp-2 break-words text-[0.85rem] text-muted">{job.context.description}</p>
-        {job.kind === "video" && job.status === "generating" && videoProgress[job.id] ? <VideoRender state={videoProgress[job.id]} />
+        {job.kind === "video" && job.status === "generating" && videoProgress[job.id] ? <VideoRender state={videoProgress[job.id]} download={demoClip} />
           : (job.status === "generating" || job.status === "queued") && <p className="mt-3 flex items-center gap-2 text-muted"><Spinner />Pregătim materialul din brief-ul confirmat…</p>}
         {job.error && <p className="mt-3 text-bad" role="alert">{job.error}</p>}
         {job.result && job.status === "ready" && <div className="mt-3">
           {job.kind !== "video" && <p className="mb-2 text-xs font-medium text-muted">{job.result.simulated ? "Rezultat simulat · fără generare de imagine" : "Imagine generată · propunere de verificat"}</p>}
-          {job.kind === "video" ? <><VideoResult url={job.result.url} onError={() => setError("Clipul nu se mai poate reda. Apasă Reîncearcă pentru a-l randa din nou.")} /><VideoScript result={job.result} /></> : <img className="max-h-80 w-full rounded-xl bg-paper object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
+          {job.kind === "video" ? <><VideoResult url={job.result.url} onError={() => setError("Clipul nu se mai poate reda. Apasă Reîncearcă pentru a-l randa din nou.")} />{!demoClip && <VideoScript result={job.result} />}</> : <img className="max-h-80 w-full rounded-xl bg-paper object-contain" src={job.result.url} alt={`${KIND[job.kind]} pentru ${job.context.brand.name}${job.result.simulated ? " — simulare" : ""}`} />}
         </div>}
         <div className="mt-3 flex flex-wrap items-center gap-2">
           {job.result && job.status === "ready" && <a className="btn btn-secondary !px-3 !py-1.5 text-xs" href={job.result.url} download={job.kind === "video" ? `${job.context.brand.name}-video.${job.result.video?.type === "video/mp4" ? "mp4" : "webm"}` : `${job.kind}-${job.id}`} target="_blank" rel="noreferrer">Descarcă {job.kind === "video" ? "videoclipul" : "propunerea"}</a>}

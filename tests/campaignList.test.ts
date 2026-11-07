@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attentionLabel, campaignSource, failedKey, guardSummary, newCampaignStep, newestFirst, previewDesign, recentCampaigns, removeWithUndo } from "../src/lib/campaignList";
+import { attentionLabel, campaignSource, failedKey, guardSummary, materialsLabel, newCampaignStep, newestFirst, previewDesign, recentCampaigns, removeWithUndo } from "../src/lib/campaignList";
 import { demoBrand } from "../src/lib/brand";
 import { brandSample, Campaign, seedCampaign } from "../src/lib/campaigns";
 import type { Check } from "../src/lib/guard";
@@ -122,5 +122,23 @@ describe("postarea de exemplu de pe /marca", () => {
   });
   it("are mărimea unei postări", () => {
     expect([design.width, design.height]).toEqual([1080, 1350]);
+  });
+});
+
+describe("clipul campaniei", () => {
+  const video = { url: "/clip.mp4", poster: "/clip.webp" };
+
+  it("campaniile vechi, fără câmp, rămân valide și n-au semn", () => {
+    const { video: _none, ...old } = seed;
+    expect(Campaign.parse(old).video).toBeUndefined();
+    expect(Campaign.parse({ ...old, video: null }).video).toBeNull();
+    expect(materialsLabel(Campaign.parse(old))).toBeNull();
+  });
+
+  it("clipul se păstrează la citire, iar semnul apare doar lângă un afiș", () => {
+    expect(Campaign.parse({ ...seed, video }).video).toEqual(video);
+    expect(materialsLabel({ ...seed, video })).toBe("Afiș + clip");
+    expect(materialsLabel({ designs: {}, video })).toBeNull();
+    expect(() => Campaign.parse({ ...seed, video: { url: "/clip.mp4" } })).toThrow();
   });
 });

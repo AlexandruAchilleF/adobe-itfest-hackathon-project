@@ -92,6 +92,11 @@ function Editor({ id, initial }: { id: string; initial: Campaign }) {
         </section>
         <div className="work-side min-w-0 space-y-3">
           <GuardLine checks={draft.checks} />
+          {draft.video && (
+            <Card title="Clipul">
+              <video data-testid="campaign-video" src={draft.video.url} poster={draft.video.poster} controls autoPlay muted loop playsInline preload="metadata" className="mx-auto max-h-80 rounded-lg bg-ink" />
+            </Card>
+          )}
           {design && (
             <Card title="Textele">
               <div className="space-y-3">
