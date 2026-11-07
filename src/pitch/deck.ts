@@ -45,7 +45,7 @@ export interface PitchConfig {
 // Cifrele de pe net sunt verificate pe pagina sursei la 7 noiembrie 2026. Cifra din interviuri, când o avem,
 // merge în scenario.business.evidence și ia locul lui problemFact.
 export const PITCH: PitchConfig = {
-  team: ["Fork Exec", "Flueraru Alexandru Achille"],
+  team: ["Fork Exec", "Flueraru Alexandru Achille", "David Gaina"],
   event: "ITFest × Adobe · 7 noiembrie 2026",
   demoUrl: "https://adobe-itfest-hackathon-project.vercel.app",
   problemFact: {
