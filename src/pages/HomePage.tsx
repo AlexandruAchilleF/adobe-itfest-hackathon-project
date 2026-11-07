@@ -1,30 +1,9 @@
-// Ghidul template-ului (/start), pentru echipă, nu pentru juriu: cum treci de la brief la config,
-// ce module opționale există și starea cheilor. Juriul vede ScenarioHome pe „/”.
+// Pagina echipei (/start), nu pentru juriu: verificarea scenariului și starea cheilor.
 
-import { Link } from "wouter";
 import type { AppStatus } from "../App";
 import { Card, Code, Pill } from "../components/ui";
 import { validateScenario } from "../scenario/model";
 import { scenario } from "../scenario/config";
-
-// Cerințele tipice din briefurile ITFest × Adobe → piesa din template care le acoperă.
-const BRIEF_MAP = [
-  { need: "un proces între oameni: cine cere, cine aprobă, cine execută", piece: "scenario.roles + scenario.flow (pași, retur cu motiv, „n-a mers”)", href: "/cereri" },
-  { need: "documente, bonuri, facturi, formulare", piece: "scenario.documents → AI citește, codul verifică (sumă, CUI, dată, duplicate, plafoane)", href: "/cereri" },
-  { need: "eficiență, „cât durează”, optimizarea unui proces", piece: "/cronometru: timp pe pas, blocaje, reminder, cost din cifre spuse de oameni", href: "/cronometru" },
-  { need: "un document final, raport, proces-verbal", piece: "/fisa/:id: fapte din date + rezumat editabil, tipărit ca PDF", href: "/cereri" },
-  { need: "Interactive Mapping, găsește în apropiere", piece: "/cereri: cereri pe hartă + potrivire cu scor determinist", href: "/cereri" },
-  { need: "Gamification, puncte, recompense", piece: "scenario.points + ranks → /profil, /clasament", href: "/clasament" },
-  { need: "raportare în timp real, la locația curentă", piece: "scenario.reports → /raport pe telefon, live pe hartă; cu toRequest devine cerere cu flux (scenariul sesizari)", href: "/raport" },
-  { need: "încredere: a ajuns sau nu?", piece: "ciclul cererii, „nu am primit”, suspendare, SMS cu link /c/:id", href: "/cereri" },
-];
-
-const MODULES = [
-  { href: "/docs", title: "Documente → răspunsuri verificate", flow: "PDF → structură → întrebare → răspuns cu citate verificate în text" },
-  { href: "/design", title: "Input haotic → design editabil", flow: "text / voce / poză → design → audit de lizibilitate și contrast → QR" },
-  { href: "/assistant", title: "Asistent cu confirmare", flow: "cerere în limbaj natural → acțiuni pe cererile scenariului → omul aprobă" },
-  { href: "/business", title: "Business canvas + sondaj", flow: "problemă, cine plătește, piață → sondaj prin QR → cifre pentru pitch" },
-];
 
 export function HomePage({ status }: { status: AppStatus }) {
   const ai = status.ai;
@@ -58,50 +37,11 @@ export function HomePage({ status }: { status: AppStatus }) {
         )}
       </Card>
 
-      <Card title="Brief → piesa din template">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-xs uppercase text-slate-500">
-              <tr>
-                <th className="py-2">Dacă brief-ul cere…</th>
-                <th>Ce schimbați</th>
-              </tr>
-            </thead>
-            <tbody>
-              {BRIEF_MAP.map((t) => (
-                <tr key={t.need} className="border-t border-slate-800">
-                  <td className="py-2 pr-4">{t.need}</td>
-                  <td>
-                    <Link href={t.href} className="text-accent hover:underline">
-                      {t.piece}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs text-slate-500">Altceva în brief? Scrieți-l în tabelul de cerințe din docs/BRIEF.md și căutați modulul opțional cel mai apropiat.</p>
-      </Card>
-
-      <section>
-        <h2 className="text-lg font-semibold">Module opționale</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          {MODULES.map((r) => (
-            <Link key={r.href} href={r.href} className="group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-accent/60">
-              <h3 className="font-semibold group-hover:text-accent">{r.title} →</h3>
-              <p className="mt-1 text-sm text-slate-300">{r.flow}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
       <Card title="Stare configurare">
         <div className="flex flex-wrap gap-2">
           <Pill ok={ai ? ai.configured.gemini : null}>Gemini {ai?.configured.gemini ? `(${ai.models.gemini})` : "– fără cheie"}</Pill>
           <Pill ok={ai ? ai.configured.anthropic : null}>Claude {ai?.configured.anthropic ? `(${ai.models.anthropic})` : "– fără cheie"}</Pill>
           <Pill ok={status.supabase}>Supabase {status.supabase ? "conectat" : "– date locale (doar tab-urile aceluiași browser)"}</Pill>
-          <Pill ok={status.adobePdf}>Adobe PDF {status.adobePdf ? "configurat" : "– viewer pdf.js"}</Pill>
           {status.demo && <Pill ok={null}>Mod demo activ</Pill>}
           {!ai && <Pill ok={false}>/api indisponibil — rulezi cu `npm run dev`?</Pill>}
         </div>

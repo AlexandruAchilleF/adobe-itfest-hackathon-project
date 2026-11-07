@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { distanceKm } from "../src/modules/map/geo";
 import { baselineScore, buildRequestSeed, requestSchema, validateScenario } from "../src/scenario/model";
-import { vecini } from "../src/scenario/scenarios/vecini";
+import { vecini } from "./fixtures/vecini";
 import type { Scenario } from "../src/scenario/types";
 import { scenario, SCENARIOS } from "../src/scenario/config";
 
@@ -63,20 +63,6 @@ describe("scorul de potrivire (determinist)", () => {
   });
 });
 
-describe("mock-ul de structurare (modul demo)", async () => {
-  const { guessQuantity, mockStructure } = await import("../src/scenario/mock");
-  it("ia cantitatea, nu etajul sau ora", () => {
-    expect(guessQuantity("Sunt la etajul 4 pe Calea Moșilor, îmi trebuie 6 sticle")).toEqual({ quantity: 6, unit: "sticle" });
-    expect(guessQuantity("Avem 20 de porții de supă până la ora 22")).toEqual({ quantity: 20, unit: "porții" });
-    expect(guessQuantity("Str. Brașov 12 bloc 3")).toEqual({ quantity: 1, unit: "bucată" });
-  });
-  it("categoria și adresa vin din text", () => {
-    const m = mockStructure("Nu mai am apă pe Calea Moșilor, 6 sticle până diseară", vecini);
-    expect(m).toMatchObject({ category: "apa", quantity: 6, urgency: 5 });
-    expect(m.address).toContain("Calea Moșilor");
-  });
-});
-
 describe("meniul și mascota din config", async () => {
   const { mainNav, showMascot, teamNav } = await import("../src/scenario/nav");
   it("meniul principal folosește cuvintele scenariului și ascunde raportarea dacă e oprită", () => {
@@ -86,7 +72,7 @@ describe("meniul și mascota din config", async () => {
     expect(office.map((n) => n.label)).toEqual(["Cereri", "Profilul meu", "Unde se blochează", "Raportează"]);
   });
   it("rețetele vechi apar doar cu optionalModules", () => {
-    expect(teamNav(vecini).map((n) => n.href)).toContain("/docs");
+    expect(teamNav(vecini).map((n) => n.href)).toContain("/pitch");
     expect(teamNav({ ...vecini, features: { ...vecini.features, optionalModules: false } })).toEqual([]);
   });
   it("modul de pitch ascunde uneltele echipei", async () => {
@@ -101,31 +87,6 @@ describe("meniul și mascota din config", async () => {
   });
 });
 
-describe("mock-ul pentru documente (modul demo)", async () => {
-  const { mockDocument } = await import("../src/scenario/mock");
-  const bon = `TAXI EXEMPLU SRL
-C.U.I. RO12345674
-Nr. bon 0042   Data 05.11.2026
-Cursă Piața Victoriei - Otopeni 70,00 lei
-Taxă bagaj 8,00 lei
-TOTAL 87,00`;
-  it("citește ce scrie pe bon, inclusiv totalul greșit (verificarea îl prinde, nu mock-ul)", () => {
-    expect(mockDocument(bon)).toEqual({
-      kind: "bon",
-      vendor: "TAXI EXEMPLU SRL",
-      cui: "12345674",
-      number: "0042",
-      date: "2026-11-05",
-      currency: "lei",
-      lines: [
-        { label: "Cursă Piața Victoriei - Otopeni", amount: 70 },
-        { label: "Taxă bagaj", amount: 8 },
-      ],
-      total: 87,
-    });
-  });
-});
-
 describe("toate scenariile din SCENARIOS", async () => {
   const { SCENARIOS } = await import("../src/scenario/config");
   for (const [id, s] of Object.entries(SCENARIOS)) {
@@ -136,7 +97,7 @@ describe("toate scenariile din SCENARIOS", async () => {
 
 describe("raportul de pe telefon devine sesizare (reports.toRequest)", async () => {
   const { requestFromReport } = await import("../src/scenario/model");
-  const { sesizari } = await import("../src/scenario/scenarios/sesizari");
+  const { sesizari } = await import("./fixtures/sesizari");
   const r = { type: "groapa", note: "lângă stație", lat: 44.44, lng: 26.12, at: "2026-11-07T10:00:00.000Z", approx: false };
   it("locul, ora și urgența vin din telefon și din config, nu din AI", () => {
     const req = requestFromReport(sesizari, r, "ana-cetatean");

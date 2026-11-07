@@ -2,7 +2,7 @@
 // E ales intenționat diferit de briefurile ITFest, ca echipa să vadă ce se schimbă la adaptare.
 // La hackathon: copiați fișierul, schimbați tot ce e aici și setați-l activ în ../config.ts.
 
-import { defineScenario } from "../types";
+import { defineScenario } from "../../src/scenario/types";
 
 export const vecini = defineScenario({
   id: "vecini",

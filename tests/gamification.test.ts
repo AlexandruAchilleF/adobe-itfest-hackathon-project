@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { confirmationReward, giverStats, impact, isSuspended, leaderboard, pointsFor, rankFor } from "../src/lib/gamification";
 import { advance, apply, createRequest, type Request } from "../src/lib/flow";
-import { vecini } from "../src/scenario/scenarios/vecini";
+import { vecini } from "./fixtures/vecini";
 import type { Scenario } from "../src/scenario/types";
 
 const cfg: Pick<Scenario, "points" | "trust" | "ranks" | "flow"> = {

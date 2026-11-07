@@ -390,8 +390,6 @@ h1, h2, h3 {
 }
 
 /* harta: fundalul OSM atenuat (punctele rămân în culori pline) */
-.leaflet-tile-pane { filter: saturate(0.4) brightness(1.04) contrast(0.95); }
-.leaflet-container { font-family: var(--font-sans); background: #eef0f4; }
 
 /* câmpurile de formular: albe, cu linie, ca să se vadă și pe carduri albe */
 input:not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="color"]), select, textarea {

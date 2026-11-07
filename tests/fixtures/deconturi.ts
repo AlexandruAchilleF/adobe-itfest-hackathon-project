@@ -2,7 +2,7 @@
 // Plătitorul e clar: firma, care plătește deja orele contabilului sau firma de contabilitate.
 // Cifrele de durere NU sunt de la oameni reali încă: se completează din interviuri (business.evidence).
 
-import { defineScenario } from "../types";
+import { defineScenario } from "../../src/scenario/types";
 
 const doc = (vendor: string, cui: string, number: string, date: string, lines: Array<[string, number]>) => ({
   doc: { kind: "bon", vendor, cui, number, date, currency: "lei", lines: lines.map(([label, amount]) => ({ label, amount })), total: lines.reduce((s, [, a]) => s + a, 0) },

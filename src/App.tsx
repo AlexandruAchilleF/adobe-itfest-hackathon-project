@@ -1,11 +1,10 @@
 import { type ComponentType, lazy, Suspense, useEffect, useState } from "react";
-import { Link, Redirect, Route, Switch, useLocation } from "wouter";
+import { Link, Route, Switch, useLocation } from "wouter";
 import type { HealthResponse } from "../shared/ai-contract";
 import { DevPanel, isDevMode } from "./components/DevPanel";
 import { aiHealth } from "./lib/ai";
 import { isDemoMode } from "./lib/demoMode";
 import { supabase } from "./lib/supabase";
-import { adobeClientId } from "./modules/adobe/AdobePdfViewer";
 import { MascotDock } from "./modules/mascot/MascotDock";
 import { HomePage } from "./pages/HomePage";
 import { ScenarioHome } from "./pages/ScenarioHome";
@@ -15,25 +14,14 @@ import { RoleSwitcher } from "./scenario/ui/RoleSwitcher";
 import { LiveProvider } from "./lib/live";
 import { outbox, people, reports, requests } from "./scenario/model";
 
-// Fiecare pagină se încarcă doar când e deschisă (pdf.js, harta și Fabric sunt mari),
+// Fiecare pagină se încarcă doar când e deschisă (Fabric e mare),
 // ca pagina de sondaj de pe telefon să pornească repede.
 const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) =>
   lazy(() => load().then((m) => ({ default: m[name] })));
-const AiPage = page(() => import("./pages/AiPage"), "AiPage");
-const AssistantPage = page(() => import("./pages/AssistantPage"), "AssistantPage");
 const BusinessPage = page(() => import("./pages/BusinessPage"), "BusinessPage");
-const DesignPage = page(() => import("./pages/DesignPage"), "DesignPage");
-const DocsPage = page(() => import("./pages/DocsPage"), "DocsPage");
-const BoardPage = page(() => import("./pages/BoardPage"), "BoardPage");
-const ProfilePage = page(() => import("./pages/ProfilePage"), "ProfilePage");
-const LeaderboardPage = page(() => import("./pages/LeaderboardPage"), "LeaderboardPage");
-const ProcessPage = page(() => import("./pages/ProcessPage"), "ProcessPage");
-const RecordPage = page(() => import("./pages/RecordPage"), "RecordPage");
 const SurveyPage = page(() => import("./pages/SurveyPage"), "SurveyPage");
 const SurveyRespondPage = page(() => import("./pages/SurveyRespondPage"), "SurveyRespondPage");
 const ViewPage = page(() => import("./pages/ViewPage"), "ViewPage");
-const ReportPage = page(() => import("./pages/ReportPage"), "ReportPage");
-const ConfirmPage = page(() => import("./pages/ConfirmPage"), "ConfirmPage");
 const PitchPage = page(() => import("./pages/PitchPage"), "PitchPage");
 const NewCampaignPage = page(() => import("./pages/spire/NewCampaignPage"), "NewCampaignPage");
 const CampaignsPage = page(() => import("./pages/spire/CampaignsPage"), "CampaignsPage");
@@ -54,15 +42,12 @@ export const NAV_GROUPS = [{ label: "", items: MAIN_NAV }, ...(TEAM_NAV.length ?
 const BARE: Array<[string, ComponentType]> = [
   ["/view", ViewPage],
   ["/s", SurveyRespondPage],
-  ["/raport", ReportPage],
-  ["/c", ConfirmPage],
   ["/pitch", PitchPage],
 ];
 
 export interface AppStatus {
   ai: HealthResponse | null;
   supabase: boolean;
-  adobePdf: boolean;
   demo: boolean;
 }
 
@@ -123,9 +108,9 @@ function Shell() {
       </Suspense>
     );
   }
-  const status: AppStatus = { ai, supabase: Boolean(supabase), adobePdf: Boolean(adobeClientId), demo: isDemoMode() };
+  const status: AppStatus = { ai, supabase: Boolean(supabase), demo: isDemoMode() };
   const home = location === "/";
-  const active = (href: string) => location === href || (href === "/cereri" && location === "/harta");
+  const active = (href: string) => location === href;
   const navLinks = MAIN_NAV.map((n) => (
     <Link
       key={n.href}
@@ -168,21 +153,8 @@ function Shell() {
           <Route path="/start">
             <HomePage status={status} />
           </Route>
-          <Route path="/docs" component={DocsPage} />
-          <Route path="/design" component={DesignPage} />
-          <Route path="/assistant" component={AssistantPage} />
-          <Route path="/cereri" component={BoardPage} />
-          <Route path="/harta" component={BoardPage} />
-          <Route path="/profil" component={ProfilePage} />
-          <Route path="/clasament" component={LeaderboardPage} />
-          <Route path="/cronometru" component={ProcessPage} />
-          <Route path="/fisa/:id" component={RecordPage} />
-          <Route path="/map">
-            <Redirect to="/cereri" />
-          </Route>
           <Route path="/business" component={BusinessPage} />
           <Route path="/survey" component={SurveyPage} />
-          <Route path="/ai" component={AiPage} />
           <Route>
             <p className="text-muted">Pagina nu există.</p>
           </Route>

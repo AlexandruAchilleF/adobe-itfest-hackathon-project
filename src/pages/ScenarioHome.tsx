@@ -7,7 +7,7 @@
 // Tot textul vine din scenariu; cifrele le calculează codul (src/lib/gamification.ts, src/lib/checks.ts).
 
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { isDevMode } from "../components/DevPanel";
 import { QrPanel } from "../components/QrPanel";
 import { Accent, Ribbon } from "../components/ui";
@@ -95,7 +95,7 @@ export function ScenarioHome() {
   const enter = (role: string) => {
     const first = people.find((p) => p.role === role);
     if (first) setMe(first.handle);
-    navigate("/cereri");
+    navigate("/nou");
   };
   const roleButtons = (big: boolean) => (
     <div className={`flex flex-wrap gap-3 ${big ? "" : "justify-center"}`} data-testid={big ? "roles" : undefined}>
@@ -208,9 +208,6 @@ export function ScenarioHome() {
                 <Reveal className="card p-6">
                   <div className="mb-4 flex items-center justify-between">
                     <h2 className="font-semibold text-ink">Cine a ajutat cel mai mult</h2>
-                    <Link href="/clasament" className="text-sm text-ink-2 hover:text-coral-deep">
-                      Tot clasamentul →
-                    </Link>
                   </div>
                   <ol className="space-y-3">
                     {top.map((r) => (

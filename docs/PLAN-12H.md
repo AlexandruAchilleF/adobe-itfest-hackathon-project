@@ -7,23 +7,7 @@ Pe scurt: **un om, un input haotic, o transformare AI, un rezultat editabil**, p
 
 Criteriile oficiale din prezentarea Adobe de la ITFest 2026: Problem Solving 25%, AI-Driven Innovation 25%, Third-Party Integrations 15%, Technical Excellence 25%, Product Experience & Demo 10%, plus bonus Cost vs. Value până la 10 puncte.
 Întrebările care le mută, întrebările grele și cum le aplicați la fiecare decizie: [`JURIU.md`](JURIU.md). Deciziile echipei se notează în [`BRIEF.md`](BRIEF.md).
-Cu Claude Code: `/brief` la start (brief → cerințe bifabile → 3 idei punctate), `/juriu` la ora 6 și înainte de pitch.
-
-## Brief-ul → piesele din template
-
-La ITFest, Adobe a dat de fiecare dată un scenariu cu funcționalități opționale numite (2023: ResourceWise, cu hartă și gamificare; 2024, dedus: raportare live pe hartă). Nu alegeți o „rețetă” după cuvinte-cheie: mapați fiecare cerință pe o piesă. Pașii sunt în `docs/BRIEF.md` („Prima oră”), piesele în `README.md`.
-
-| Dacă brief-ul seamănă cu… | Porniți de la scenariul | Ce schimbați |
-|---|---|---|
-| un proces între oameni dintr-o organizație (aprobări, cereri interne, deconturi, documente) | `deconturi` | `roles`, `flow`, `documents.rules`, `seed` |
-| oameni care au ceva și oameni care au nevoie, pe o hartă (resurse, voluntariat) | `resurse` | `roles`, `flow`, `categories`, `reports`, `points`, `seed` |
-| cereri interne: IT, HR, onboarding, aprobări fără documente | `interne` | `roles`, `flow`, `categories`, `seed` |
-| raportare în timp real, la locația curentă (sesizări, incidente, ce vezi acum) | `sesizari` | `reports.types`, `flow`, `roles`, `seed` |
-| citit și înțeles documente lungi | modulul `/docs` + `flow` pentru ce urmează după citire | documentul, întrebările |
-| un material creativ sau accesibilitate | modulul `/design` | brief-ul, formatul, regulile auditului |
-| unelte de marketing cu AI (tema 2026: conținut, decizie, personalizare, conversii) | modulul `/design` + `agent.ts` + `flow` pentru bucla de măsurare | contextul agentului, garda de marcă, codurile de conversie |
-
-Cel mai ieftin indiciu despre temă: întrebați ce s-a prezentat la workshopul Adobe de la ITFest din 22 octombrie.
+Cu Claude Code: `/juriu` la ora 6 și înainte de pitch.
 
 ## Rolurile (stabilite înainte)
 
@@ -76,9 +60,3 @@ Slide-urile sunt în aplicație, la `/pitch`, pe aceleași teme (checklist: `doc
 | Demo-ul pică de tot | video-ul de prezentare |
 | Adobe PDF Embed nu se încarcă | viewer-ul trece automat pe pdf.js |
 | Supabase nu merge | datele rămân în browser (localStorage), sondajul merge între tab-uri |
-
-## Testul înainte de eveniment
-
-Repetiție completă pe tema „Resource Wise” (ITFest 2023): 4 ore de construit și 3 minute de pitch, cronometrate. Adaptarea config-ului, făcută de asistent, e descrisă în `docs/REPETITIE-2023.md`; repetați-o voi, cu ceasul pornit.
-Fiecare membru explică cu voce tare un fișier din nucleu: `src/lib/ai.ts`, `src/lib/documents.ts`, `src/lib/agent.ts` sau `src/lib/store.ts`.
-**Ce nu poate explica nimeni din echipă se scoate.**

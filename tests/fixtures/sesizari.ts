@@ -2,7 +2,7 @@
 // cetățeanul raportează de pe telefon, la locația curentă; raportul devine o sesizare cu flux
 // (preluată → rezolvată → confirmată de cetățean sau „nu s-a rezolvat”). Plătitorul: primăria.
 
-import { defineScenario } from "../types";
+import { defineScenario } from "../../src/scenario/types";
 
 export const sesizari = defineScenario({
   id: "sesizari",

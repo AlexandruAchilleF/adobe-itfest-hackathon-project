@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { type Actor, advance, apply, available, can, createRequest, describeEntry, type FlowDef, happyPath, isExpired, type Request, validateFlow, waitingOn } from "../src/lib/flow";
-import { deconturi } from "../src/scenario/scenarios/deconturi";
-import { vecini } from "../src/scenario/scenarios/vecini";
+import { deconturi } from "./fixtures/deconturi";
+import { vecini } from "./fixtures/vecini";
 
 const now = new Date("2026-11-07T10:00:00Z");
 const F = vecini.flow;

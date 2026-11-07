@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Template pentru hackathon: cameră + gesturi, voce, AI cu JSON structurat, design editabil, multiplayer, Adobe PDF Embed.",
+  "description": "Spire: stilul care îți place, pe marca ta.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
@@ -28,9 +28,7 @@
     "@google/genai": "^2.32.0",
     "@supabase/supabase-js": "^2.118.0",
     "fabric": "^7.4.0",
-    "leaflet": "^1.9.4",
     "lz-string": "^1.5.0",
-    "pdfjs-dist": "^6.5.438",
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -40,7 +38,6 @@
   "devDependencies": {
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/leaflet": "^1.9.22",
     "@types/node": "^26.6.6",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.0",
