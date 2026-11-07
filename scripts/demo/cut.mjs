@@ -7,8 +7,11 @@ import { join } from "node:path";
 import { chromium } from "@playwright/test";
 
 const ROOT = process.cwd();
-const RUN = JSON.parse(readFileSync(join(ROOT, "docs/demo/demo-run.json"), "utf8"));
-const OUT = join(ROOT, "public/pitch/demo.mp4");
+// `DEMO_VARIANT=viteza-reala`: fișiere separate, fără nicio accelerare la montaj.
+const REAL_SPEED = process.env.DEMO_VARIANT === "viteza-reala";
+const SUFFIX = REAL_SPEED ? "-viteza-reala" : "";
+const RUN = JSON.parse(readFileSync(join(ROOT, `docs/demo/demo-run${SUFFIX}.json`), "utf8"));
+const OUT = join(ROOT, `public/pitch/demo${SUFFIX}.mp4`);
 const WORK = join(ROOT, "test-results-demo/cut");
 const FADE = 0.4;
 const MAX_WAIT = 2;
@@ -63,7 +66,7 @@ function sceneParts(scene) {
   let cursor = scene.start;
   for (const wait of [...scene.waits].sort((a, b) => a.start - b.start)) {
     const length = (wait.end - wait.start) / 1000;
-    if (length <= MAX_WAIT) continue;
+    if (REAL_SPEED || length <= MAX_WAIT) continue;
     if (wait.start > cursor) parts.push({ from: cursor, to: wait.start, speed: 1 });
     parts.push({ from: wait.start, to: wait.end, speed: length / MAX_WAIT, wait });
     cursor = wait.end;
@@ -152,7 +155,7 @@ const rows = scenes.map((scene, i) => {
   return `| ${scene.id} | ${clock(start)} | ${(end - start).toFixed(1)} s | ${VOICE[scene.id]}${faster.length ? ` <br>_${faster.join("; ")}_` : ""} |`;
 });
 writeFileSync(
-  join(ROOT, "docs/demo/repere.md"),
+  join(ROOT, `docs/demo/repere${SUFFIX}.md`),
   `# Reperele video-ului demo
 
 Din montajul de pe ${new Date().toISOString().slice(0, 10)}. Video-ul n-are sunet: echipa vorbește peste el, în sală. Durată: ${clock(total)} (${total.toFixed(1)} s). Rulare cu \`${RUN.provider}\`, ${RUN.aiCalls.length} apeluri AI.${RUN.provider === "mock" ? " **Critica și scanarea din film sunt simulate (mock); pe ecran scrie „Analiză simulată”.**" : ""}
@@ -188,7 +191,7 @@ if (banded.length) {
   console.log("Cadrele n-au bandă gri.");
 }
 let late = false;
-for (const { mark, before, label } of DEADLINES) {
+for (const { mark, before, label } of REAL_SPEED ? [] : DEADLINES) {
   const scene = scenes.find((s) => s.marks?.[mark] !== undefined);
   if (!scene) throw new Error(`Lipsește reperul „${mark}” din demo-run.json.`);
   const t = finalSecond(scene, scene.marks[mark]);

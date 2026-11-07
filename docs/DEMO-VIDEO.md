@@ -1,6 +1,6 @@
 # Video-ul demo: Marina Park, filmat cu Playwright
 
-Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 1:56, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 1:56 în loc de 1:20, fiindcă echipa a păstrat clipul întreg, de 40 s. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
+Stare: filmat și montat pe 7 noiembrie, **cu AI simulat (mock)**, 2:13, cu extensia la viteza ei, în `public/pitch/demo.mp4`. Gemini era supraîncărcat (trei încercări, 502), așa că echipa a ales mock-ul; pe ecran scrie „Analiză simulată”, iar brief-ul din film are produsul „Vremea in Vama Veche”. Critica vine din commitul lui David (`76260fc`), iar varianta pentru Marina Park e CSS pregătit de echipă. Reperele: `docs/demo/repere.md`. Scenariul inițial: `docs/PROMPT-DEMO-VIDEO.md`; față de el, filmul n-are zoom și are 2:13 în loc de 1:20, fiindcă echipa a păstrat clipul întreg, de 40 s, și animațiile uliului la viteză reală. Se filmează cu `DEMO_VARIANT=viteza-reala`; fără variabilă, ies filmul accelerat și reperele lui. Pentru o filmare cu Gemini: `npm run demo:film`, apoi `npm run demo:cut`, când modelele răspund.
 
 ## Povestea, într-o frază
 
@@ -12,16 +12,16 @@ Drumul: **site → critică → aplicarea ajustărilor → scanare → video din
 
 ## Formatul
 
-**Un singur video, 1:56**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
+**Un singur video, 2:13**, pentru slide-ul 8 din deck (`public/pitch/demo.mp4`), fără sunet și fără subtitrări: echipa vorbește peste el, live.
 
 ## Regulile filmării
 
 - **Pe site și pe pagina de căutare rulează extensia reală**, încărcată dintr-o copie temporară. În pachetul public nu ajunge nimic din modul de filmare.
 - **Critica rulează pe marinapark.ro live, dar în filmul actual e simulată (mock), iar pe ecran scrie asta.** Ajustările aplicate sunt varianta CSS aleasă de echipă pentru Marina Park, fără scor pe ecran.
-- **Doar în copia de filmare:** zborul uliului e accelerat, uliul intră de pe marginea ecranului, descărcarea clipului e încetinită ca bara să se vadă, iar întrebările de brief din balon sunt ascunse cu un stil. Toate sunt notate în `docs/demo/demo-run.json`.
+- **Doar în copia de filmare:** uliul intră de pe marginea ecranului și pleacă după 250 ms, nu după 4–8 s, descărcarea clipului e încetinită ca bara să se vadă, iar întrebările de brief din balon sunt ascunse cu un stil. Toate sunt notate în `docs/demo/demo-run.json`.
 - **Rezultatele pregătite pornesc doar cu un semnal pus de filmare.** Fără el, aplicația și extensia se poartă ca înainte.
 - **Dacă pică ceva, refacem rularea întreagă.** Nu lipim bucăți din rulări diferite.
-- **Accelerarea așteptărilor are etichetă.** Scriptul notează timpii reali, iar montajul pune ×N din acele cifre.
+- **Filmul actual nu accelerează nimic.** În varianta accelerată, așteptările au etichetă: scriptul notează timpii reali, iar montajul pune ×N din acele cifre.
 - **Referința e a altcuiva** (șablon Envato, cu filigran): spunem „stilul unui afiș găsit” și păstrăm doar așezarea.
 - Fără `?dev=1`, fără chei vizibile, fără notificări.
 

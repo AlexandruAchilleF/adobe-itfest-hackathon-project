@@ -25,10 +25,13 @@ const REFERENCE = `${APP}/samples/spire/marina-park/referinta-camping.png`;
 const DOWNLOAD_BYTES_PER_SECOND = 5_000_000;
 /** Zborul uliului, doar în copia filmării: durata scenelor lasă cam 2 s pe oprire. */
 const BIRD_SPEED = 0.35;
+/** `DEMO_VARIANT=viteza-reala`: extensia la viteza ei, cu pauze în care se văd animațiile uliului; rezultatul stă în fișiere separate. */
+const REAL_SPEED = process.env.DEMO_VARIANT === "viteza-reala";
+const STOP_HOLD_MS = REAL_SPEED ? 1800 : 450;
 
 const ROOT = process.cwd();
 const RAW = join(ROOT, "test-results-demo");
-const RUN_JSON = join(ROOT, "docs/demo/demo-run.json");
+const RUN_JSON = join(ROOT, REAL_SPEED ? "docs/demo/demo-run-viteza-reala.json" : "docs/demo/demo-run.json");
 const FORBIDDEN_ALWAYS = /AI indisponibil|Nu am putut|N-am reușit|Campania nu mai există|Nu primesc nimic|Afiș pregătit pentru demo|Scenariu simulat|Demo simulat/;
 const FORBIDDEN_REAL = /Analiză simulată|Rezultat simulat|Verificări locale/;
 
@@ -72,7 +75,7 @@ function prepareExtension(dirs: string[]): string {
   let content = readFileSync(contentPath, "utf8");
   content = swap(content, "var S = 140, pos = { x: innerWidth - 180, y: 140 }", "var S = 140, pos = { x: innerWidth + 120, y: 90 }");
   content = swap(content, "(4000+Math.random()*4000)*speed", "(globalThis.__demoRoamed ? 7000 : (globalThis.__demoRoamed = true, 250))");
-  writeFileSync(contentPath, `globalThis.__spireTestSpeed = ${BIRD_SPEED};\n${content}`);
+  writeFileSync(contentPath, REAL_SPEED ? content : `globalThis.__spireTestSpeed = ${BIRD_SPEED};\n${content}`);
   return dir;
 }
 
@@ -358,7 +361,7 @@ test("filmarea video-ului demo", async () => {
     await scene(2, "site", async () => {
       await wait("Spire analizează pagina", () => nextButton.or(applyButton).first().waitFor({ state: "visible", timeout: 60_000 }));
       await assertClean(sitePage);
-      for (let stop = 0; stop < 7; stop++) {
+      for (let stop = 0; stop < 30; stop++) {
         if (await applyButton.isVisible()) break;
         if (!(await nextButton.isVisible())) {
           await nextButton.or(applyButton).first().waitFor({ state: "visible", timeout: 12_000 });
@@ -370,7 +373,7 @@ test("filmarea video-ului demo", async () => {
           title: await bubble.locator("h2").innerText().catch(() => ""),
           body: await bubble.locator("p").first().innerText().catch(() => ""),
         });
-        await mouse.idle(450);
+        await mouse.idle(STOP_HOLD_MS);
         await mouse.click(nextButton);
         await pause(250);
       }
@@ -443,7 +446,7 @@ test("filmarea video-ului demo", async () => {
     await scene(5, "site", async () => {
       const description = panel.getByLabel("Ce vrei să creăm?");
       await description.waitFor({ state: "visible" });
-      await mouse.type(description, "Un clip scurt pentru vară", 0.55);
+      await mouse.type(description, "Un clip scurt pentru vară", REAL_SPEED ? 1 : 0.55);
       const prepare = panel.getByRole("button", { name: "Pregătește video" });
       await expect(prepare).toBeEnabled();
       await demo(sitePage).ring(await rectOf(prepare));
@@ -600,12 +603,15 @@ test("filmarea video-ului demo", async () => {
         {
           recordedAt: new Date().toISOString(),
           provider,
+          realSpeed: REAL_SPEED,
           seed: Number(process.env.DEMO_SEED ?? 1107),
           clip: { src: CLIP.replace(APP, ""), from: CLIP_FROM, ms: CLIP_MS },
           brandNote: "Marca Marina Park a fost dată doar browserului filmării (context.route pe citirea spire:marca); în baza comună prima marcă era alta. Baza nu a fost atinsă.",
           filmNotes: [
             ...(real ? [] : ["Filmat cu mock, la cererea echipei: Gemini a fost supraîncărcat pe 7 noiembrie (3 încercări, 502; gemini-3.8-flash n-a răspuns în 40 s, gemini-3.5-flash a dat 503). Critica și scanarea sunt simulate, iar pe ecran scrie „Analiză simulată”."]),
-            `Copia extensiei are zborul uliului la ×${(1 / BIRD_SPEED).toFixed(2)} (__spireTestSpeed = ${BIRD_SPEED}) și intrarea de pe marginea ecranului. Nu e accelerare de montaj.`,
+            REAL_SPEED
+              ? "Extensia rulează la viteza ei, iar montajul nu accelerează nimic. Doar în copia filmării, uliul intră de pe marginea ecranului și pleacă după 250 ms, nu după 4–8 s."
+              : `Copia extensiei are zborul uliului la ×${(1 / BIRD_SPEED).toFixed(2)} (__spireTestSpeed = ${BIRD_SPEED}) și intrarea de pe marginea ecranului. Nu e accelerare de montaj.`,
             "Fără zoom, la cererea echipei: accentul îl pun spotlight-ul și inelele.",
             "Întrebările de brief din balonul uliului sunt ascunse cu un stil pus de filmare în shadow root; logica lor rulează neschimbată.",
             `Descărcarea clipului e încetinită la ${(DOWNLOAD_BYTES_PER_SECOND / 1e6).toFixed(1)} MB/s din CDP, ca bara reală să se vadă.`,
