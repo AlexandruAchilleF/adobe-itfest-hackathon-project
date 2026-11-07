@@ -13,6 +13,7 @@ Prezentarea (de la organizatori): se recomandă un video de circa 3 minute, dura
 - `api/*.ts`: funcții serverless cu semnătură Web standard (`export function POST(request: Request): Response`). În dev sunt servite de `server/vite-api-plugin.ts`. Importurile relative din `api/` și `server/` folosesc extensia `.js`.
   - `api/ai.ts`: un singur endpoint AI (Gemini, Claude sau `mock`, implicit fără chei).
   - `api/geocode.ts`: adresă → coordonate (Nominatim, cu cache).
+  - `api/video.ts` și `api/logo.ts`: contracte doar cu mock (`shared/media-contract.ts`, `server/media.ts`), fără furnizor legat. Video e job asincron: `POST` → `jobId`, `GET ?id=` → stare.
 - `src/lib/ai.ts`: `ask({ prompt, schema, files, mock })` → `{ data }` validat cu Zod. Folosește-l pentru orice apel AI.
 - `src/lib/documents.ts`: logică pură pentru PDF (linii, cuprins H1–H3, secțiuni, context cu `[p. N]`, `verifyCitations`). `src/modules/documents/pdfjs.ts` face citirea în browser. `src/lib/docAi.ts`: `askDocument`, `rankSections`.
 - `src/lib/store.ts`: CRUD cu seed (`createCollection`, `useCollection`). Folosește Supabase (tabela `records`) sau localStorage.

@@ -697,6 +697,14 @@ test("uliul pornește fără panou și se plimbă singur", async () => {
   expect(await inject()).toBe(true);
   const bird = page.locator("#spire-root .spire-bird");
   await expect(bird).toBeVisible();
+  const drawing = bird.locator('.spire-pose.show svg');
+  await expect(drawing).toBeVisible();
+  const rendered = await drawing.evaluate((el) => ({ namespace: el.namespaceURI, svg: el instanceof SVGSVGElement,
+    width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height }));
+  expect(rendered.namespace).toBe("http://www.w3.org/2000/svg");
+  expect(rendered.svg).toBe(true);
+  expect(rendered.width).toBeGreaterThan(100);
+  expect(rendered.height).toBeGreaterThan(100);
   await expect(page.locator("#spire-root iframe")).toHaveCount(0);
   const before = await bird.getAttribute("style");
   await expect.poll(() => bird.getAttribute("style")).not.toBe(before);
@@ -747,6 +755,8 @@ test("critica aterizează, conturează elementul, avansează și termină cu rez
   await inject();
   await startCritique(page);
   const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-bubble p")).toHaveCount(1);
+  await expect(root.locator(".spire-bubble")).not.toContainText("Pentru asistenții AI");
   await expect(root.locator(".spire-bird")).toHaveClass(/perched/);
   await expect(root.locator(".spire-bird")).not.toHaveClass(/flap/);
   await expect(root.locator('.spire-pose.show[data-pose="perched"]')).toHaveCount(1);
