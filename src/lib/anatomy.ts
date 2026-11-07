@@ -38,6 +38,33 @@ export const Anatomy = z.object({
 });
 export type Anatomy = z.infer<typeof Anatomy>;
 
+/** Ce acceptăm de la model: casetele pot veni în pixeli sau puțin peste margine. */
+export const AnatomyRead = Anatomy.extend({
+  zones: z.array(Zone.extend({ box: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }) })),
+});
+export type AnatomyRead = z.infer<typeof AnatomyRead>;
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
+/** O axă: pixeli (peste 2) → împărțiți la dimensiune; apoi tăiată la marginea imaginii. */
+function axis(start: number, size: number, total: number): [number, number] {
+  const scale = Math.max(start, size) > 2 ? total : 1;
+  const s = clamp01(start / scale);
+  return [s, Math.min(1 - s, clamp01(size / scale))];
+}
+
+/** Aduce casetele propuse de model în coordonate 0–1, ca să treacă schema strictă. */
+export function normalizeAnatomy(a: AnatomyRead): Anatomy {
+  return {
+    ...a,
+    zones: a.zones.map((zone) => {
+      const [x, w] = axis(zone.box.x, zone.box.w, a.width);
+      const [y, h] = axis(zone.box.y, zone.box.h, a.height);
+      return { ...zone, box: { x, y, w, h } };
+    }),
+  };
+}
+
 /** Exemplu de postare cu o cămilă; e și răspunsul de rezervă al analizei. */
 export const sampleAnatomy: Anatomy = {
   kind: "image",

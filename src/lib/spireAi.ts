@@ -3,7 +3,7 @@
 import { z } from "zod";
 import type { AiErrorBody } from "../../shared/ai-contract";
 import { ask, AiError, toAttachment } from "./ai";
-import { Anatomy, sampleAnatomy } from "./anatomy";
+import { Anatomy, AnatomyRead, normalizeAnatomy, sampleAnatomy } from "./anatomy";
 import type { Brand } from "./brand";
 import { campaignCandidates } from "./campaign";
 import { type Copy, copyFromAnswers } from "./compose";
@@ -46,7 +46,7 @@ export async function summarizePage(page: PageSummary, elements: PageElement[]):
 }
 
 export async function analyzeReference(image: string, extra?: { elements?: PageElement[]; root?: SectionNode }): Promise<Anatomy> {
-  const kind = extra?.root ? "section" : "image";
+  const kind: Anatomy["kind"] = extra?.root ? "section" : "image";
   const read = extra?.elements?.length ? extra.elements : extra?.root;
   const { data: anatomy } = await ask({
     prompt: [
@@ -59,11 +59,12 @@ export async function analyzeReference(image: string, extra?: { elements?: PageE
       read ? data(read) : "",
     ].join("\n"),
     files: [image],
-    schema: Anatomy,
+    schema: AnatomyRead,
+    outputSchema: Anatomy,
     mock: { ...sampleAnatomy, kind },
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  return { ...anatomy, kind };
+  return { ...normalizeAnatomy(anatomy), kind };
 }
 
 const CopyRead = z.object({ items: z.array(z.object({ zone: z.string(), text: z.string() })) });
