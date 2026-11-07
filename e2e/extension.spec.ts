@@ -10,7 +10,8 @@ import { parseExtensionMessage } from "../src/lib/extensionBridge";
 // activeTab se acordă doar la un clic real pe iconiță, pe care Playwright nu îl poate face.
 // Fără permisiune, chrome.scripting.executeScript din service worker ar eșua pe fixture.
 // Așa că testul copiază chrome-extension/ într-un director temporar din os.tmpdir() și DOAR în
-// copie adaugă host_permissions pentru originile de test și rescrie APP_URL din config.js.
+// copie adaugă host_permissions pentru originile de test (plus "<all_urls>" pentru captură, vezi
+// prepareExtension) și rescrie APP_URL din config.js.
 // Fișierele din repo rămân neatinse; directorul temporar se șterge la final.
 
 // Originea falsă pe care servim fixture-ul (prin context.route, fără server nou).
@@ -48,7 +49,19 @@ window.__reply = function () {
 window.addEventListener("message", function (event) {
   var data = event.data;
   window.__spireMessages.push({ origin: event.origin, fromParent: event.source === parent, type: data && data.type, receivedAt: Date.now() });
-  if (!data || data.type !== "spire:page") return;
+  if (!data) return;
+  // Referința (A3): o arătăm ca aplicația reală, cu titlul „Ce am văzut”, și o ținem minte.
+  if (data.type === "spire:reference" && typeof data.image === "string" && data.image.indexOf("data:image/jpeg") === 0 && Array.isArray(data.elementIds)) {
+    window.__spireReference = data;
+    if (!document.getElementById("vazut")) {
+      var h = document.createElement("h2");
+      h.id = "vazut";
+      h.textContent = "Ce am văzut";
+      document.body.appendChild(h);
+    }
+    return;
+  }
+  if (data.type !== "spire:page") return;
   window.__spirePage = data;
   if (${reply}) window.__reply();
 });
@@ -73,7 +86,9 @@ function prepareExtension(): string {
 
   const manifestPath = join(dir, "manifest.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  manifest.host_permissions = [`${SITE_ORIGIN}/*`, `${APP_URL}/*`];
+  // "<all_urls>": chrome.tabs.captureVisibleTab cere fie activeTab (acordat la clicul real pe
+  // iconiță, pe care testul nu îl poate face), fie <all_urls>. Doar în copie, ca dublură a clicului.
+  manifest.host_permissions = [`${SITE_ORIGIN}/*`, `${APP_URL}/*`, "<all_urls>"];
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
   const configPath = join(dir, "config.js");
@@ -85,41 +100,50 @@ function prepareExtension(): string {
 }
 
 let extDir: string;
-let userDataDir: string;
 let context: BrowserContext;
 let sw: Worker;
+const profiles: string[] = [];
 
-test.beforeAll(async () => {
-  extDir = prepareExtension();
-  userDataDir = mkdtempSync(join(tmpdir(), "spire-profile-"));
-  context = await chromium.launchPersistentContext(userDataDir, {
+// Un Chromium cu extensia și rutele de test. Al doilea (ecran cu densitate 2) se pornește în testul lui.
+async function launch(options: { deviceScaleFactor?: number; args?: string[] } = {}): Promise<{ context: BrowserContext; sw: Worker }> {
+  const userDataDir = mkdtempSync(join(tmpdir(), "spire-profile-"));
+  profiles.push(userDataDir);
+  const ctx = await chromium.launchPersistentContext(userDataDir, {
     channel: "chromium",
     headless: true,
-    args: [`--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`],
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: options.deviceScaleFactor,
+    args: [`--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`, ...(options.args ?? [])],
   });
   const html = { status: 200, contentType: "text/html; charset=utf-8" };
-  await context.route(`${SITE_ORIGIN}/**`, (route) => {
+  await ctx.route(`${SITE_ORIGIN}/**`, (route) => {
     const body = new URL(route.request().url()).pathname === "/mare" ? bigPage() : readFileSync(FIXTURE, "utf8");
     return route.fulfill({ ...html, body });
   });
-  await context.route(`${APP_URL}/**`, (route) => {
+  await ctx.route(`${APP_URL}/**`, (route) => {
     // Navigarea din script (o redirecționare 302 prin route nu e urmată în iframe).
     if (appMode === "redirect") return route.fulfill({ ...html, body: `<script>location.replace(${JSON.stringify(`${OTHER_ORIGIN}/nou`)})</script>` });
     return route.fulfill({ ...html, body: appDouble(appMode === "raspunde") });
   });
-  await context.route(`${OTHER_ORIGIN}/**`, (route) => route.fulfill({ ...html, body: appDouble(false) }));
-  sw = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+  await ctx.route(`${OTHER_ORIGIN}/**`, (route) => route.fulfill({ ...html, body: appDouble(false) }));
+  const worker = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker"));
+  return { context: ctx, sw: worker };
+}
+
+test.beforeAll(async () => {
+  extDir = prepareExtension();
+  ({ context, sw } = await launch());
 });
 
 test.afterAll(async () => {
   await context?.close();
   rmSync(extDir, { recursive: true, force: true });
-  rmSync(userDataDir, { recursive: true, force: true });
+  for (const dir of profiles) rmSync(dir, { recursive: true, force: true });
 });
 
 // Ce face clicul pe iconiță: background.js injectează config.js și content.js în fila cu fixture-ul.
-async function inject(): Promise<boolean> {
-  return sw.evaluate(async (origin) => {
+async function inject(worker: Worker = sw): Promise<boolean> {
+  return worker.evaluate(async (origin) => {
     type Chrome = {
       tabs: { query: (q: { url: string }) => Promise<Array<{ id?: number }>> };
     };
@@ -130,8 +154,8 @@ async function inject(): Promise<boolean> {
   }, SITE_ORIGIN);
 }
 
-async function openFixture(): Promise<Page> {
-  const page = await context.newPage();
+async function openFixture(ctx: BrowserContext = context): Promise<Page> {
+  const page = await ctx.newPage();
   await page.goto(`${SITE_ORIGIN}/`);
   await expect(page.getByRole("heading", { name: "Cupe pentru dimineți lente" })).toBeVisible();
   return page;
@@ -357,4 +381,256 @@ test("pe o pagină cu 3000 de rânduri, scanarea dă cel mult 200 de elemente ș
   // Pagina răspunde după scanare.
   expect(await page.evaluate(() => document.title)).toBe("Pagina mare");
   await page.close();
+});
+
+// ---------------------------------------------------------------------------------------------
+// A3: captura, decupajul și referința (spire:reference).
+// ---------------------------------------------------------------------------------------------
+
+type Reference = { type: string; image: string; elementIds: string[] };
+
+// Referința primită de dublura aplicației, după ce a apărut „Ce am văzut”.
+async function reference(frame: Frame): Promise<Reference> {
+  await expect(frame.getByText("Ce am văzut")).toBeVisible();
+  return frame.evaluate(() => (window as unknown as { __spireReference: Reference }).__spireReference);
+}
+
+async function referenceCount(frame: Frame): Promise<number> {
+  return (await received(frame)).filter((m) => m.type === "spire:reference").length;
+}
+
+// Dimensiunile imaginii și, la cerere, culoarea câtorva pixeli (coordonate în imagine).
+async function imageInfo(frame: Frame, image: string, points: Array<[number, number]> = []) {
+  return frame.evaluate(
+    async ({ image, points }) => {
+      const img = new Image();
+      img.src = image;
+      await img.decode();
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+      ctx.drawImage(img, 0, 0);
+      const pixels = points.map(([x, y]) => Array.from(ctx.getImageData(x, y, 1, 1).data.slice(0, 3)));
+      return { w: img.naturalWidth, h: img.naturalHeight, pixels };
+    },
+    { image, points },
+  );
+}
+
+// Dreptunghi tras cu mouse-ul real, în coordonatele viewport-ului.
+async function drag(page: Page, from: [number, number], to: [number, number]) {
+  await page.mouse.move(from[0], from[1]);
+  await page.mouse.down();
+  await page.mouse.move((from[0] + to[0]) / 2, (from[1] + to[1]) / 2, { steps: 4 });
+  await page.mouse.move(to[0], to[1], { steps: 4 });
+  await page.mouse.up();
+}
+
+function near(actual: number, expected: number, tolerance = 3) {
+  expect(Math.abs(actual - expected), `${actual} față de ${expected}`).toBeLessThanOrEqual(tolerance);
+}
+
+type Box = { x: number; y: number; width: number; height: number };
+
+// Ce element vede pagina sub un punct: id-ul elementului sau „spire-root” pentru stratul Spire.
+async function hitAt(page: Page, x: number, y: number): Promise<string> {
+  return page.evaluate(([x, y]) => {
+    const el = document.elementFromPoint(x, y);
+    return el ? el.id || el.tagName.toLowerCase() : "";
+  }, [x, y] as const);
+}
+
+test("Strânge, apoi clic real pe chenarul mascotei: decupajul mascotei, JPEG, cu id-ul ei; panoul se redeschide", async () => {
+  const page = await openFixture();
+  expect(await inject()).toBe(true);
+  const frame = await appFrame(page);
+  const msg = await spirePage(frame);
+  const mascot = msg.elements.find((e) => e.tag === "svg");
+  const root = page.locator("#spire-root");
+  const panel = root.locator(".spire-panel");
+  const tab = root.getByRole("button", { name: "Deschide panoul Spire" });
+  await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
+
+  // Stratul nu prinde clicuri în afara chenarelor: sub (20, 650) e tot pagina.
+  expect(await hitAt(page, 20, 650)).not.toBe("spire-root");
+
+  // Mascota stă sub panoul de 420 px: un clic real acolo nimerește panoul.
+  const svg = (await page.locator("svg.mascot").boundingBox()) as Box;
+  const mx = svg.x + svg.width / 2;
+  const my = svg.y + svg.height / 2;
+  expect(await hitAt(page, mx, my)).toBe("spire-root");
+
+  // Strânge: rămâne fila de ~44 px la margine, iframe-ul rămâne încărcat (aceeași fereastră).
+  const before = await frame.evaluate(() => performance.timeOrigin);
+  await root.getByRole("button", { name: "Strânge panoul Spire" }).click();
+  await expect(panel).toBeHidden();
+  await expect(tab).toBeVisible();
+  const tabBox = (await tab.boundingBox()) as Box;
+  near(tabBox.width, 44, 1);
+  near(tabBox.x + tabBox.width, page.viewportSize()?.width ?? 0, 1);
+  expect(frame.isDetached()).toBe(false);
+  expect(await frame.evaluate(() => performance.timeOrigin)).toBe(before);
+
+  // Interiorul chenarului lasă clicul spre pagină; doar marginea îl prinde.
+  expect(await hitAt(page, mx, my)).not.toBe("spire-root");
+  const mascotBox = root.locator(".spire-box").nth(2);
+  await expect(mascotBox.locator(".spire-box-edge-top")).toHaveCSS("cursor", "pointer");
+  const edge = (await mascotBox.locator(".spire-box-edge-left").boundingBox()) as Box;
+  const ex = edge.x + edge.width / 2;
+  const ey = edge.y + edge.height / 2;
+  expect(await hitAt(page, ex, ey)).toBe("spire-root");
+
+  // Două clicuri reale la rând: al doilea vine cât captura e în curs și se ignoră.
+  await page.mouse.click(ex, ey);
+  await page.mouse.click(ex, ey);
+
+  const ref = await reference(frame);
+  expect(parseExtensionMessage(ref)?.type).toBe("spire:reference");
+  expect(ref.elementIds).toEqual([mascot?.id]);
+  expect(ref.image.startsWith("data:image/jpeg")).toBe(true);
+
+  // Panoul s-a deschis singur, ca omul să vadă „Ce am văzut”; fila a dispărut.
+  await expect(panel).toBeVisible();
+  await expect(tab).toBeHidden();
+  expect(await frame.evaluate(() => performance.timeOrigin)).toBe(before);
+
+  const dpr = await page.evaluate(() => window.devicePixelRatio);
+  const info = await imageInfo(frame, ref.image);
+  near(info.w, svg.width * dpr);
+  near(info.h, svg.height * dpr);
+  expect(Math.max(info.w, info.h)).toBeLessThanOrEqual(1080);
+
+  await page.waitForTimeout(800);
+  expect(await referenceCount(frame)).toBe(1);
+
+  // Fila redeschide panoul și cu mâna.
+  await root.getByRole("button", { name: "Strânge panoul Spire" }).click();
+  await tab.click();
+  await expect(panel).toBeVisible();
+  await page.close();
+});
+
+test("Decupează: dreptunghiul tras cu mouse-ul ajunge în aplicație; Esc anulează, cele mici se ignoră", async () => {
+  const page = await openFixture();
+  expect(await inject()).toBe(true);
+  const frame = await appFrame(page);
+  await spirePage(frame);
+  const root = page.locator("#spire-root");
+  const crop = root.locator(".spire-crop");
+  const button = root.getByRole("button", { name: "Decupează" });
+
+  // Fără mod de decupaj, stratul nu prinde clicuri.
+  await expect(crop).toBeHidden();
+
+  // Esc anulează.
+  await button.click();
+  await expect(crop).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(crop).toBeHidden();
+
+  // Un dreptunghi mai mic de 20×20 nu trimite nimic; modul rămâne deschis.
+  await button.click();
+  await drag(page, [100, 150], [110, 158]);
+  await page.waitForTimeout(500);
+  expect(await referenceCount(frame)).toBe(0);
+  await expect(crop).toBeVisible();
+
+  await drag(page, [100, 150], [500, 450]);
+  const ref = await reference(frame);
+  expect(parseExtensionMessage(ref)?.type).toBe("spire:reference");
+  await expect(crop).toBeHidden();
+  const dpr = await page.evaluate(() => window.devicePixelRatio);
+  const info = await imageInfo(frame, ref.image);
+  near(info.w, 400 * dpr);
+  near(info.h, 300 * dpr);
+
+  // elementIds: elementele scanate aflate în mare parte în dreptunghi (aici titlul, nu mascota).
+  const msg = await spirePage(frame);
+  const known = new Set(msg.elements.map((e) => e.id));
+  for (const id of ref.elementIds) expect(known.has(id)).toBe(true);
+  expect(ref.elementIds).toContain(msg.elements.find((e) => e.tag === "h1")?.id);
+  expect(ref.elementIds).not.toContain(msg.elements.find((e) => e.tag === "svg")?.id);
+  await page.close();
+});
+
+test("captura nu conține stratul Spire: sub panou și sub decupaj e culoarea paginii", async () => {
+  const page = await openFixture();
+  expect(await inject()).toBe(true);
+  const frame = await appFrame(page);
+  await spirePage(frame);
+  const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
+
+  // Un fond simplu (#FFF4D6) sub hero, de la x=700 (pagina) până la x=1250 (sub panoul alb, care
+  // începe la 860). Dreptunghiul începe pe pagină; mouse-ul trece apoi peste panou.
+  await root.getByRole("button", { name: "Decupează" }).click();
+  await drag(page, [700, 590], [1250, 700]);
+  const ref = await reference(frame);
+  const dpr = await page.evaluate(() => window.devicePixelRatio);
+  // (750, 640) e sub stratul de decupaj (umbrit); (1100, 640) e sub panou (alb, #ffffff).
+  const info = await imageInfo(frame, ref.image, [
+    [Math.round(50 * dpr), Math.round(50 * dpr)],
+    [Math.round(400 * dpr), Math.round(50 * dpr)],
+  ]);
+  for (const [r, g, b] of info.pixels) {
+    near(r, 0xff, 8);
+    near(g, 0xf4, 8);
+    near(b, 0xd6, 8);
+  }
+  // Și stratul e la loc după captură.
+  await expect(root.locator(".spire-panel")).toBeVisible();
+  await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
+  await page.close();
+});
+
+test("cu deviceScaleFactor 2, decupajul are de două ori mai mulți pixeli, dar tot cel mult 1080", async () => {
+  // deviceScaleFactor din Playwright e doar emulare (Emulation.setDeviceMetricsOverride): pagina vede
+  // devicePixelRatio 2, dar captureVisibleTab dă tot o imagine 1x. Un ecran 2x adevărat vine din
+  // --force-device-scale-factor=2; deviceScaleFactor: 2 rămâne ca emularea să nu-l readucă la 1.
+  const hi = await launch({ deviceScaleFactor: 2, args: ["--force-device-scale-factor=2"] });
+  try {
+    const page = await openFixture(hi.context);
+    expect(await page.evaluate(() => window.devicePixelRatio)).toBe(2);
+    expect(await inject(hi.sw)).toBe(true);
+    const frame = await appFrame(page);
+    const msg = await spirePage(frame);
+    const root = page.locator("#spire-root");
+    await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
+
+    // Clic real pe eticheta chenarului butonului (în stânga, nu e sub panou). Interiorul chenarului
+    // lasă clicul spre pagină, deci ținta e eticheta.
+    const cta = (await page.getByRole("link", { name: "Comandă acum" }).boundingBox()) as Box;
+    const label = (await root.locator(".spire-box-label", { hasText: "buton" }).boundingBox()) as Box;
+    await page.mouse.click(label.x + label.width / 2, label.y + label.height / 2);
+    const ref = await reference(frame);
+    expect(ref.elementIds).toEqual([msg.elements.find((e) => e.tag === "a")?.id]);
+    const info = await imageInfo(frame, ref.image);
+    near(info.w, cta.width * 2, 4);
+    near(info.h, cta.height * 2, 4);
+
+    // Un dreptunghi de 600×300 px CSS are 1200×600 px în captură: se micșorează la 1080×540.
+    await frame.evaluate(() => {
+      (window as unknown as { __spireReference: unknown }).__spireReference = null;
+    });
+    await page.waitForTimeout(600); // captureVisibleTab: cel mult 2 capturi pe secundă
+    await root.getByRole("button", { name: "Decupează" }).click();
+    await drag(page, [80, 100], [680, 400]);
+    await expect.poll(() => referenceCount(frame)).toBe(2);
+    const big = await frame.evaluate(() => (window as unknown as { __spireReference: Reference }).__spireReference);
+    const bigInfo = await imageInfo(frame, big.image);
+    expect(bigInfo.w).toBe(1080);
+    near(bigInfo.h, 540, 2);
+    await page.close();
+  } finally {
+    await hi.context.close();
+  }
+});
+
+test("content.js trimite referința doar spre APP_ORIGIN, iar background.js captează doar pentru extensie", () => {
+  const content = readFileSync(join(EXT_SRC, "content.js"), "utf8");
+  expect(content).toMatch(/type: "spire:reference"[\s\S]*config\.APP_ORIGIN/);
+  const background = readFileSync(join(EXT_SRC, "background.js"), "utf8");
+  expect(background).toMatch(/sender\.id !== chrome\.runtime\.id/);
+  expect(background).toMatch(/captureVisibleTab/);
 });

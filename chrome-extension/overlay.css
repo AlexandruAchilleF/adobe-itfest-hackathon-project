@@ -37,9 +37,97 @@
   transition: opacity 200ms ease-out, transform 200ms ease-out;
 }
 
+/* Aprins, chenarul se poate alege (A3). Interiorul rămâne transparent la clicuri (un chenar hero
+   acoperă tot ecranul); le prind doar marginile și eticheta. */
 .spire-box-lit {
   opacity: 1;
   transform: none;
+}
+
+/* Benzile de 10 px peste margine (2 px vizibili): ținta clicului. */
+.spire-box-edge {
+  position: absolute;
+  pointer-events: none;
+}
+
+.spire-box-lit .spire-box-edge,
+.spire-box-lit .spire-box-label {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.spire-box-edge-top,
+.spire-box-edge-bottom {
+  left: -6px;
+  right: -6px;
+  height: 10px;
+}
+
+.spire-box-edge-top {
+  top: -6px;
+}
+
+.spire-box-edge-bottom {
+  bottom: -6px;
+}
+
+.spire-box-edge-left,
+.spire-box-edge-right {
+  top: -6px;
+  bottom: -6px;
+  width: 10px;
+}
+
+.spire-box-edge-left {
+  left: -6px;
+}
+
+.spire-box-edge-right {
+  right: -6px;
+}
+
+.spire-box-lit:hover,
+.spire-box-lit:focus-visible {
+  background: rgba(242, 92, 59, 0.14);
+  outline: none;
+}
+
+/* „Alege”, în colțul dreapta-jos, cât stai cu mouse-ul pe chenar. */
+.spire-box-lit:hover::after,
+.spire-box-lit:focus-visible::after {
+  content: "Alege";
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--spire-ink);
+  color: #ffffff;
+  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+}
+
+/* Stratul de decupaj (A3): peste pagină, sub panou; prinde clicuri doar cât e deschis. */
+.spire-crop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 68, 0.12);
+  cursor: crosshair;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.spire-crop[hidden],
+.spire-crop-rect[hidden] {
+  display: none;
+}
+
+.spire-crop-rect {
+  position: absolute;
+  border: 2px solid var(--spire-coral);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -79,6 +167,44 @@
   pointer-events: auto;
 }
 
+/* Strâns: ascuns, dar încărcat (visibility nu descarcă iframe-ul și nu se lovește la clic). */
+.spire-panel.spire-panel-collapsed {
+  visibility: hidden;
+}
+
+/* Fila panoului strâns, lipită de marginea dreaptă. */
+.spire-tab {
+  position: fixed;
+  top: 96px;
+  right: 0;
+  width: 44px;
+  padding: 14px 0;
+  border: 1px solid var(--spire-line);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: var(--spire-paper);
+  color: var(--spire-ink);
+  box-shadow: -4px 0 12px rgba(31, 42, 68, 0.12);
+  font: 500 13px/1 "Geist", system-ui, sans-serif;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.spire-tab[hidden] {
+  display: none;
+}
+
+.spire-tab:hover {
+  background: #f4f5f7;
+}
+
+.spire-tab:focus-visible {
+  outline: 2px solid var(--spire-ink);
+  outline-offset: 2px;
+}
+
 .spire-frame {
   flex: 1;
   width: 100%;
@@ -87,9 +213,24 @@
   background: var(--spire-paper);
 }
 
-.spire-close {
-  align-self: flex-end;
-  margin: 8px 10px 0;
+/* Bara de sus a panoului: starea (stânga), apoi butoanele. */
+.spire-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 0;
+}
+
+.spire-status {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: 400 13px/1.35 "Geist", system-ui, sans-serif;
+  color: var(--spire-ink);
+}
+
+.spire-button {
+  flex: none;
   padding: 6px 12px;
   border: 1px solid var(--spire-line);
   border-radius: 10px;
@@ -99,11 +240,11 @@
   cursor: pointer;
 }
 
-.spire-close:hover {
+.spire-button:hover {
   background: #f4f5f7;
 }
 
-.spire-close:focus-visible {
+.spire-button:focus-visible {
   outline: 2px solid var(--spire-ink);
   outline-offset: 2px;
 }

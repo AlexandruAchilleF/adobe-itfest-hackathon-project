@@ -1,5 +1,5 @@
 // Stratul Spire din pagină. Injectat de background.js după config.js (la clic pe iconiță).
-// Desenează doar chenarele de scanare (A2) și, mai târziu, decupajul (A3). Spire (uliul),
+// Desenează doar chenarele de scanare (A2) și decupajul (A3). Spire (uliul),
 // balonul și întrebările sunt aplicația din iframe: un singur desen, aceleași stări.
 // Script clasic, fără build. Singura urmă globală: marcajul __spireInjected.
 (function () {
@@ -49,23 +49,60 @@
   css.href = chrome.runtime.getURL("overlay.css");
   shadow.appendChild(css);
 
-  // Stratul pentru chenarele de scanare (A2) și decupaj (A3). Nu prinde clicuri.
+  // Stratul pentru chenarele de scanare (A2). Nu prinde clicuri; doar chenarele aprinse (A3).
   var boxes = document.createElement("div");
   boxes.className = "spire-boxes";
   shadow.appendChild(boxes);
 
-  // Panoul din dreapta: aplicația Spire într-un iframe.
+  // Stratul de decupaj (A3): ascuns; în modul de decupaj prinde clicurile de pe pagină. Stă sub
+  // panou, ca bara panoului să rămână la îndemână.
+  var crop = document.createElement("div");
+  crop.className = "spire-crop";
+  crop.hidden = true;
+  var cropRect = document.createElement("div");
+  cropRect.className = "spire-crop-rect";
+  cropRect.hidden = true;
+  crop.appendChild(cropRect);
+  shadow.appendChild(crop);
+
+  // Panoul din dreapta: bara (stare, Decupează, Închide) și aplicația Spire într-un iframe.
   var panel = document.createElement("div");
   panel.className = "spire-panel";
 
+  var bar = document.createElement("div");
+  bar.className = "spire-bar";
+
+  // Mesajele scurte (erori, indicații). Doar textContent.
+  var status = document.createElement("p");
+  status.className = "spire-status";
+  status.setAttribute("role", "status");
+  bar.appendChild(status);
+
+  var cropButton = document.createElement("button");
+  cropButton.type = "button";
+  cropButton.className = "spire-button";
+  cropButton.textContent = "Decupează";
+  cropButton.setAttribute("aria-pressed", "false");
+  bar.appendChild(cropButton);
+
+  // „Strânge”: panoul se ascunde (visibility, deci iframe-ul rămâne încărcat cu starea aplicației)
+  // și în locul lui rămâne o filă îngustă la marginea dreaptă. Pagina de sub panou devine clicabilă.
+  var collapseButton = document.createElement("button");
+  collapseButton.type = "button";
+  collapseButton.className = "spire-button";
+  collapseButton.textContent = "Strânge";
+  collapseButton.setAttribute("aria-label", "Strânge panoul Spire");
+  bar.appendChild(collapseButton);
+
   var close = document.createElement("button");
   close.type = "button";
-  close.className = "spire-close";
+  close.className = "spire-button spire-close";
   close.textContent = "Închide Spire";
   close.addEventListener("click", function () {
     host.style.setProperty("display", "none", "important");
   });
-  panel.appendChild(close);
+  bar.appendChild(close);
+  panel.appendChild(bar);
 
   var iframe = document.createElement("iframe");
   iframe.className = "spire-frame";
@@ -75,6 +112,29 @@
   panel.appendChild(iframe);
 
   shadow.appendChild(panel);
+
+  var tab = document.createElement("button");
+  tab.type = "button";
+  tab.className = "spire-tab";
+  tab.textContent = "Spire";
+  tab.setAttribute("aria-label", "Deschide panoul Spire");
+  tab.hidden = true;
+  shadow.appendChild(tab);
+
+  function setCollapsed(on) {
+    panel.classList.toggle("spire-panel-collapsed", on);
+    tab.hidden = !on;
+  }
+
+  collapseButton.addEventListener("click", function () {
+    setCollapsed(true);
+    tab.focus();
+  });
+  tab.addEventListener("click", function () {
+    setCollapsed(false);
+    collapseButton.focus();
+  });
+
   (document.body || document.documentElement).appendChild(host);
 
   // ---------------------------------------------------------------------------------------------
@@ -324,7 +384,7 @@
   var KIND_LABELS = { hero: "hero", offer: "ofertă", mascot: "mascotă", cta: "buton", badge: "insignă" };
   var MAX_PICKS = 10;
   var LIGHT_STEP_MS = 250;
-  var drawn = []; // { el, box }
+  var drawn = []; // { el, id, box }
   var timers = [];
   var frameRequested = false;
 
@@ -374,7 +434,7 @@
       var key = p.elementId + "|" + p.kind;
       if (seen[key]) continue;
       seen[key] = true;
-      out.push({ el: el, kind: p.kind });
+      out.push({ el: el, id: p.elementId, kind: p.kind });
     }
     return out;
   }
@@ -386,11 +446,32 @@
     valid.forEach(function (pick, i) {
       var box = document.createElement("div");
       box.className = "spire-box";
+      // Chenarul e și buton (A3): clic sau Enter → referința din caseta elementului.
+      box.setAttribute("role", "button");
+      box.tabIndex = 0;
+      box.setAttribute("aria-label", "Alege " + KIND_LABELS[pick.kind]);
+      // Interiorul chenarului lasă clicurile spre pagină (un chenar hero acoperă tot ecranul);
+      // le prind doar cele patru margini și eticheta.
+      ["top", "right", "bottom", "left"].forEach(function (side) {
+        var edge = document.createElement("span");
+        edge.className = "spire-box-edge spire-box-edge-" + side;
+        box.appendChild(edge);
+      });
       var label = document.createElement("span");
       label.className = "spire-box-label";
       label.textContent = KIND_LABELS[pick.kind]; // doar textContent, niciodată HTML
       box.appendChild(label);
-      var entry = { el: pick.el, box: box };
+      var entry = { el: pick.el, id: pick.id, box: box };
+      box.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        chooseElement(entry);
+      });
+      box.addEventListener("keydown", function (event) {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        chooseElement(entry);
+      });
       placeBox(entry);
       boxes.appendChild(box);
       drawn.push(entry);
@@ -401,6 +482,272 @@
       );
     });
   }
+
+  // ---------------------------------------------------------------------------------------------
+  // Decupajul și referința (A3): clic pe un chenar sau un dreptunghi tras cu mouse-ul →
+  // captura filei (background.js) → decupajul în pagină → spire:reference spre aplicație.
+  // Din pagină pleacă doar decupajul, niciodată captura întreagă.
+  // ---------------------------------------------------------------------------------------------
+  var MAX_SIDE = 1080; // latura cea mai mare a decupajului, în pixeli (nu mărim niciodată)
+  var MIN_CROP = 20; // dreptunghiurile mai mici (în px CSS, pe oricare latură) se ignoră
+  var MOSTLY_INSIDE = 0.5; // un element intră în elementIds dacă cel puțin jumătate din el e în dreptunghi
+  var JPEG_QUALITY = 0.85;
+  var busy = false; // o captură în curs: alte clicuri se ignoră (captureVisibleTab are limită de rată)
+
+  function clamp(v, min, max) {
+    return Math.min(max, Math.max(min, v));
+  }
+
+  // Calculul pur al decupajului, fără DOM.
+  // - box: caseta în px CSS, coordonatele viewport-ului ({ x, y, w, h }), citită la momentul clicului.
+  // - viewport: { w: innerWidth, h: innerHeight }; image: { w, h } ale capturii (pixeli de ecran).
+  // Scara = lățimea capturii / innerWidth. Acoperă și devicePixelRatio, și zoom-ul browserului
+  // (captura e în pixeli de ecran, innerWidth în px CSS). devicePixelRatio e doar rezerva, când una
+  // dintre lățimi lipsește (0).
+  // Caseta se prinde în limitele imaginii: dintr-un element ieșit parțial din ecran rămâne doar
+  // partea vizibilă (captura nu are restul). Apoi micșorăm (fără mărire) ca latura mai mare să fie
+  // cel mult MAX_SIDE. Întoarce null dacă nu rămâne nimic vizibil.
+  function cropPlan(box, viewport, image, dpr) {
+    var scale = image.w > 0 && viewport.w > 0 ? image.w / viewport.w : dpr > 0 ? dpr : 1;
+    var sx = clamp(Math.round(box.x * scale), 0, image.w);
+    var sy = clamp(Math.round(box.y * scale), 0, image.h);
+    var sw = clamp(Math.round((box.x + box.w) * scale), 0, image.w) - sx;
+    var sh = clamp(Math.round((box.y + box.h) * scale), 0, image.h) - sy;
+    if (sw < 1 || sh < 1) return null;
+    var fit = Math.min(1, MAX_SIDE / Math.max(sw, sh));
+    return {
+      scale: scale,
+      sx: sx,
+      sy: sy,
+      sw: sw,
+      sh: sh,
+      dw: Math.max(1, Math.round(sw * fit)),
+      dh: Math.max(1, Math.round(sh * fit)),
+    };
+  }
+
+  function setStatus(text) {
+    status.textContent = text || "";
+  }
+
+  function rectBox(r) {
+    return { x: r.left, y: r.top, w: r.width, h: r.height };
+  }
+
+  // Ascundem tot stratul Spire (panou, chenare, decupaj) cât se face captura, altfel apare în ea.
+  // visibility, nu display: iframe-ul aplicației rămâne încărcat și nu se reflowează nimic.
+  function setLayerHidden(hidden) {
+    if (hidden) host.style.setProperty("visibility", "hidden", "important");
+    else host.style.removeProperty("visibility");
+  }
+
+  // Două cadre: în primul se aplică stilul, al doilea e desenat fără strat.
+  function twoFrames() {
+    return new Promise(function (resolve) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          resolve();
+        });
+      });
+    });
+  }
+
+  function captureTab() {
+    try {
+      return chrome.runtime.sendMessage({ type: "capture" }).then(function (reply) {
+        if (!reply || reply.ok !== true || typeof reply.image !== "string" || reply.image.indexOf("data:image/") !== 0) {
+          throw new Error((reply && reply.error) || "captură goală");
+        }
+        return reply.image;
+      });
+    } catch (e) {
+      // Extensia a fost reîncărcată sau scoasă: chrome.runtime nu mai răspunde.
+      return Promise.reject(e);
+    }
+  }
+
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        resolve(img);
+      };
+      img.onerror = function () {
+        reject(new Error("nu pot citi captura"));
+      };
+      img.src = src;
+    });
+  }
+
+  function cropImage(img, box) {
+    var plan = cropPlan(
+      box,
+      { w: window.innerWidth, h: window.innerHeight },
+      { w: img.naturalWidth, h: img.naturalHeight },
+      window.devicePixelRatio,
+    );
+    if (!plan) return null;
+    var canvas = document.createElement("canvas");
+    canvas.width = plan.dw;
+    canvas.height = plan.dh;
+    var ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, plan.sx, plan.sy, plan.sw, plan.sh, 0, 0, plan.dw, plan.dh);
+    return canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+  }
+
+  var CAPTURE_FAILED = "Nu am putut fotografia pagina. Apasă din nou iconița Spire și încearcă iar.";
+
+  // Caseta (px CSS, viewport) → captură → decupaj → spire:reference. Un singur drum odată.
+  function sendReference(box, elementIds) {
+    if (busy) return;
+    var win = iframe.contentWindow;
+    if (!win) return;
+    busy = true;
+    setStatus("");
+    setLayerHidden(true);
+    twoFrames()
+      .then(captureTab)
+      .catch(function (e) {
+        console.warn("Spire: captura a eșuat.", e && e.message ? e.message : e);
+        throw new Error(CAPTURE_FAILED);
+      })
+      .then(function (image) {
+        setLayerHidden(false);
+        return loadImage(image);
+      })
+      .then(function (img) {
+        var cropped = cropImage(img, box);
+        if (!cropped) {
+          setStatus("Elementul nu se vede pe ecran. Derulează până la el și încearcă din nou.");
+          return;
+        }
+        // Doar spre originea aplicației: dacă iframe-ul a ajuns pe altă adresă, nu pleacă.
+        win.postMessage({ type: "spire:reference", image: cropped, elementIds: elementIds }, config.APP_ORIGIN);
+      })
+      .catch(function (e) {
+        var message = e && e.message === CAPTURE_FAILED ? CAPTURE_FAILED : "Nu am putut decupa imaginea. Încearcă din nou.";
+        if (message !== CAPTURE_FAILED) console.warn("Spire: decupajul a eșuat.", e && e.message ? e.message : e);
+        setStatus(message);
+      })
+      .then(function () {
+        setLayerHidden(false);
+        busy = false;
+        // Panoul se deschide singur: acolo e „Ce am văzut” sau mesajul de eroare.
+        setCollapsed(false);
+      });
+  }
+
+  // Clic pe un chenar: caseta se recitește acum (pagina poate fi derulată de la scanare).
+  function chooseElement(entry) {
+    if (busy || !entry.el.isConnected) return;
+    sendReference(rectBox(entry.el.getBoundingClientRect()), [entry.id]);
+  }
+
+  // Elementele scanate aflate în mare parte în dreptunghi (casete citite acum).
+  function idsInside(box) {
+    var ids = [];
+    elementsById.forEach(function (el, id) {
+      if (!el.isConnected) return;
+      var r = el.getBoundingClientRect();
+      var area = r.width * r.height;
+      if (!(area > 0)) return;
+      var w = Math.min(r.right, box.x + box.w) - Math.max(r.left, box.x);
+      var h = Math.min(r.bottom, box.y + box.h) - Math.max(r.top, box.y);
+      if (w > 0 && h > 0 && (w * h) / area >= MOSTLY_INSIDE) ids.push(id);
+    });
+    return ids;
+  }
+
+  // Modul de decupaj: stratul prinde clicurile, tragi un dreptunghi, Esc anulează.
+  var dragStart = null; // { x, y, pointerId }
+
+  function dragBox(event) {
+    var x = clamp(event.clientX, 0, window.innerWidth);
+    var y = clamp(event.clientY, 0, window.innerHeight);
+    return {
+      x: Math.min(dragStart.x, x),
+      y: Math.min(dragStart.y, y),
+      w: Math.abs(x - dragStart.x),
+      h: Math.abs(y - dragStart.y),
+    };
+  }
+
+  function showRect(box) {
+    cropRect.hidden = false;
+    cropRect.style.left = box.x + "px";
+    cropRect.style.top = box.y + "px";
+    cropRect.style.width = box.w + "px";
+    cropRect.style.height = box.h + "px";
+  }
+
+  // Cât tragi, panoul nu prinde mouse-ul: iframe-ul aplicației (altă origine) ar înghiți
+  // evenimentele, iar captura de pointer nu trece peste el. Așa dreptunghiul continuă și sub panou.
+  function setDragging(on) {
+    if (on) panel.style.setProperty("pointer-events", "none");
+    else panel.style.removeProperty("pointer-events");
+  }
+
+  function setCropMode(on) {
+    dragStart = null;
+    setDragging(false);
+    cropRect.hidden = true;
+    crop.hidden = !on;
+    cropButton.setAttribute("aria-pressed", on ? "true" : "false");
+    setStatus(on ? "Trage un dreptunghi peste pagină. Esc anulează." : "");
+  }
+
+  cropButton.addEventListener("click", function () {
+    if (busy) return;
+    setCropMode(crop.hidden);
+  });
+
+  crop.addEventListener("pointerdown", function (event) {
+    if (event.button !== 0 || busy) return;
+    event.preventDefault();
+    dragStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+    setDragging(true);
+    // Captura de pointer: dreptunghiul continuă și dacă mouse-ul iese din fereastră.
+    crop.setPointerCapture(event.pointerId);
+    showRect({ x: event.clientX, y: event.clientY, w: 0, h: 0 });
+  });
+
+  crop.addEventListener("pointermove", function (event) {
+    if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+    showRect(dragBox(event));
+  });
+
+  crop.addEventListener("pointerup", function (event) {
+    if (!dragStart || event.pointerId !== dragStart.pointerId) return;
+    var box = dragBox(event);
+    dragStart = null;
+    setDragging(false);
+    cropRect.hidden = true;
+    if (box.w < MIN_CROP || box.h < MIN_CROP) {
+      setStatus("Dreptunghiul e prea mic. Trage unul mai mare sau apasă Esc.");
+      return;
+    }
+    setCropMode(false);
+    sendReference(box, idsInside(box));
+  });
+
+  crop.addEventListener("pointercancel", function () {
+    dragStart = null;
+    setDragging(false);
+    cropRect.hidden = true;
+  });
+
+  window.addEventListener(
+    "keydown",
+    function (event) {
+      if (event.key === "Escape" && !crop.hidden) {
+        event.preventDefault();
+        setCropMode(false);
+      }
+    },
+    true,
+  );
 
   // Scanăm când s-a încărcat aplicația din iframe (și la fiecare reîncărcare a ei).
   iframe.addEventListener("load", sendPage);
@@ -417,6 +764,5 @@
     } else if (data.type === "spire:picks") {
       drawPicks(data.picks);
     }
-    // A3: decupajul (ex. data.type === "spire:scan").
   });
 })();
