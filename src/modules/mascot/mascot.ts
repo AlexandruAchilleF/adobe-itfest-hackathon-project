@@ -4,7 +4,8 @@
 //   mascot.say("Am verificat toate citatele!", "happy");
 //   mascot.set("thinking");
 
-export type MascotMood = "idle" | "listening" | "thinking" | "happy" | "worried" | "celebrate";
+// „searching”: se uită prin lupă (scanarea paginii din extensie); stare de lucru, ca „thinking”.
+export type MascotMood = "idle" | "listening" | "thinking" | "searching" | "happy" | "worried" | "celebrate";
 
 export interface MascotState {
   mood: MascotMood;
@@ -21,6 +22,7 @@ export const MOOD_TTL: Record<MascotMood, number> = {
   idle: 0,
   listening: 0,
   thinking: 0,
+  searching: 0,
   happy: 4000,
   worried: 6000,
   celebrate: 3500,

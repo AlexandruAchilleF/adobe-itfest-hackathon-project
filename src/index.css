@@ -307,8 +307,13 @@ input::placeholder, textarea::placeholder { color: #8d90a6; }
 .mascot-dots circle, .mascot-waves path { animation: mascot-pulse 1.2s ease-in-out infinite; }
 .mascot-dots circle:nth-child(2), .mascot-waves path:nth-child(2) { animation-delay: 0.3s; }
 .mascot-dots circle:nth-child(3) { animation-delay: 0.6s; }
+/* „searching”: lupa trece prin fața ochilor, stânga-dreapta; pupilele o urmăresc puțin */
+@keyframes mascot-search { 0%, 100% { transform: translateX(-7px) } 50% { transform: translateX(7px) } }
+@keyframes mascot-search-eye { 0%, 100% { transform: translateX(-0.8px) } 50% { transform: translateX(0.8px) } }
+.mascot-search { animation: mascot-search 1.6s ease-in-out infinite; }
+.mascot-search-eye { animation: mascot-search-eye 1.6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path { animation: none; }
+  .mascot-bob, .mascot-jump, .mascot-shake, .mascot-blink, .mascot-dots circle, .mascot-waves path, .mascot-search, .mascot-search-eye { animation: none; }
 }
 
 /* elementul arătat de asistent în turul ghidat */

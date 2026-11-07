@@ -28,13 +28,18 @@ const OTHER_ORIGIN = "http://spire-other.test";
 // - "tace": doar ține minte mesajele (testul trimite el alegerile, cu window.__reply());
 // - "redirect": /nou trimite iframe-ul pe OTHER_ORIGIN (altă aplicație decât cea configurată).
 let appMode: "raspunde" | "tace" | "redirect" = "raspunde";
+// Dacă dublura cere singură scanarea la încărcare (spire:scan), ca aplicația reală la „Scanează pagina”.
+// content.js nu mai scanează la `load`-ul iframe-ului; fără cererea asta nu vine spire:page.
+let appScan = true;
 
 // Dublura aplicației: ține minte mesajele primite și, la cerere, răspunde cu spire:picks.
 // Alegerile de aici sunt doar o dublură de test, după text și tag; regulile reale stau în
 // src/lib/campaign.ts, rulate de aplicație.
-function appDouble(reply: boolean): string {
+function appDouble(reply: boolean, scan: boolean): string {
   return `<!doctype html><title>Spire</title><script>
 window.__spireMessages = [];
+// Ce trimite aplicația reală la „Scanează pagina” (src/lib/extensionPanel.ts, scanRequest).
+window.__scan = function () { parent.postMessage({ type: "spire:scan" }, "*"); };
 window.__reply = function () {
   var els = (window.__spirePage && window.__spirePage.elements) || [];
   function find(test) { var e = els.find(test); return e ? e.id : null; }
@@ -65,6 +70,7 @@ window.addEventListener("message", function (event) {
   window.__spirePage = data;
   if (${reply}) window.__reply();
 });
+if (${scan}) window.__scan();
 </script>`;
 }
 
@@ -123,9 +129,10 @@ async function launch(options: { deviceScaleFactor?: number; args?: string[] } =
   await ctx.route(`${APP_URL}/**`, (route) => {
     // Navigarea din script (o redirecționare 302 prin route nu e urmată în iframe).
     if (appMode === "redirect") return route.fulfill({ ...html, body: `<script>location.replace(${JSON.stringify(`${OTHER_ORIGIN}/nou`)})</script>` });
-    return route.fulfill({ ...html, body: appDouble(appMode === "raspunde") });
+    return route.fulfill({ ...html, body: appDouble(appMode === "raspunde", appScan) });
   });
-  await ctx.route(`${OTHER_ORIGIN}/**`, (route) => route.fulfill({ ...html, body: appDouble(false) }));
+  // Și aplicația străină cere scanarea: content.js o refuză (altă origine), deci nu pleacă nimic.
+  await ctx.route(`${OTHER_ORIGIN}/**`, (route) => route.fulfill({ ...html, body: appDouble(false, true) }));
   const worker = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker"));
   return { context: ctx, sw: worker };
 }
@@ -194,6 +201,7 @@ async function spirePage(frame: Frame): Promise<PageMsg> {
 
 test.beforeEach(() => {
   appMode = "raspunde";
+  appScan = true;
 });
 
 test("după injectare, Spire apare peste pagină: shadow root cu iframe la /nou?din=extensie", async () => {
@@ -228,7 +236,41 @@ test("injectarea de două ori nu dublează stratul", async () => {
   await page.close();
 });
 
-test("după încărcarea iframe-ului, aplicația primește spire:page cu elementele vizibile ale paginii", async () => {
+test("scanarea pornește doar la spire:scan: întâi linia de scanare, apoi spire:page; a doua cerere în curs se ignoră", async () => {
+  appMode = "tace";
+  appScan = false;
+  const page = await openFixture();
+  expect(await inject()).toBe(true);
+  const frame = await appFrame(page);
+  const root = page.locator("#spire-root");
+  const line = root.locator(".spire-boxes .spire-scanline");
+
+  // Fără cerere: iframe-ul s-a încărcat, dar pagina nu se scanează singură.
+  await page.waitForTimeout(2000);
+  expect((await received(frame)).filter((m) => m.type === "spire:page")).toEqual([]);
+  await expect(line).toHaveCount(0);
+
+  // Două cereri la rând: linia apare în shadow root (fără să prindă clicuri), apoi vine o singură scanare.
+  await frame.evaluate(() => {
+    const w = window as unknown as { __scan: () => void };
+    w.__scan();
+    w.__scan();
+  });
+  await expect(line).toHaveCount(1);
+  await expect(line).toHaveCSS("pointer-events", "none");
+  const msg = await spirePage(frame);
+  expect(parseExtensionMessage(msg)?.type).toBe("spire:page");
+  await expect(line).toHaveCount(0);
+  await page.waitForTimeout(1500);
+  expect((await received(frame)).filter((m) => m.type === "spire:page")).toHaveLength(1);
+
+  // După ce s-a terminat, o cerere nouă scanează din nou.
+  await frame.evaluate(() => (window as unknown as { __scan: () => void }).__scan());
+  await expect.poll(async () => (await received(frame)).filter((m) => m.type === "spire:page").length).toBe(2);
+  await page.close();
+});
+
+test("după spire:scan, aplicația primește spire:page cu elementele vizibile ale paginii", async () => {
   appMode = "tace";
   const page = await openFixture();
   expect(await inject()).toBe(true);

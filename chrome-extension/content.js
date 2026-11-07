@@ -363,6 +363,32 @@
     };
   }
 
+  // ---------------------------------------------------------------------------------------------
+  // Cererea de scanare (spire:scan), trimisă de aplicație la „Scanează pagina”. Pagina nu se mai
+  // scanează singură la încărcarea iframe-ului: omul apasă butonul și vede ce se întâmplă.
+  // Întâi linia de scanare trece de sus în jos (în stratul chenarelor, fără clicuri), apoi
+  // scanarea de mai jos și spire:page. O cerere venită cât scanarea e în curs se ignoră.
+  // ---------------------------------------------------------------------------------------------
+  var SCAN_LINE_MS = 1200; // cât durează linia (și animația ei din overlay.css)
+  var scanning = false;
+  var scanLine = null;
+
+  function requestScan() {
+    if (scanning) return;
+    scanning = true;
+    clearBoxes(); // chenarele vechi nu mai înseamnă nimic după o scanare nouă
+    scanLine = document.createElement("div");
+    scanLine.className = "spire-scanline";
+    scanLine.setAttribute("aria-hidden", "true");
+    boxes.appendChild(scanLine);
+    setTimeout(function () {
+      if (scanLine && scanLine.parentNode) scanLine.parentNode.removeChild(scanLine);
+      scanLine = null;
+      scanning = false;
+      sendPage();
+    }, SCAN_LINE_MS);
+  }
+
   function sendPage() {
     var win = iframe.contentWindow;
     if (!win) return;
@@ -388,11 +414,14 @@
   var timers = [];
   var frameRequested = false;
 
+  // Șterge chenarele; linia de scanare (dacă trece acum) rămâne.
   function clearBoxes() {
     timers.forEach(clearTimeout);
     timers = [];
     drawn = [];
-    while (boxes.firstChild) boxes.removeChild(boxes.firstChild);
+    Array.prototype.slice.call(boxes.children).forEach(function (child) {
+      if (child !== scanLine) boxes.removeChild(child);
+    });
   }
 
   function placeBox(entry) {
@@ -440,6 +469,8 @@
   }
 
   function drawPicks(picks) {
+    // Cât trece linia, id-urile vechi sunt pe cale să fie înlocuite: alegerile întârziate se ignoră.
+    if (scanning) return;
     var valid = validPicks(picks);
     if (valid.length === 0) return;
     clearBoxes();
@@ -749,8 +780,9 @@
     true,
   );
 
-  // Scanăm când s-a încărcat aplicația din iframe (și la fiecare reîncărcare a ei).
-  iframe.addEventListener("load", sendPage);
+  // Nu scanăm la `load`-ul iframe-ului: doar la spire:scan, când omul apasă „Scanează pagina”.
+  // `spire:ready` (vechiul semnal „aplicația ascultă, scanează acum”) a fost scos: ar fi pornit
+  // scanarea fără să apese nimeni, iar aplicația nu-l mai trimite.
 
   // Mesajele de la aplicație. Acceptăm doar din iframe-ul nostru și de pe originea aplicației.
   window.addEventListener("message", function (event) {
@@ -758,9 +790,8 @@
     if (event.source !== iframe.contentWindow) return;
     var data = event.data;
     if (!data || typeof data !== "object" || typeof data.type !== "string") return;
-    if (data.type === "spire:ready") {
-      // Aplicația și-a pus ascultătorul abia după `load` (React montează târziu): scanăm din nou.
-      sendPage();
+    if (data.type === "spire:scan") {
+      requestScan();
     } else if (data.type === "spire:picks") {
       drawPicks(data.picks);
     }

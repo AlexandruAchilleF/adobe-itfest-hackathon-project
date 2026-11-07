@@ -92,7 +92,7 @@ const STREAKS = [
 ];
 
 /** Cât de sus sunt aripile: bucuria le ridică, îngrijorarea le lasă în jos. */
-const WING_ANGLE: Record<MascotMood, number> = { idle: 0, listening: 0, thinking: -2, happy: -8, worried: 12, celebrate: -20 };
+const WING_ANGLE: Record<MascotMood, number> = { idle: 0, listening: 0, thinking: -2, searching: -4, happy: -8, worried: 12, celebrate: -20 };
 /** Ochii spre lateral; stângul e mai mare, fiindcă e mai aproape. */
 const EYES = [
   [54.8, 38.2, 2.9],
@@ -102,9 +102,11 @@ const EYES = [
 export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood?: MascotMood; size?: number; color?: string }) {
   const anim = mood === "worried" ? "mascot-shake" : mood === "celebrate" || mood === "happy" ? "mascot-jump" : "mascot-bob";
   const a = WING_ANGLE[mood];
-  const look = mood === "thinking" ? [0.4, -0.9] : [0.35, 0.1];
+  const searching = mood === "searching";
+  const look = mood === "thinking" ? [0.4, -0.9] : searching ? [0.2, 0.5] : [0.35, 0.1];
   const glad = mood === "happy" || mood === "celebrate";
-  const headTilt = mood === "listening" ? "rotate(-10 62 44)" : mood === "thinking" ? "rotate(6 62 44)" : undefined;
+  // la căutare, capul se apleacă puțin spre lupă
+  const headTilt = mood === "listening" ? "rotate(-10 62 44)" : mood === "thinking" ? "rotate(6 62 44)" : searching ? "rotate(4 62 46)" : undefined;
   const bank = mood === "worried" ? "rotate(3 60 60)" : "rotate(-5 60 60)";
 
   return (
@@ -151,8 +153,11 @@ export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood
             ) : (
               <g key={i} className="mascot-blink" style={{ transformOrigin: `${x}px ${y}px` }}>
                 <circle cx={x} cy={y} r={r} fill={C.gold} />
-                <circle cx={x + look[0]} cy={y + look[1]} r={r * (mood === "worried" ? 0.46 : 0.62)} fill={C.pupil} />
-                <circle cx={x + look[0] + r * 0.28} cy={y + look[1] - r * 0.3} r={r * 0.22} fill="#fff" />
+                {/* la căutare, pupilele urmăresc lupa */}
+                <g className={searching ? "mascot-search-eye" : undefined}>
+                  <circle cx={x + look[0]} cy={y + look[1]} r={r * (mood === "worried" ? 0.46 : 0.62)} fill={C.pupil} />
+                  <circle cx={x + look[0] + r * 0.28} cy={y + look[1] - r * 0.3} r={r * 0.22} fill="#fff" />
+                </g>
               </g>
             ),
           )}
@@ -172,6 +177,17 @@ export function MascotFigure({ mood = "idle", size = 96, color = COLOR }: { mood
           {mood === "worried" && <path d="M58 28.6 L57 24.4 L60 27.2 L61.2 23.4 L62.6 28 Z" fill={C.ink} />}
         </g>
 
+        {/* lupa ținută în aripă: trece prin fața ochilor, stânga-dreapta (mascot-search în index.css) */}
+        {searching && (
+          <g className="mascot-search" data-testid="mascot-lupa">
+            <path d="M56.6 45.2 L49.4 53.6" stroke={C.dark} strokeWidth="3.4" strokeLinecap="round" />
+            <path d="M56.6 45.2 L53.4 48.9" stroke={C.goldDeep} strokeWidth="3.4" strokeLinecap="round" />
+            <circle cx="61.4" cy="39.6" r="7.2" fill={C.cream} fillOpacity="0.3" />
+            <circle cx="61.4" cy="39.6" r="7.2" fill="none" stroke={C.goldDeep} strokeWidth="2.2" />
+            <circle cx="61.4" cy="39.6" r="6.1" fill="none" stroke={C.gold} strokeWidth="0.9" />
+            <path d="M57.4 37 Q58.6 34.6 61.2 34" stroke="#fff" strokeWidth="1.1" strokeLinecap="round" fill="none" />
+          </g>
+        )}
         {/* undele sunetului când ascultă */}
         {mood === "listening" && (
           <g stroke={C.mid} strokeWidth="1.6" fill="none" strokeLinecap="round" className="mascot-waves">

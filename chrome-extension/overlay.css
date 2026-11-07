@@ -24,6 +24,60 @@
   overflow: hidden;
 }
 
+/* Linia de scanare: trece o dată de sus în jos, cât content.js citește pagina (spire:scan).
+   Stă în .spire-boxes, deci nu prinde clicuri. Durata e SCAN_LINE_MS din content.js. */
+.spire-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--spire-coral);
+  box-shadow: 0 0 0 1px rgba(242, 92, 59, 0.12), 0 6px 18px rgba(242, 92, 59, 0.28);
+  opacity: 0.75;
+  pointer-events: none;
+  animation: spire-scan 1200ms ease-in-out forwards;
+}
+
+@keyframes spire-scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.75;
+  }
+  90% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Fără mișcare: în loc de linie, o licărire scurtă și discretă peste pagină. */
+@keyframes spire-scan-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spire-scanline {
+    inset: 0;
+    height: auto;
+    background: rgba(242, 92, 59, 0.06);
+    box-shadow: none;
+    opacity: 0;
+    animation: spire-scan-flash 400ms ease-out 1;
+  }
+}
+
 /* Un chenar de scanare (A2): elementul citit din pagină. Poziția vine din content.js. */
 .spire-box {
   position: absolute;
