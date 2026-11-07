@@ -84,7 +84,11 @@ Ideea echipei (aleasă după discuție și după un consiliu de 5 perspective): 
 - **Bucla în lumea reală:** de stabilit.
 - **Momentul wow (secunda din demo):** ~45: mascota concurentului (de ex. o cămilă) în stânga, mascota mărcii (un pinguin) în același stil în dreapta, cu bifele gărzii.
 
-Decizii luate: doar imagini statice; aplicația web + export în Express; marca din formular, brand book PDF după ora 6; designul construit de cod din „anatomia” referinței (AI-ul scrie textele scurte și generează ilustrația); generarea de imagini cu modelul de imagine Gemini (Firefly Services de verificat); captură din ecran și extensie de Chrome (poziția ei în plan: de confirmat).
+Decizii luate: doar imagini statice; aplicația web + export în Express; marca din formular, brand book PDF după ora 6; designul construit de cod din „anatomia” referinței (AI-ul scrie textele scurte și generează ilustrația); generarea de imagini cu modelul de imagine Gemini (Firefly Services de verificat); extensia de Chrome construită în paralel de la început (panou lateral, decupaj, citirea culorilor și fonturilor din pagină), aplicația web rămâne ruta de telefon pentru juriu și rezerva.
+
+Scopul pe tipuri de element (cererea colegului: interfață, logo, mascotă, video, animație): o singură arhitectură „element → anatomie → adaptare la marcă → gardă”, cu adaptoare pe tip. **Azi:** imagini statice și mascota, cap-coadă. **După pragul de la ora 6, dacă fluxul static merge:** video ca storyboard + animatic (anatomia scenelor și a ritmului, cadre-cheie generate în stilul referinței, export video din browser), nu video generat. **Scos:** logo-ul (fix în brand guidelines, cel mai protejat juridic). **După hackathon:** interfața site-ului (secțiuni HTML refăcute pe tokenii mărcii), animațiile CSS/Lottie.
+
+Întrebări de validat pe hol (5 oameni care fac marketing): ultimul material refăcut după ceva văzut (imagine sau video, cât a durat); câte materiale statice vs video luna trecută; ultimul video (cine, cât timp, cât cost); câte încercări în ChatGPT/Firefly/Canva și ce a ieșit greșit; ce le-ar economisi mai mult.
 
 ## Ideile respinse
 
@@ -151,4 +155,5 @@ Notele 1–5 sunt pe cele 9 întrebări din `docs/JURIU.md`; nota ponderată e c
 | 08:xx | Verdict: B (rețeta `/design`), cu agentul (`agent.ts`) și bucla (`flow`); de confirmat după alegerea ideii | AI, Problem Solving |
 | 08:xx | Respinsă: aprobarea agenție ↔ client (AI ar fi add-on) | AI-Driven Innovation |
 | 09:xx | Aleasă: „stilul altcuiva, conținutul tău” (referință → stil; mascota, culorile și textele mărcii), verificat de cod | AI-Driven Innovation, Problem Solving, Demo |
+| 09:xx | Scop: static acum, video (storyboard + animatic) după ora 6; logo scos; interfața site-ului după hackathon | Demo, Technical Excellence |
 | 09:xx | Consiliul: originalitatea e în gardă și în rezultatul editabil, nu în clonare; extensia doar ca strat subțire; citirea paginii utilă doar pe site-uri, nu pe Meta/Instagram | Technical Excellence |
