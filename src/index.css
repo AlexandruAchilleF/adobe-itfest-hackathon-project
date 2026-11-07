@@ -336,15 +336,30 @@ h1, h2, h3 {
 /* chenarele extensiei (chrome-extension/overlay.css), la scara machetei */
 .land-xbox { position: absolute; border: 2px solid #f25c3b; border-radius: 6px; background: rgb(242 92 59 / 0.06); opacity: 0; transform: scale(0.98); transition: opacity 0.2s ease-out, transform 0.2s ease-out, background-color 0.2s ease; }
 .land-xbox[data-lit="true"] { opacity: 1; transform: none; }
-.land-xbox[data-hover="true"] { background: rgb(242 92 59 / 0.14); }
 .land-xlabel { position: absolute; left: -2px; bottom: 100%; margin-bottom: 3px; padding: 1px 6px; border-radius: 5px; background: #f25c3b; color: #fff; font-size: 9.5px; font-weight: 500; line-height: 1.4; white-space: nowrap; }
-.land-xpick { position: absolute; right: 4px; bottom: 4px; padding: 1px 6px; border-radius: 5px; background: var(--color-ink); color: #fff; font-size: 9px; font-weight: 500; line-height: 1.4; }
+/* panoul din machetă intră din dreapta după „Fă o campanie” */
+.land-xpanel { transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.land-xpanel[data-on="false"] { transform: translateX(105%); }
+/* critica: uliul zboară între elemente, cu conturul și balonul din extensie */
+.land-hawk { position: absolute; z-index: 15; line-height: 0; transition: left 0.9s cubic-bezier(0.45, 0, 0.2, 1), top 0.9s cubic-bezier(0.45, 0, 0.2, 1); }
+.land-hawk .mascot-wing { transform-box: fill-box; transform-origin: 10% 25%; }
+@keyframes land-flap { from { transform: rotate(-22deg); } to { transform: rotate(14deg) scaleY(0.94); } }
+.land-hawk[data-fly="true"] .mascot-wing { animation: land-flap 0.17s ease-in-out infinite alternate; }
+.land-outline { position: absolute; border: 2px solid #f25c3b; border-radius: 6px; background: rgb(242 92 59 / 0.04); pointer-events: none; }
+@keyframes land-bubble-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.land-bubble { animation: land-bubble-in 0.35s ease-out 0.15s both; }
+.land-level::before { content: ""; width: 8px; height: 8px; flex: none; border-radius: 50%; background: #b08834; }
+.land-level[data-level="important"]::before { background: #f25c3b; }
+.land-level[data-level="marunt"]::before { background: #8b94a6; }
+/* fundalul criticii și al extensiei: lila de la capătul nopții, crem la mijloc, lila apusului */
+.land-dawn { background: linear-gradient(180deg, #d0bfe8 0, var(--color-cream) 230px, var(--color-cream) calc(100% - 230px), #d0bfe8 100%); }
 @keyframes land-scan { from { transform: translateY(0); opacity: 0; } 10%, 90% { opacity: 0.8; } to { transform: translateY(var(--h, 380px)); opacity: 0; } }
 .land-scanline { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: #f25c3b; box-shadow: 0 6px 18px rgb(242 92 59 / 0.3); animation: land-scan 1.2s ease-in-out forwards; }
 @keyframes land-ring { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 .land-ring { animation: land-ring 1.1s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .land-cursor, .land-press, .land-toast, .land-row, .land-xbox { transition: none; }
+  .land-cursor, .land-press, .land-toast, .land-row, .land-xbox, .land-xpanel, .land-hawk { transition: none; }
+  .land-hawk[data-fly="true"] .mascot-wing, .land-bubble { animation: none; }
   .land-scanline, .land-ring { animation: none; }
   .land-scanline { display: none; }
 }

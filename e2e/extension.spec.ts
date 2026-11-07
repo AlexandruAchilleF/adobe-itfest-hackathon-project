@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -820,4 +821,28 @@ test("faptele separă textul propriu, controalele reale, butonul fals și numele
   expect(facts.elements.some((e: { tag: string }) => e.tag === "body")).toBe(false);
   expect(facts.elements.find((e: { tag: string }) => e.tag === "img").accessibleName).toBe("Cană ilustrată");
   await page.close();
+});
+
+test("ZIP-ul de pe landing page se încarcă în Chromium, cu adresa publică și fără sidePanel", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "spire-zip-"));
+  const profile = mkdtempSync(join(tmpdir(), "spire-zip-profile-"));
+  execFileSync("unzip", ["-q", join(process.cwd(), "public", "spire-extensie.zip"), "-d", dir]);
+  const ctx = await chromium.launchPersistentContext(profile, {
+    channel: "chromium",
+    headless: true,
+    args: [`--disable-extensions-except=${dir}`, `--load-extension=${dir}`],
+  });
+  try {
+    const worker = ctx.serviceWorkers()[0] ?? (await ctx.waitForEvent("serviceworker"));
+    const seen = await worker.evaluate(() => {
+      const g = globalThis as unknown as { chrome: { runtime: { getManifest(): { permissions: string[]; icons: Record<string, string> } } }; SPIRE_CONFIG: { APP_URL: string } };
+      const m = g.chrome.runtime.getManifest();
+      return { permissions: m.permissions, icons: Object.keys(m.icons), appUrl: g.SPIRE_CONFIG.APP_URL };
+    });
+    expect(seen).toEqual({ permissions: ["activeTab", "scripting"], icons: ["16", "32", "48", "128"], appUrl: "https://spire-coral.vercel.app" });
+  } finally {
+    await ctx.close();
+    rmSync(dir, { recursive: true, force: true });
+    rmSync(profile, { recursive: true, force: true });
+  }
 });

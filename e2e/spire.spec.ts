@@ -1,4 +1,6 @@
+import { existsSync, statSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
+import { critiqueStops } from "../src/lib/landingCritique";
 
 const REFERENCE = "public/samples/spire/referinta.png";
 
@@ -53,6 +55,71 @@ test("exportul PNG descarcă designul", async ({ page }) => {
   const download = page.waitForEvent("download");
   await page.getByRole("button", { name: "Descarcă PNG" }).click();
   expect((await download).suggestedFilename()).toMatch(/\.png$/);
+});
+
+test("landing: critica și extensia apar după noapte, în ordinea poveștii", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("#extensie")).toBeAttached();
+  const order = await page.locator("main section").evaluateAll((all) => all.map((s) => s.querySelector("h1,h2")?.textContent ?? s.id));
+  const at = (t: string) => order.findIndex((o) => o.includes(t));
+  expect(at("Stilul altcuiva")).toBeLessThan(at("Ochi de uliu"));
+  expect(at("Ochi de uliu")).toBeLessThan(at("inSPIRĂ"));
+  expect(at("inSPIRĂ")).toBeLessThan(at("N-ai designer"));
+  await expect(page.locator("#critica")).toContainText("local, fără AI");
+  await expect(page.locator("#critica")).toContainText("cel mult 8 observații");
+  await expect(page.locator("main")).not.toContainText("audit complet");
+});
+
+test("landing: linkul din meniu duce la extensie, iar butonul descarcă ZIP-ul", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Extensia" }).click();
+  await expect(page).toHaveURL(/#extensie$/);
+  await expect(page.locator("#extensie")).toBeInViewport();
+  await expect(page.locator("#extensie")).toContainText("Developer mode");
+  await expect(page.locator("main")).not.toContainText("Chrome Web Store");
+  const download = page.waitForEvent("download");
+  await page.locator("#extensie").getByRole("link", { name: "Descarcă extensia" }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toBe("spire-extensie.zip");
+  const path = await file.path();
+  expect(existsSync(path) && statSync(path).size).toBeGreaterThan(1000);
+});
+
+test("landing: macheta criticii afișează textele reale, unul după altul", async ({ page }) => {
+  const stops = critiqueStops();
+  await page.goto("/#critica");
+  await page.locator("#critica .land-stage").scrollIntoViewIfNeeded();
+  const balon = page.getByTestId("critica-balon");
+  await expect(balon).toContainText(stops[0].critique.title, { timeout: 8000 });
+  await expect(balon).toContainText("Important");
+  await expect(balon).toContainText(stops[0].critique.fix);
+  await expect(balon).toContainText(stops[1].critique.title, { timeout: 10000 });
+  await expect(balon).toContainText("De îmbunătățit");
+  await expect(page.locator("#critica .land-outline")).toHaveCount(1);
+});
+
+test("landing: cu mișcare redusă, critica arată toate observațiile, fără zbor", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  for (const stop of critiqueStops()) await expect(page.locator("#critica").getByText(stop.critique.title)).toBeAttached();
+  await expect(page.locator("#critica .land-outline")).toHaveCount(critiqueStops().length);
+  await expect(page.getByTestId("critica-balon")).toHaveCount(0);
+});
+
+test("landing pe telefon: fără scroll orizontal, fără descărcare, cu link spre aplicație", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const section = page.locator("#extensie");
+  await section.scrollIntoViewIfNeeded();
+  await expect(section.getByText("Extensia se instalează pe calculator, în Chrome")).toBeVisible();
+  await expect(section.getByRole("link", { name: "Descarcă extensia" })).toBeHidden();
+  await expect(section.getByText("Developer mode")).toBeHidden();
+  await page.locator("#critica .land-stage").scrollIntoViewIfNeeded();
+  await expect(page.locator("#critica").getByTestId("critica-text").filter({ hasText: critiqueStops()[0].critique.title })).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBe(0);
+  await section.getByRole("link", { name: "Încearcă Spire în browser" }).click();
+  await expect(page).toHaveURL(/\/nou$/);
 });
 
 /** Aplicația într-un iframe, ca în extensie. */

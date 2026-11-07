@@ -46,7 +46,7 @@ export const PITCH: PitchConfig = {
   next: [],
   architecture: {
     steps: [
-      { owner: "cod", title: "Extensia", text: "Citește pagina doar la clic, cu activeTab, scripting și sidePanel." },
+      { owner: "cod", title: "Extensia", text: "Citește pagina doar la clic, cu activeTab și scripting." },
       { owner: "AI", title: "Analiza", text: "Gemini scrie anatomia și textele, validate cu Zod." },
       { owner: "AI", title: "Ilustrația", text: "FLUX.2 pe Cloudflare, printr-un singur endpoint." },
       { owner: "cod", title: "Compunerea", text: "Designul pe straturi, din anatomie și marcă." },

@@ -3,8 +3,20 @@
   "name": "Spire",
   "version": "0.1.0",
   "description": "Spire citește stilul unei pagini și îl refolosește pentru marca ta.",
-  "permissions": ["activeTab", "scripting", "sidePanel"],
-  "action": { "default_title": "Spire" },
+  "permissions": ["activeTab", "scripting"],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "Spire",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
   "background": { "service_worker": "background.js" },
   "web_accessible_resources": [
     { "resources": ["overlay.css"], "matches": ["<all_urls>"] }

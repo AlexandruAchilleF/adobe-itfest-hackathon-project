@@ -69,7 +69,7 @@ Pe ecran alternează schema, cu pasul curent aprins, și codul real, mărit, 3�
 
 | Timp | Cine | Pe ecran | Se spune |
 |---|---|---|---|
-| 1:05 | Coleg | Schema; `chrome-extension/manifest.json` | „Extensia cere doar `activeTab`, `scripting` și `sidePanel` și citește pagina doar la clic. Stratul stă într-un shadow root, ca să nu se amestece cu site-ul. E un singur motor, cu două intrări: extensia și aplicația web. Cheile stau pe server.” |
+| 1:05 | Coleg | Schema; `chrome-extension/manifest.json` | „Extensia cere doar `activeTab` și `scripting` și citește pagina doar la clic. Stratul stă într-un shadow root, ca să nu se amestece cu site-ul. E un singur motor, cu două intrări: extensia și aplicația web. Cheile stau pe server.” |
 | 1:20 | Coleg | `src/lib/spireAi.ts`, `src/lib/anatomy.ts` | „Modelul întoarce anatomia referinței: zone, roluri, culori. Nu ne bazăm pe răspuns: îl validăm cu o schemă Zod. Textul paginii intră ca date între delimitatori, nu ca instrucțiuni.” |
 | 1:33 | Alexandru | `src/lib/guard.ts`, `src/lib/color.ts`, `src/lib/similarity.ts` | „Compunerea și garda sunt cod. Prețul se compară ca valoare și monedă. Culorile, cu Delta E în spațiul Lab, fiindcă distanța RGB nu seamănă cu ce vede ochiul. O amprentă dHash respinge ce e prea aproape de referință. Singura verificare AI e mascota și e marcată ca atare.” |
 | 1:52 | Alexandru | `src/lib/agentLoop.ts` | „Bucla de agent e o funcție pură, cu apelurile AI injectate, deci o testăm fără rețea. Dacă pică ceva reparabil, reîncearcă de cel mult două ori, știind ce a picat. Ilustrația se redesenează doar dacă a picat ea.” |
@@ -176,7 +176,7 @@ Doar „seamănă cu mascota” e o verificare AI și e marcată „AI” pe ecr
 Pe pagini care nu se pot citi, lucrăm pe pixeli și marcăm rolurile culorilor ca „ghicite”. *[De testat: un CSP strict poate bloca iframe-ul din strat; ar rămâne panoul lateral. Probați pe 5 site-uri mari și spuneți rezultatul real.]*
 
 **10. „Ce date pleacă din browser? Ce permisiuni cere?”**
-`activeTab`, `scripting` și `sidePanel`, deci nimic permanent. Pagina se citește doar la clic. Captura și textele merg la serverul nostru și la modelul AI, iar cheile rămân pe server. Nu sunt date de clienți. Spuneți deschis că azi nu avem conturi sau izolare între firme.
+`activeTab` și `scripting`, deci nimic permanent. Pagina se citește doar la clic. Captura și textele merg la serverul nostru și la modelul AI, iar cheile rămân pe server. Nu sunt date de clienți. Spuneți deschis că azi nu avem conturi sau izolare între firme.
 
 **11. „Cine plătește și cât?”**
 *[Din interviuri.]* Fără cifră: „ipoteza e un abonament plătit de firmă, iar azi am aflat că [N] oameni dau [S] pe material; prețul nu e validat”.

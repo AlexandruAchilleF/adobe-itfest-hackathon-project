@@ -2,19 +2,24 @@
 //  1. cerul pictat cu uliul: fraza produsului și Spire care vorbește în locul promptului
 //  2. problema: de ce un chat nu ajunge (aripile desenate pe margini)
 //  3. cei trei pași: se uită, întreabă, face; macheta din dreapta stă fixă și se schimbă la derulare
-//     (extensia pe site → întrebările → kitul cu bifele → exportul PNG), din LandingMockups.tsx
+//     (uliul pe site și meniul lui → întrebările → kitul cu bifele → exportul PNG), din LandingMockups.tsx
 //  4. garda: bucla reală (runAgentLoop + guardCampaign) prinde prețul greșit și îl corectează
 //  5. cerul de noapte: referința lângă rezultat, cu bifele calculate pe ilustrația măsurată
-//  6. apusul: îndemnul final
+//  6. critica: uliul aterizează pe o pagină de demo, cu textele date de critiquePage (src/lib/landingCritique.ts)
+//  7. extensia: fișa de instalare; butonul vine din src/lib/extensionInstall.ts
+//  8. apusul: îndemnul final
+// Între noapte și apus, critica și extensia stau pe .land-dawn, care pornește și se termină cu lila lor comun.
 // Imaginile din public/landing/ sunt generate cu Cloudflare Workers AI (FLUX.2 klein), ca restul ilustrațiilor Spire.
 
 import { Fragment, type ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Accent, Ribbon } from "../../components/ui";
+import { installAction } from "../../lib/extensionInstall";
+import { MAX_CRITIQUES } from "../../lib/critique";
 import { useInView, useTypewriter } from "../../lib/motion";
 import { useMascotPage } from "../../modules/mascot/page";
 import { scenario } from "../../scenario/config";
-import { AfterMock, AskMock, ExportMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./LandingMockups";
+import { AfterMock, AskMock, CritiqueMock, ExportMock, GuardMock, KitMock, type LandingData, ReferenceMock, Scaled, ScanMock, useLandingData } from "./LandingMockups";
 import { useBrand } from "./parts";
 
 const S = scenario;
@@ -63,6 +68,7 @@ function Nav() {
         <div className="hidden flex-1 items-center gap-7 text-[0.97rem] text-ink md:flex">
           <a href="#cum" className="hover:text-coral-deep">Cum funcționează</a>
           <a href="#garda" className="hover:text-coral-deep">Garda</a>
+          <a href="#extensie" className="hover:text-coral-deep">Extensia</a>
           <Link href="/campanii" className="hover:text-coral-deep">Campanii</Link>
         </div>
         <Link href="/" className="md:flex-none" aria-label={S.app.name}>
@@ -71,7 +77,7 @@ function Nav() {
         <div className="ml-auto flex flex-1 items-center justify-end gap-3">
           <Link href="/marca" className="hidden text-[0.97rem] text-coral-deep hover:underline lg:inline">Marca ta</Link>
           {/* .btn fixează display-ul, deci ascunderea pe telefon stă pe un înveliș */}
-          <span className="hidden sm:inline-flex">
+          <span className="hidden sm:inline-flex md:hidden lg:inline-flex">
             <Link href="/campanii" className="btn btn-story btn-secondary land-btn-sm whitespace-nowrap">Vezi un exemplu</Link>
           </span>
           <Link href="/nou" className="btn btn-story btn-primary land-btn-sm whitespace-nowrap">Încearcă acum</Link>
@@ -235,7 +241,7 @@ function HowItWorks({ data }: { data: LandingData }) {
     </Scaled>
   );
   const steps = [
-    { tag: "Se uită", title: "Spire *citește pagina*\npe care ești", text: "Apare peste site, alege ce e util pentru o campanie și îți spune de ce: așezarea, rolurile culorilor, tonul." },
+    { tag: "Se uită", title: "Spire *citește pagina*\npe care ești", text: "Apeși iconița și uliul apare pe site. Alegi „Fă o campanie”, iar el citește pagina, marchează ce e bun pentru campanie și îți spune de ce." },
     { tag: "Întreabă", title: "Te întreabă\n*doar trei lucruri*", text: `Oferta, îndemnul și formatele. Culorile, fonturile și mascota le ia din marca ${brand.name}.` },
     { tag: "Face", title: "Îți face\n*kitul de campanie*", text: `Postare și story, cu ${brand.mascot?.name ?? "mascota ta"} redesenat în stilul referinței. Straturile rămân editabile, iar tu ai ultimul cuvânt.` },
   ];
@@ -354,12 +360,73 @@ function BeforeAfter({ data }: { data: LandingData }) {
   );
 }
 
+function CritiqueSection() {
+  const ref = useRef<HTMLDivElement>(null);
+  const on = useInView(ref, { once: false, margin: "-15% 0px -15% 0px" });
+  return (
+    <section id="critica" className="scroll-mt-24 px-4 pt-36 pb-14">
+      <Reveal className="mx-auto max-w-3xl text-center">
+        <Ribbon>Critica</Ribbon>
+        <h2 className="mt-6 text-[2.2rem] leading-[1.05] font-semibold tracking-[-0.04em] whitespace-pre-line text-ink sm:text-[3.2rem]">
+          <Accent text={"Ochi de uliu\n*pe pagina ta.*"} />
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-[1.08rem] leading-relaxed text-ink-2">
+          Alegi „Critică pagina”, iar uliul aterizează pe ce merită schimbat și îți spune pe rând ce poți face. Verificarea rulează local, fără AI, și arată cel mult {MAX_CRITIQUES} observații: contrast slab, linkuri vagi, poze fără descriere. Gustul rămâne treaba ta.
+        </p>
+      </Reveal>
+      <Reveal delay={120} className="mx-auto mt-12 max-w-4xl">
+        <div ref={ref}>
+          <CritiqueMock active={on} />
+        </div>
+        <p className="mt-4 text-center text-sm text-ink-2">Pagina e de demo. Textele din balon le scriu aceleași reguli ca în extensie.</p>
+      </Reveal>
+    </section>
+  );
+}
+
+function ExtensionSection() {
+  const action = installAction();
+  return (
+    <section id="extensie" className="scroll-mt-24 px-4 pt-14 pb-36">
+      <Reveal className="mx-auto max-w-3xl text-center">
+        <Ribbon>Extensia</Ribbon>
+        <h2 className="mt-6 text-[2.2rem] leading-[1.05] font-semibold tracking-[-0.04em] whitespace-pre-line text-ink sm:text-[3.2rem]">
+          <Accent text={"Ce te inSPIRĂ pe net\n*ajunge pe marca ta.*"} />
+        </h2>
+      </Reveal>
+      <Reveal delay={120} className="land-frame mx-auto mt-10 max-w-xl p-7 text-center sm:p-10">
+        <img src="/landing/hawk-mark.svg" alt="" className="mx-auto h-16 w-16" />
+        <h3 className="mt-3 text-[1.6rem] font-semibold tracking-[-0.03em] text-ink">{S.app.name}</h3>
+        <p className="mt-2 text-[1.05rem] leading-relaxed text-ink-2">Uliul apare peste site-ul deschis. Îi ceri o critică a paginii sau o campanie în stilul ei, pe marca ta.</p>
+        <p className="mt-2 text-[0.95rem] text-ink-2">Nimic nu rulează până nu apeși iconița.</p>
+        {/* .btn fixează display-ul, deci ascunderea pe telefon stă pe un înveliș */}
+        <div className="mt-6 hidden md:block">
+          {action.kind === "download" ? (
+            <>
+              <a href={action.href} download className="btn btn-story btn-secondary">{action.label}</a>
+              <p className="mt-3 text-sm text-ink-2">{action.hint}</p>
+            </>
+          ) : (
+            <a href={action.href} target="_blank" rel="noreferrer" className="btn btn-story btn-secondary">{action.label}</a>
+          )}
+        </div>
+        <div className="mt-6 md:hidden">
+          <p className="text-[1rem] font-medium text-ink">Extensia se instalează pe calculator, în Chrome</p>
+          <Link href="/nou" className="mt-2 inline-block text-[1rem] text-coral-deep underline underline-offset-4">Încearcă Spire în browser</Link>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
 function Closing() {
   return (
     <section className="relative isolate -mt-px overflow-hidden px-4 pt-32 pb-40 text-center">
       <img src="/landing/dusk.webp" alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+      {/* apusul iese din lila secțiunii de deasupra, fără margine */}
+      <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-[#d0bfe8] to-transparent" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-32 bg-gradient-to-b from-transparent to-cream" />
-      <Ribbon>Spire</Ribbon>
+      <Ribbon>reSPIRĂ</Ribbon>
       <WordsIn text="N-ai designer azi?" className="mx-auto mt-6 max-w-3xl text-[2.6rem] leading-[1.02] font-semibold tracking-[-0.045em] text-ink sm:text-[4rem]" />
       <Reveal delay={300}>
         <p className="text-[2.6rem] leading-[1.05] tracking-[-0.03em] sm:text-[4rem]">
@@ -368,6 +435,7 @@ function Closing() {
         <div className="mt-9 flex flex-wrap justify-center gap-3">
           <Link href="/nou" className="btn btn-story btn-primary">Încearcă acum</Link>
           <Link href="/campanii" className="btn btn-story btn-secondary">Vezi un exemplu</Link>
+          <a href="#extensie" className="btn btn-story btn-secondary">Vezi extensia</a>
         </div>
       </Reveal>
     </section>
@@ -403,6 +471,10 @@ export function LandingPage() {
         <HowItWorks data={data} />
         <Guard data={data} />
         <BeforeAfter data={data} />
+        <div className="land-dawn -mt-px">
+          <CritiqueSection />
+          <ExtensionSection />
+        </div>
         <Closing />
       </main>
       <Footer />

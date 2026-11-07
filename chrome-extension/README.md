@@ -11,13 +11,12 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 
 ## Adresa aplicației (deploy)
 
-În `config.js` schimbi `APP_URL` din `http://localhost:5173` pe adresa Vercel, apoi reîncarci extensia din `chrome://extensions` (butonul de reîncărcare).
+`config.js` rămâne pe `http://localhost:5173`, pentru dezvoltare. Pachetul de descărcare are adresa publică: `npm run ext:zip` copiază extensia într-un folder temporar, pune în copie `APP_URL = "https://spire-coral.vercel.app"` și scrie `public/spire-extensie.zip`, fără README și fără teste. ZIP-ul se comite; `tests/extensionPackage.test.ts` pică dacă rămâne în urma sursei.
 
 ## Permisiuni și de ce
 
 - `activeTab`: acces temporar la fila pe care ai apăsat iconița, doar după clic.
 - `scripting`: injectarea stratului Spire în acea filă.
-- `sidePanel`: panoul lateral (aceeași aplicație).
 - Fără `host_permissions` și fără scripturi declarate: nimic nu rulează pe site-uri până nu apeși iconița. `overlay.css` e resursă accesibilă din pagină (nu dă acces la site-uri).
 
 ## Fișierele
@@ -26,6 +25,7 @@ Spire este uliul care citește stilul unei pagini (culori, fonturi, texte, secț
 - `config.js`: `APP_URL` și `APP_ORIGIN`, pe `globalThis.SPIRE_CONFIG`; script clasic, folosit în fundal și în pagină.
 - `background.js`: la clic injectează, în ordine, config.js, mascot-poses.js, critique.js, content.js (`injectSpire(tabId)`).
 - `content.js`: stratul din pagină, în shadow root (chenare de scanare, iframe).
+- `icons/`: iconițele PNG de 16, 32, 48 și 128 px, generate din `public/landing/hawk-mark.svg` cu `npm run ext:icons`.
 - `overlay.css`: referința stilurilor panoului și chenarelor; copia din content.js se aplică împreună cu stilurile uliului prin adoptedStyleSheets în shadow root, fără CSS extern. La modificarea panoului, ține copia sincronizată.
 
 ## Testul

@@ -7,8 +7,9 @@ import { demoBrand } from "../../lib/brand";
 import { type Campaign, FORMAT_LABEL, guardCampaign, kitVerdict, seedCampaign } from "../../lib/campaigns";
 import { FORMATS } from "../../lib/compose";
 import type { Check } from "../../lib/guard";
+import { bubbleAt, CRITIQUE_ELEMENTS, CRITIQUE_IMAGE, CRITIQUE_VIEWPORT, type CritiqueStop, critiqueStops } from "../../lib/landingCritique";
 import { boxPercent, DEMO_SITE, demoQuestions, demoScan, guardReplay, type Measured, type ReplayStep } from "../../lib/landingDemo";
-import { useSequence } from "../../lib/motion";
+import { reducedMotion, useSequence } from "../../lib/motion";
 import { illustrationSignature } from "../../lib/spireImages";
 import { MascotFigure } from "../../modules/mascot/MascotFigure";
 import { scenario } from "../../scenario/config";
@@ -82,7 +83,7 @@ export function Scaled({ width, height, children, className = "" }: { width: num
   );
 }
 
-function Window({ address, title, children, className = "" }: { address?: string; title?: string; children: ReactNode; className?: string }) {
+function Window({ address, title, action, children, className = "" }: { address?: string; title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div className={`land-window ${className}`}>
       <div className="land-winbar">
@@ -102,7 +103,7 @@ function Window({ address, title, children, className = "" }: { address?: string
         ) : (
           <span className="flex-1 text-center text-[10.5px] font-medium text-ink-2">{title}</span>
         )}
-        <span className="w-[34px]" aria-hidden />
+        {action ?? <span className="w-[34px]" aria-hidden />}
       </div>
       {children}
     </div>
@@ -177,9 +178,9 @@ function DemoSite({ dim = false }: { dim?: boolean }) {
   );
 }
 
-function ExtensionPanel({ children }: { children: ReactNode }) {
+function ExtensionPanel({ on, children }: { on: boolean; children: ReactNode }) {
   return (
-    <div className="absolute inset-y-0 right-0 flex flex-col gap-2.5 border-l border-[#e3e5ea] bg-white p-2.5 shadow-[-8px_0_24px_rgb(31_42_68/0.12)]" style={{ width: `${PANEL * 100}%` }}>
+    <div className="land-xpanel absolute inset-y-0 right-0 z-10 flex flex-col gap-2.5 border-l border-[#e3e5ea] bg-white p-2.5 shadow-[-8px_0_24px_rgb(31_42_68/0.12)]" data-on={on} style={{ width: `${PANEL * 100}%` }}>
       <div className="flex items-center justify-end gap-1.5">
         {["Decupează", "Strânge"].map((b) => (
           <span key={b} className="rounded-md border border-[#e3e5ea] px-1.5 py-0.5 text-[9px] font-medium text-ink">
@@ -192,38 +193,56 @@ function ExtensionPanel({ children }: { children: ReactNode }) {
   );
 }
 
+// Fazele: 1 cursorul pe iconiță, 2 clic și uliul apare, 3 cursorul pe uliu, 4 clic și meniul, 5 cursorul pe „Fă o campanie”,
+// 6 clic și panoul, 7 cursorul pe „Scanează pagina”, 8 scanarea, 9 chenarele.
+const SCAN_AT = [450, 1000, 1500, 2200, 2700, 3300, 3900, 4500, 5700];
+
 export function ScanMock({ active }: { active: boolean }) {
   const { picks, said } = useMemo(demoScan, []);
-  const phase = useSequence(active, [700, 1400, 3200, 4600], { loop: true, rest: 3200 });
+  const phase = useSequence(active, SCAN_AT, { loop: true, rest: 3800 });
   const root = useRef<HTMLDivElement>(null);
+  const icon = useRef<HTMLSpanElement>(null);
+  const hawk = useRef<HTMLSpanElement>(null);
+  const campaign = useRef<HTMLSpanElement>(null);
   const button = useRef<HTMLSpanElement>(null);
-  const mascotBox = useRef<HTMLSpanElement>(null);
+  const toIcon = usePoint(icon, root, 10, 11, [phase]);
+  const toHawk = usePoint(hawk, root, 38, 42, [phase]);
+  const toCampaign = usePoint(campaign, root, 56, 10, [phase]);
   const toButton = usePoint(button, root, 70, 10, [phase]);
-  const toMascot = usePoint(mascotBox, root, 60, 90, [phase]);
-  const scanning = phase === 2;
-  const scanned = phase >= 3;
-  const cursor = phase >= 4 ? toMascot : phase >= 1 ? toButton : { x: 170, y: 300 };
+  const scanning = phase === 8;
+  const scanned = phase >= 9;
+  const cursor = phase >= 7 ? toButton : phase >= 5 ? toCampaign : phase >= 3 ? toHawk : phase >= 1 ? toIcon : { x: 170, y: 300 };
   const text = scanned ? said : scanning ? "Mă uit pe pagină…" : "Sunt Spire. Apasă „Scanează pagina” și mă uit pe site-ul tău.";
   return (
     <div ref={root} className="land-stage relative" style={{ width: W, height: H }}>
-      <Window address={DEMO_SITE.url} className="absolute top-6 left-5">
+      <Window
+        address={DEMO_SITE.url}
+        className="absolute top-6 left-5"
+        action={
+          <span ref={icon} className="land-press grid h-[22px] w-[34px] place-items-center rounded-md bg-white shadow-[inset_0_0_0_1px_#e6e5ee]" data-pressed={phase === 2}>
+            <img src="/landing/hawk-mark.svg" alt="" className="h-3.5 w-3.5" />
+          </span>
+        }
+      >
         <div className="relative overflow-hidden" style={{ width: VIEW_W, height: VIEW_H }}>
           <DemoSite />
           {scanning && <span className="land-scanline" style={{ ["--h" as string]: `${VIEW_H}px` }} aria-hidden />}
           {picks.map((p, i) => (
-            <span
-              key={p.elementId}
-              ref={p.kind === "mascot" ? mascotBox : undefined}
-              className="land-xbox"
-              data-lit={scanned}
-              data-hover={phase >= 4 && p.kind === "mascot"}
-              style={{ ...boxPercent(p.elementId), transitionDelay: scanned ? `${i * 250}ms` : "0ms" }}
-            >
+            <span key={p.elementId} className="land-xbox" data-lit={scanned} style={{ ...boxPercent(p.elementId), transitionDelay: scanned ? `${i * 250}ms` : "0ms" }}>
               <span className="land-xlabel">{KIND_LABELS[p.kind]}</span>
-              {phase >= 4 && p.kind === "mascot" && <span className="land-xpick">Alege</span>}
             </span>
           ))}
-          <ExtensionPanel>
+          {/* uliul stă pe marginea ilustrației, în stânga panoului care se deschide */}
+          <span ref={hawk} className="land-toast land-press absolute z-[5] block" data-on={phase >= 2} data-pressed={phase === 4} style={{ left: 214, top: 10 }}>
+            <MascotFigure mood={scanning ? "searching" : scanned ? "happy" : "idle"} pose="perched" size={76} />
+          </span>
+          <div className="land-toast land-card absolute z-[6] grid w-[124px] gap-1.5 rounded-[10px] p-2" data-on={phase === 4 || phase === 5} style={{ left: 292, top: 24 }}>
+            <span className="rounded-[7px] bg-coral py-1 text-center text-[9.5px] font-medium text-white">Critică pagina</span>
+            <span ref={campaign} className="land-press rounded-[7px] py-1 text-center text-[9.5px] font-medium text-ink shadow-[inset_0_0_0_1px_var(--color-line)]" data-pressed={phase === 6}>
+              Fă o campanie
+            </span>
+          </div>
+          <ExtensionPanel on={phase >= 6}>
             <div className="flex items-start gap-1.5">
               <span className="-mt-1 -ml-1 shrink-0">
                 <MascotFigure mood={scanning ? "searching" : "idle"} size={46} />
@@ -232,7 +251,7 @@ export function ScanMock({ active }: { active: boolean }) {
             </div>
             <span
               ref={button}
-              data-pressed={phase === 2}
+              data-pressed={scanning}
               className={`land-press block rounded-[8px] py-1.5 text-center text-[10px] font-medium ${scanned ? "bg-white text-ink shadow-[inset_0_0_0_1px_var(--color-line)]" : "bg-coral text-white"}`}
             >
               {scanned ? "Scanează din nou" : "Scanează pagina"}
@@ -250,7 +269,7 @@ export function ScanMock({ active }: { active: boolean }) {
           </ExtensionPanel>
         </div>
       </Window>
-      <Cursor at={cursor} pressed={phase === 2} />
+      <Cursor at={cursor} pressed={phase === 2 || phase === 4 || phase === 6 || scanning} />
     </div>
   );
 }
@@ -468,6 +487,128 @@ export function GuardMock({ active, data }: { active: boolean; data: LandingData
         {message}
       </SpireToast>
     </div>
+  );
+}
+
+// ——— Critica: uliul aterizează pe elemente, cu textele date de critiquePage ———
+
+const CRIT_W = 680;
+const CRIT_H = 552;
+const CRIT_VIEW = { w: 640, h: 480 };
+const CRIT_K = CRIT_VIEW.w / CRITIQUE_VIEWPORT.w;
+const CRIT_HAWK = 92;
+const CRIT_BUBBLE = { w: 286, h: 226 };
+// 1 zbor spre primul element, 2 aterizat, 3 zbor spre al doilea, 4 aterizat, 5 zbor spre al treilea, 6 aterizat
+const CRIT_AT = [300, 1200, 6000, 6900, 11700, 12600];
+const scaleBox = (b: { x: number; y: number; w: number; h: number }) => ({ x: b.x * CRIT_K, y: b.y * CRIT_K, w: b.w * CRIT_K, h: b.h * CRIT_K });
+
+/** Pagina desenată chiar din faptele pe care rulează regulile: culorile și textele sunt aceleași. */
+function CritiqueSite() {
+  return (
+    <div className="absolute inset-0" style={{ background: SITE.sand }} aria-hidden>
+      <div className="absolute inset-x-0 top-0" style={{ height: 48 * CRIT_K, background: "#FBF2E2" }} />
+      {CRITIQUE_ELEMENTS.map((e) => {
+        const b = scaleBox(e.box);
+        const place = { left: b.x, top: b.y, width: b.w, height: b.h };
+        if (e.isImage) return <img key={e.id} src={CRITIQUE_IMAGE} alt="" className="absolute rounded-[14px] object-cover" style={place} />;
+        return (
+          <span
+            key={e.id}
+            className={`absolute flex items-center whitespace-nowrap ${e.tag === "h1" ? "tracking-[-0.04em]" : "justify-center"} ${e.tag === "p" ? "rounded-full" : "rounded-[10px]"}`}
+            style={{ ...place, color: e.color, background: e.background, fontSize: e.fontSizePx * CRIT_K, fontWeight: e.fontWeight, lineHeight: 1.1 }}
+          >
+            {e.text}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+function LevelLabel({ stop }: { stop: CritiqueStop }) {
+  return (
+    <p className="land-level flex items-center gap-1.5 font-medium text-ink" data-level={stop.critique.level}>
+      {stop.label}
+    </p>
+  );
+}
+
+/** Observația în text obișnuit: sub machetă pe telefon și pentru cine a cerut mișcare redusă. */
+function CritiqueNote({ stop, index, total }: { stop: CritiqueStop; index: number; total: number }) {
+  const c = stop.critique;
+  return (
+    <div className="land-card p-4 text-left text-[0.92rem] leading-snug text-ink-2" data-testid="critica-text">
+      <div className="flex items-center justify-between gap-3 text-[0.85rem]">
+        <LevelLabel stop={stop} />
+        <span className="text-muted tabular-nums">
+          {index + 1} din {total}
+        </span>
+      </div>
+      <p className="mt-1.5 text-[1.02rem] leading-snug font-semibold text-ink">{c.title}</p>
+      <p className="mt-1.5">{c.body}</p>
+      <p className="mt-1.5">Ce faci: {c.fix}</p>
+      <p className="mt-2 border-t border-line pt-2">Pentru asistenții AI: {c.agent}</p>
+    </div>
+  );
+}
+
+export function CritiqueMock({ active }: { active: boolean }) {
+  const stops = useMemo(() => critiqueStops(CRIT_HAWK / CRIT_K), []);
+  const still = useMemo(reducedMotion, []);
+  const phase = useSequence(active, CRIT_AT, { loop: true, rest: 5200 });
+  const last = stops.length - 1;
+  const index = still ? last : Math.min(last, Math.max(0, Math.ceil(phase / 2) - 1));
+  const started = still || phase > 0;
+  const landed = still || (phase > 0 && phase % 2 === 0);
+  const stop = stops[index];
+  const box = scaleBox(stop.box);
+  // la pornire, uliul stă în colțul paginii, ca în extensie
+  const claws = started ? { x: stop.perch.x * CRIT_K, y: stop.perch.y * CRIT_K } : { x: CRIT_VIEW.w - 60, y: 70 };
+  const bubble = bubbleAt(box, CRIT_VIEW, CRIT_BUBBLE);
+  const c = stop.critique;
+  return (
+    <>
+      <Scaled width={CRIT_W} height={CRIT_H}>
+        <div className="land-stage relative" style={{ width: CRIT_W, height: CRIT_H }}>
+          <Window address={DEMO_SITE.url} className="absolute top-5 left-5">
+            <div className="relative overflow-hidden" style={{ width: CRIT_VIEW.w, height: CRIT_VIEW.h }}>
+              <CritiqueSite />
+              {(still ? stops : landed ? [stop] : []).map((s) => {
+                const b = scaleBox(s.box);
+                return <span key={s.critique.ruleId} className="land-outline" style={{ left: b.x, top: b.y, width: b.w, height: b.h }} />;
+              })}
+              <span className="land-hawk" data-fly={started && !landed} style={{ left: claws.x - CRIT_HAWK / 2, top: claws.y - CRIT_HAWK * 0.78 }}>
+                <MascotFigure mood={landed ? (c.level === "important" ? "worried" : "thinking") : "idle"} pose={landed ? "perched" : "flying"} size={CRIT_HAWK} />
+              </span>
+              {landed && !still && (
+                <section key={c.ruleId} className="land-bubble land-card absolute z-20 hidden rounded-[12px] p-3 text-[11px] leading-snug text-ink-2 md:block" style={{ left: bubble.x, top: bubble.y, width: CRIT_BUBBLE.w }} data-testid="critica-balon">
+                  <div className="flex items-center justify-between gap-2 text-[10.5px]">
+                    <LevelLabel stop={stop} />
+                    <span className="text-muted tabular-nums">
+                      {index + 1} din {stops.length}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[13px] leading-tight font-semibold text-ink">{c.title}</p>
+                  <p className="mt-1">{c.body}</p>
+                  <p className="mt-1">Ce faci: {c.fix}</p>
+                </section>
+              )}
+            </div>
+          </Window>
+        </div>
+      </Scaled>
+      {still ? (
+        <div className="mt-4 grid gap-3">
+          {stops.map((s, i) => (
+            <CritiqueNote key={s.critique.ruleId} stop={s} index={i} total={stops.length} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-4 min-h-[17rem] md:hidden">
+          <CritiqueNote stop={stop} index={index} total={stops.length} />
+        </div>
+      )}
+    </>
   );
 }
 
