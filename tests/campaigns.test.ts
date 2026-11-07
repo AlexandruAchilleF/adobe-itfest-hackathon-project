@@ -44,7 +44,7 @@ describe("makeKit", () => {
     const kit = await makeKit(input, deps({ generateMascot: vi.fn(async () => { throw new Error("cota"); }) }));
     expect(kit.illustration).toBeNull();
     expect(kit.designs.post?.elements.some((e) => e.type === "image" && e.src === demoBrand.mascot.image)).toBe(true);
-    expect(kit.checks.find((c) => c.id === "illustration-palette")?.message).toBe("Ilustrația originală, generarea n-a reușit");
+    expect(kit.checks.find((c) => c.id === "illustration-palette")?.message).toBe("Imaginea din marcă, generarea n-a reușit");
     expect(kit.checks.some((c) => c.id === "mascot")).toBe(false);
   });
   it("ilustrația nu trece garda nici după 2 reîncercări: se întoarce la mascota originală", async () => {
@@ -53,7 +53,7 @@ describe("makeKit", () => {
     expect(d.generateMascot).toHaveBeenCalledTimes(3);
     expect(kit.illustration).toBeNull();
     expect(kit.attempts).toBe(3);
-    expect(kit.checks.find((c) => c.id === "illustration-palette")?.message).toBe("Ilustrația originală, generarea n-a reușit");
+    expect(kit.checks.find((c) => c.id === "illustration-palette")?.message).toBe("Imaginea din marcă, generarea n-a reușit");
   });
   it("corectează textele fără să regenereze ilustrația, trimițând ce a picat", async () => {
     const writeCopy = vi.fn(async (_failed: unknown[]) => copy);

@@ -80,7 +80,7 @@ export const PITCH: PitchConfig = {
     loop: "Ce nu trece se întoarce la AI, de cel mult două ori",
     failures: [
       { when: "Pică modelul Gemini", then: "trecem automat pe alt model" },
-      { when: "Pică un element vizual", then: "imaginea originală, iar garda o spune" },
+      { when: "Pică un element vizual", then: "imaginea din marca ta, iar garda o spune" },
       { when: "Fără cheie AI", then: "mod demo, spus ca atare" },
     ],
   },

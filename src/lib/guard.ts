@@ -107,7 +107,7 @@ function checkHeadline(design: Design): Check {
 }
 
 function illustrationChecks(illustration: { colors: string[]; hashDistance: number } | null, brand: Brand): Check[] {
-  if (!illustration) return [code("illustration-palette", true, "Ilustrația originală, generarea n-a reușit", false)];
+  if (!illustration) return [code("illustration-palette", true, "Imaginea din marcă, generarea n-a reușit", false)];
   const palette = brandPalette(brand);
   const distances = illustration.colors.map((c) => nearest(c, palette).distance);
   // media, nu maximul: conturul și umbra pot fi în afara paletei fără ca imaginea să iasă de pe marcă

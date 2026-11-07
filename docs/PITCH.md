@@ -64,12 +64,12 @@ Slide-ul pornește cu „Citește” aprins. Patru clicuri până la imaginea co
 > **[clic]** Gemini se uită la design și scrie textele, iar FLUX.2 creează elementele vizuale. Dacă Gemini răspunde în altă formă decât am cerut, aruncăm răspunsul.
 > **[clic]** Modelul de imagine creează doar elementele vizuale. Textul și prețul le așază codul, ca straturi separate. Dintr-o singură imagine n-am putea verifica nimic. Așa, codul citește fiecare cifră.
 > **[clic]** Omul schimbă ce vrea, vede iar verificarea și descarcă.
-> **[clic]** Ce nu trece se reface, de cel mult două ori. Dacă nu răspunde Gemini, trecem pe alt model. Dacă nu iese un element vizual, punem imaginea originală și spunem asta pe ecran.
+> **[clic]** Ce nu trece se reface, de cel mult două ori. Dacă nu răspunde Gemini, trecem pe alt model. Dacă nu iese un element vizual, folosim imaginea pe care firma și-a pus-o în marcă și spunem asta pe ecran.
 
 ### 1:25–1:50 · Garda (slide-ul 7) · Alexandru
 
-> Un chat îți poate scrie alt preț și nu te anunță. La noi, codul compară prețul cu ce ai dat tu, măsoară cât de departe sunt culorile de ale tale, vede dacă textul se citește și respinge elementul vizual care seamănă prea tare cu originalul.
-> În tot proiectul avem 492 de teste unitare și 73 end-to-end, și rulează fără chei AI. ✂
+> Un chat îți poate scrie alt preț și nu te anunță. La noi, codul compară prețul cu ce ai dat tu, măsoară cât de departe sunt culorile de ale tale, vede dacă textul se citește și respinge elementul vizual care seamănă prea tare cu designul de pe care ai pornit.
+> În tot proiectul avem 499 de teste unitare și 73 end-to-end, și rulează fără chei AI. ✂
 
 Sursele din cod: `src/lib/agentLoop.ts`, `src/lib/campaigns.ts`, `src/lib/compose.ts`, `src/lib/guard.ts`, `server/providers/gemini.ts`. Numărul de teste e cel de la ultima rulare; dacă s-a schimbat codul, rulați `npm run check` și spuneți cifra nouă.
 
@@ -173,7 +173,7 @@ Nu. Fără AI nu înțelegem referința și nu avem elemente vizuale. Codul doar
 Nu am măsurat încă. Aș măsura așa: pe un set de referințe, câte materiale trec verificarea, câte au nevoie de reîncercare și câte ar publica un om de marketing. Întrebarea e sigură de la un om de „Run and Operate”.
 
 **7. „Ce se întâmplă dacă Gemini dă 429 sau pică în timpul unei rulări?”**
-Depinde de pas. La analiză și texte, la 429, eroare de server sau 20 de secunde fără răspuns, trecem automat pe modelul Gemini de rezervă (`server/providers/gemini.ts`). Dacă pică un element vizual, kitul iese cu imaginea originală, iar garda spune „generarea n-a reușit”. Furnizorul AI se alege din configurație (`server/ai.ts`), nu după o eroare, deci nu spuneți „failover între furnizori”. Pentru imagine nu există al doilea furnizor, doar rezerva.
+Depinde de pas. La analiză și texte, la 429, eroare de server sau 20 de secunde fără răspuns, trecem automat pe modelul Gemini de rezervă (`server/providers/gemini.ts`). Dacă pică un element vizual, kitul iese cu imaginea pe care firma și-a pus-o în marcă, iar garda spune „generarea n-a reușit”. Furnizorul AI se alege din configurație (`server/ai.ts`), nu după o eroare, deci nu spuneți „failover între furnizori”. Pentru imagine nu există al doilea furnizor, doar rezerva.
 
 **7b. „Clipul cine îl scrie?”**
 Codul cere Claude (`src/lib/campaignVideo.ts`), dar pe producție nu e setată cheia, așa că azi răspunde Gemini. Scenariul trece prin verificarea din `src/lib/videoPlan.ts`, iar dacă pică folosim un scenariu de rezervă. Browserul randează clipul.

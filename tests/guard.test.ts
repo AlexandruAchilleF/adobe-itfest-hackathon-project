@@ -88,7 +88,7 @@ describe("guardDesign", () => {
   it("fără ilustrație generată, spune că e cea originală", () => {
     const c = byId(guardDesign({ ...ok, illustration: null }), "illustration-palette");
     expect(c).toMatchObject({ ok: true, fixable: false });
-    expect(c.message).toBe("Ilustrația originală, generarea n-a reușit");
+    expect(c.message).toBe("Imaginea din marcă, generarea n-a reușit");
   });
   it("contrast slab", () => {
     const d = { ...design, elements: design.elements.map((e) => (e.id === "title" && e.type === "text" ? { ...e, fill: brandColor(demoBrand, "background") } : e)) };
