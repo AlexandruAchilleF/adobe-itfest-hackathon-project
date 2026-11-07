@@ -5,7 +5,8 @@ Pe scurt: **un om, un input haotic, o transformare AI, un rezultat editabil**, p
 
 ## Ce notează juriul Adobe
 
-Criteriile, întrebările grele și cum le aplicați la fiecare decizie: [`JURIU.md`](JURIU.md). Deciziile echipei se notează în [`BRIEF.md`](BRIEF.md).
+Criteriile oficiale din prezentarea Adobe de la ITFest 2026: Problem Solving 25%, AI-Driven Innovation 25%, Third-Party Integrations 15%, Technical Excellence 25%, Product Experience & Demo 10%, plus bonus Cost vs. Value până la 10 puncte.
+Întrebările care le mută, întrebările grele și cum le aplicați la fiecare decizie: [`JURIU.md`](JURIU.md). Deciziile echipei se notează în [`BRIEF.md`](BRIEF.md).
 Cu Claude Code: `/brief` la start (brief → cerințe bifabile → 3 idei punctate), `/juriu` la ora 6 și înainte de pitch.
 
 ## Brief-ul → piesele din template
@@ -20,6 +21,7 @@ La ITFest, Adobe a dat de fiecare dată un scenariu cu funcționalități opțio
 | raportare în timp real, la locația curentă (sesizări, incidente, ce vezi acum) | `sesizari` | `reports.types`, `flow`, `roles`, `seed` |
 | citit și înțeles documente lungi | modulul `/docs` + `flow` pentru ce urmează după citire | documentul, întrebările |
 | un material creativ sau accesibilitate | modulul `/design` | brief-ul, formatul, regulile auditului |
+| unelte de marketing cu AI (tema 2026: conținut, decizie, personalizare, conversii) | modulul `/design` + `agent.ts` + `flow` pentru bucla de măsurare | contextul agentului, garda de marcă, codurile de conversie |
 
 Cel mai ieftin indiciu despre temă: întrebați ce s-a prezentat la workshopul Adobe de la ITFest din 22 octombrie.
 
@@ -54,10 +56,10 @@ La ITFest × Adobe 2026 se lucrează de la **08:00 la 20:00**, iar jurizarea în
 |---|---|
 | 0:00–0:10 | Identitatea într-o frază și categoria în care intrați. |
 | 0:10–0:30 | Persoana și durerea, cu dovada: „11 din 14 oameni întrebați azi…”. |
-| 0:30–2:00 | Demo live, un singur flux. Ideal, cineva din juriu încearcă. Arătați pasul în care omul confirmă sau corectează. |
-| 2:00–2:20 | Ce folosiți de la Adobe (PDF Embed, add-on Express) și de ce AI-ul e folosit responsabil. |
-| 2:20–2:45 | Cine plătește, cât, primul segment de piață, numărat de jos în sus. |
-| 2:45–3:00 | Ce urmează: un plan pe 30 de zile (de exemplu publicarea în marketplace-ul Express). |
+| 0:30–1:45 | Demo live, un singur flux. Ideal, cineva din juriu încearcă. Arătați ce decide AI-ul și pasul în care omul confirmă sau corectează. (Problem Solving, AI, Demo) |
+| 1:45–2:15 | Arhitectura și integrările: ce API face ce, ce se întâmplă când pică unul, testele. (Technical Excellence 25%, Integrations 15%) |
+| 2:15–2:40 | Costul pe rulare vs. ce aduce sau economisește, calculat în aplicație; cine plătește. (bonus Cost vs. Value) |
+| 2:40–3:00 | Ce urmează: un plan pe 30 de zile (de exemplu publicarea în marketplace-ul Express). |
 
 Slide-urile sunt în aplicație, la `/pitch`, pe aceleași teme (checklist: `docs/AMBALARE.md`, secțiunea 3). Aveți pregătite și o variantă de 30 de secunde și una de 5 minute.
 
