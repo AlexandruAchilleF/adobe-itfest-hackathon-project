@@ -1,6 +1,5 @@
 // Stratul Spire din pagină. Injectat de background.js după config.js (la clic pe iconiță).
-// Desenează doar chenarele de scanare (A2) și decupajul (A3). Spire (uliul),
-// balonul și întrebările sunt aplicația din iframe: un singur desen, aceleași stări.
+// Uliul și critica sunt locale; campania se deschide la cerere în iframe.
 // Script clasic, fără build. Singura urmă globală: marcajul __spireInjected.
 (function () {
   var ROOT_ID = "spire-root";
@@ -44,10 +43,345 @@
 
   var shadow = host.attachShadow({ mode: "open" });
 
-  var css = document.createElement("link");
-  css.rel = "stylesheet";
-  css.href = chrome.runtime.getURL("overlay.css");
-  shadow.appendChild(css);
+  // Stilurile sunt locale, în foaie construită: funcționează și cu style-src none.
+  var sheet = new CSSStyleSheet();
+  sheet.replaceSync(`/* Stilurile stratului Spire. Se încarcă doar în shadow root-ul lui #spire-root, deci nu ating
+   pagina gazdă. Fără dark mode. Gazda (poziție fixă, all: initial) e stilată din content.js. */
+
+:host {
+  --spire-coral: #F25C3B;
+  --spire-ink: #1f2a44;
+  --spire-paper: #ffffff;
+  --spire-line: #e3e5ea;
+  font-family: "Geist", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--spire-ink);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Stratul pentru chenare și decupaj: peste toată fereastra, transparent la clicuri. */
+.spire-boxes {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Linia de scanare: trece o dată de sus în jos, cât content.js citește pagina (spire:scan).
+   Stă în .spire-boxes, deci nu prinde clicuri. Durata e SCAN_LINE_MS din content.js. */
+.spire-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--spire-coral);
+  box-shadow: 0 0 0 1px rgba(242, 92, 59, 0.12), 0 6px 18px rgba(242, 92, 59, 0.28);
+  opacity: 0.75;
+  pointer-events: none;
+  animation: spire-scan 1200ms ease-in-out forwards;
+}
+
+@keyframes spire-scan {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.75;
+  }
+  90% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translateY(100vh);
+    opacity: 0;
+  }
+}
+
+/* Fără mișcare: în loc de linie, o licărire scurtă și discretă peste pagină. */
+@keyframes spire-scan-flash {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spire-scanline {
+    inset: 0;
+    height: auto;
+    background: rgba(242, 92, 59, 0.06);
+    box-shadow: none;
+    opacity: 0;
+    animation: spire-scan-flash 400ms ease-out 1;
+  }
+}
+
+/* Un chenar de scanare (A2): elementul citit din pagină. Poziția vine din content.js. */
+.spire-box {
+  position: absolute;
+  border: 2px solid var(--spire-coral);
+  border-radius: 6px;
+  background: rgba(242, 92, 59, 0.06);
+  pointer-events: none;
+  /* Stins până îi vine rândul; content.js pune .spire-box-lit pe rând, la 250 ms. */
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+/* Aprins, chenarul se poate alege (A3). Interiorul rămâne transparent la clicuri (un chenar hero
+   acoperă tot ecranul); le prind doar marginile și eticheta. */
+.spire-box-lit {
+  opacity: 1;
+  transform: none;
+}
+
+/* Benzile de 10 px peste margine (2 px vizibili): ținta clicului. */
+.spire-box-edge {
+  position: absolute;
+  pointer-events: none;
+}
+
+.spire-box-lit .spire-box-edge,
+.spire-box-lit .spire-box-label {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.spire-box-edge-top,
+.spire-box-edge-bottom {
+  left: -6px;
+  right: -6px;
+  height: 10px;
+}
+
+.spire-box-edge-top {
+  top: -6px;
+}
+
+.spire-box-edge-bottom {
+  bottom: -6px;
+}
+
+.spire-box-edge-left,
+.spire-box-edge-right {
+  top: -6px;
+  bottom: -6px;
+  width: 10px;
+}
+
+.spire-box-edge-left {
+  left: -6px;
+}
+
+.spire-box-edge-right {
+  right: -6px;
+}
+
+.spire-box-lit:hover,
+.spire-box-lit:focus-visible {
+  background: rgba(242, 92, 59, 0.14);
+  outline: none;
+}
+
+/* „Alege”, în colțul dreapta-jos, cât stai cu mouse-ul pe chenar. */
+.spire-box-lit:hover::after,
+.spire-box-lit:focus-visible::after {
+  content: "Alege";
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--spire-ink);
+  color: #ffffff;
+  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+}
+
+/* Stratul de decupaj (A3): peste pagină, sub panou; prinde clicuri doar cât e deschis. */
+.spire-crop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 68, 0.12);
+  cursor: crosshair;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.spire-crop[hidden],
+.spire-crop-rect[hidden] {
+  display: none;
+}
+
+.spire-crop-rect {
+  position: absolute;
+  border: 2px solid var(--spire-coral);
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spire-box {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Eticheta chenarului (ex. „titlu”, „buton”), deasupra colțului stânga-sus. */
+.spire-box-label {
+  position: absolute;
+  left: -2px;
+  bottom: 100%;
+  margin-bottom: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--spire-coral);
+  color: #ffffff;
+  font: 500 12px/1.4 "Geist", system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+/* Panoul din dreapta: aplicația Spire. */
+.spire-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 420px;
+  max-width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--spire-paper);
+  border-left: 1px solid var(--spire-line);
+  box-shadow: -8px 0 24px rgba(31, 42, 68, 0.12);
+  pointer-events: auto;
+}
+
+/* Strâns: ascuns, dar încărcat (visibility nu descarcă iframe-ul și nu se lovește la clic). */
+.spire-panel.spire-panel-collapsed {
+  visibility: hidden;
+}
+
+/* Fila panoului strâns, lipită de marginea dreaptă. */
+.spire-tab {
+  position: fixed;
+  top: 96px;
+  right: 0;
+  width: 44px;
+  padding: 14px 0;
+  border: 1px solid var(--spire-line);
+  border-right: 0;
+  border-radius: 10px 0 0 10px;
+  background: var(--spire-paper);
+  color: var(--spire-ink);
+  box-shadow: -4px 0 12px rgba(31, 42, 68, 0.12);
+  font: 500 13px/1 "Geist", system-ui, sans-serif;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.spire-tab[hidden] {
+  display: none;
+}
+
+.spire-tab:hover {
+  background: #f4f5f7;
+}
+
+.spire-tab:focus-visible {
+  outline: 2px solid var(--spire-ink);
+  outline-offset: 2px;
+}
+
+.spire-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  display: block;
+  background: var(--spire-paper);
+}
+
+/* Bara de sus a panoului: starea (stânga), apoi butoanele. */
+.spire-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 0;
+}
+
+.spire-status {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: 400 13px/1.35 "Geist", system-ui, sans-serif;
+  color: var(--spire-ink);
+}
+
+.spire-button {
+  flex: none;
+  padding: 6px 12px;
+  border: 1px solid var(--spire-line);
+  border-radius: 10px;
+  background: var(--spire-paper);
+  color: var(--spire-ink);
+  font: 500 13px/1.2 "Geist", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.spire-button:hover {
+  background: #f4f5f7;
+}
+
+.spire-button:focus-visible {
+  outline: 2px solid var(--spire-ink);
+  outline-offset: 2px;
+}
+:host { font-family:Geist,system-ui,sans-serif; color:#1f2a44 }
+.spire-bird {position:fixed;top:0;left:0;width:140px;height:140px;padding:0;border:0;background:none;cursor:pointer;pointer-events:auto;z-index:3;outline-offset:-15px}
+.spire-body {display:block;width:100%;height:100%;transform-origin:50% 78%}
+.spire-pose {position:absolute;inset:0;opacity:0;transition:opacity .18s;pointer-events:none}
+.spire-pose.show {opacity:1}
+.spire-pose svg {width:100%;height:100%;overflow:visible}
+.mascot-wing {transform-box:fill-box;transform-origin:10% 25%}
+.flap .mascot-wing {animation:spire-flap .17s ease-in-out infinite alternate}
+.glide .mascot-wing {animation:spire-glide 1.4s ease-in-out infinite alternate}
+.flare .mascot-wing {animation:none;transform:rotate(-34deg);transition:transform .25s ease-out}
+.perched .spire-pose.show svg {animation:spire-breathe 2.8s ease-in-out infinite alternate;transform-origin:50% 78%}
+@keyframes spire-flap {from{transform:rotate(-30deg)}to{transform:rotate(18deg) scaleY(.92)}}
+@keyframes spire-glide {from{transform:rotate(-6deg)}to{transform:rotate(-2deg)}}
+@keyframes spire-breathe {to{transform:scale(1.012,.99)}}
+.spire-menu,.spire-bubble {position:fixed;pointer-events:auto;z-index:4;background:#fff;border:1px solid #e3e5ea;border-radius:16px;padding:16px;box-shadow:0 8px 28px #1f2a4420;font:14px/1.45 Geist,system-ui,sans-serif;color:#1f2a44}
+.spire-menu {width:220px;display:grid;gap:8px}
+.spire-bubble {width:min(340px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto}
+.spire-menu[hidden],.spire-bubble[hidden],.spire-crit-outline[hidden] {display:none}
+.spire-menu button,.spire-bubble button {border:1px solid #e3e5ea;border-radius:9px;background:#fff;color:#1f2a44;padding:8px 10px;cursor:pointer;font:500 13px/1.3 Geist,system-ui,sans-serif}
+.spire-menu .spire-primary,.spire-bubble .spire-primary {background:#F25C3B;color:white;border-color:#F25C3B}
+.spire-bubble h2 {font:600 17px/1.3 Geist,system-ui,sans-serif;margin:8px 0}
+.spire-bubble p {margin:8px 0;overflow-wrap:anywhere}
+.spire-level {font-weight:500}
+.spire-level:before {content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#b08834;margin-right:8px}
+.spire-level[data-level="important"]:before {background:#F25C3B}
+.spire-level[data-level="marunt"]:before {background:#8b94a6}
+.spire-ai {border-top:1px solid #e3e5ea;padding-top:8px}
+.spire-row {display:flex;gap:8px;align-items:center;margin-top:12px}
+.spire-row span {flex:1}
+.spire-crit-outline {position:fixed;border:2px solid #F25C3B;border-radius:6px;background:#F25C3B0A;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.spire-pose,.spire-body,.mascot-wing {transition:none!important;animation:none!important}.perched .spire-pose.show svg {animation:none}}
+`);
+  shadow.adoptedStyleSheets = [sheet];
 
   // Stratul pentru chenarele de scanare (A2). Nu prinde clicuri; doar chenarele aprinse (A3).
   var boxes = document.createElement("div");
@@ -107,11 +441,19 @@
   var iframe = document.createElement("iframe");
   iframe.className = "spire-frame";
   iframe.title = "Spire";
-  iframe.src = config.APP_URL + "/nou?din=extensie";
+
   iframe.allow = "clipboard-write";
   panel.appendChild(iframe);
 
-  shadow.appendChild(panel);
+  // Panoul și iframe-ul se atașează doar la alegerea campaniei.
+  function openCampaign() {
+    stopCritique();
+    if (!panel.isConnected) {
+      iframe.src = config.APP_URL + "/nou?din=extensie";
+      shadow.appendChild(panel);
+    }
+    setCollapsed(false);
+  }
 
   var tab = document.createElement("button");
   tab.type = "button";
@@ -136,6 +478,279 @@
   });
 
   (document.body || document.documentElement).appendChild(host);
+
+  // Motorul de mișcare portat din zbor-prototip-v3; coordonatele sunt punctul ghearelor.
+  var motion = matchMedia("(prefers-reduced-motion: reduce)");
+  var speed = Math.max(0.01, Number(globalThis.__spireTestSpeed) || 1);
+  var S = 140, pos = { x: innerWidth - 180, y: 140 }, ang = 0, run = 0, tour = 0;
+  var mode = "roam", resumeBubble = null, roamTimer, critiqueElements = new Map();
+  var bird = document.createElement("button");
+  bird.className = "spire-bird perched";
+  bird.type = "button";
+  bird.setAttribute("aria-label", "Spire, deschide meniul");
+  var body = document.createElement("span");
+  body.className = "spire-body";
+  bird.appendChild(body);
+  Object.keys(globalThis.SPIRE_POSES).forEach(function (mood) {
+    ["flying", "perched"].forEach(function (pose) {
+      var wrapper = document.createElement("span");
+      wrapper.className = "spire-pose";
+      wrapper.dataset.mood = mood;
+      wrapper.dataset.pose = pose;
+      var svg = new DOMParser().parseFromString(globalThis.SPIRE_POSES[mood][pose], "image/svg+xml").documentElement;
+      wrapper.appendChild(document.importNode(svg, true));
+      body.appendChild(wrapper);
+    });
+  });
+  var mood = "idle";
+  function pose(m) { mood = m; refreshPose(); }
+  function refreshPose() {
+    var p = bird.classList.contains("perched") ? "perched" : "flying";
+    body.querySelectorAll(".spire-pose").forEach(function (el) {
+      el.classList.toggle("show", el.dataset.mood === mood && el.dataset.pose === p);
+    });
+  }
+  function wings(c) {
+    bird.classList.remove("flap", "glide", "flare", "perched");
+    if (c) bird.classList.add(c);
+    refreshPose();
+  }
+  var bubble = document.createElement("section");
+  bubble.className = "spire-bubble";
+  bubble.setAttribute("aria-live", "polite");
+  bubble.hidden = true;
+  var menu = document.createElement("div");
+  menu.className = "spire-menu";
+  menu.hidden = true;
+  function button(parent, label, fn, primary) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = label;
+    if (primary) b.className = "spire-primary";
+    b.addEventListener("click", fn); parent.appendChild(b);
+    return b;
+  }
+  button(menu, "Critică pagina", function () { menu.hidden = true; critique(); }, true);
+  button(menu, "Fă o campanie", function () { menu.hidden = true; openCampaign(); });
+  button(menu, "Închide Spire", function () { stopCritique(); menu.hidden = true; host.style.setProperty("display", "none", "important"); });
+  shadow.append(bird, bubble, menu);
+  bird.addEventListener("click", function () {
+    menu.hidden = !menu.hidden;
+    if (!menu.hidden) { stopCritique(); place(pos.x, pos.y); }
+    positionPopup(menu);
+  });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") menu.hidden = true; });
+  function positionPopup(el) {
+    var r = bird.getBoundingClientRect();
+    var w = el.offsetWidth, h = el.offsetHeight;
+    var x = r.right + 6 + w > innerWidth ? r.left - w - 6 : r.right + 6;
+    el.style.left = Math.max(8, Math.min(innerWidth - w - 8, x)) + "px";
+    el.style.top = Math.max(8, Math.min(innerHeight - h - 8, r.top - 10)) + "px";
+  }
+  function place(x, y, rot, sx, sy) {
+    bird.style.transform = "translate(" + (x - S / 2) + "px," + (y - S * .78) + "px)";
+    body.style.transform = "rotate(" + (rot || 0) + "deg) scale(" + (sx || 1) + "," + (sy || 1) + ")";
+    if (!bubble.hidden) positionPopup(bubble);
+    if (!menu.hidden) positionPopup(menu);
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms * speed); }); }
+  function clampPoint(p) {
+    return { x: Math.max(75, Math.min(innerWidth - 75, p.x)), y: Math.max(115, Math.min(innerHeight - 30, p.y)) };
+  }
+  function fly(to, dur, arc) {
+    to = clampPoint(to);
+    var id = ++run, from = { x: pos.x, y: pos.y }, dx = to.x - from.x, dy = to.y - from.y, dist = Math.hypot(dx, dy);
+    if (motion.matches) { pos = to; place(pos.x, pos.y); wings("perched"); return Promise.resolve(true); }
+    dur = (dur || Math.max(700, dist * 1.6)) * speed; arc = arc || .35;
+    var c1 = { x: from.x + dx * .25, y: from.y + dy * .25 - dist * arc };
+    var c2 = { x: from.x + dx * .75, y: from.y + dy * .75 - dist * arc * .6 };
+    function B(t, a, b, c, d) { return (1-t)**3*a+3*(1-t)**2*t*b+3*(1-t)*t*t*c+t**3*d; }
+    pose("idle"); wings("flap");
+    return new Promise(function (resolve) {
+      var t0 = performance.now(), px = from.x;
+      function step(now) {
+        if (id !== run) return resolve(false);
+        var t = Math.min(1, (now-t0)/dur), e = t < .5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
+        var x = B(e,from.x,c1.x,c2.x,to.x), y = B(e,from.y,c1.y,c2.y,to.y);
+        var vx = x-px; px=x; ang += (Math.max(-22, Math.min(22,vx*2.2))-ang)*.15;
+        if (t > .35 && t < .7) wings("glide"); else if (t >= .7 && t < .9) wings("flap"); else if(t >= .9) wings("flare");
+        var bob = Math.sin(now/90)*(t<.9?2:0); pos={x:x,y:y+bob}; place(x,y+bob,ang);
+        if(t<1) requestAnimationFrame(step); else { pos=to; ang=0; resolve(true); }
+      }
+      requestAnimationFrame(step);
+    });
+  }
+  async function squash(sx, sy, ms) {
+    if (motion.matches) return;
+    body.style.transition = "transform " + ms*speed + "ms cubic-bezier(.3,1.5,.5,1)";
+    place(pos.x,pos.y,0,sx,sy); await wait(ms); body.style.transition = "";
+  }
+  async function land() {
+    var token=run;
+    wings("flare"); await squash(1.06,.9,140); if(token!==run)return;
+    wings("perched"); await squash(.95,1.06,150); if(token!==run)return;
+    await squash(1,1,180);
+  }
+  async function takeoff() {
+    if (motion.matches) return;
+    var token=run;
+    wings("perched"); await squash(1.05,.92,120); if(token!==run)return;
+    wings("flap"); await squash(.96,1.06,100);
+  }
+  function perchOn(el) { var r=el.getBoundingClientRect(); return clampPoint({x:r.left+Math.min(r.width*.5,r.width-40)+8,y:r.top+4}); }
+  function scheduleRoam() {
+    clearTimeout(roamTimer);
+    roamTimer=setTimeout(async function () {
+      if (mode === "roam" && menu.hidden && bubble.hidden && host.style.display !== "none" && !panel.isConnected) {
+        var targets=[], walker=document.createTreeWalker(document.body,NodeFilter.SHOW_ELEMENT), n, count=0;
+        while ((n=walker.nextNode()) && count++<500) {
+          if(n===host || host.contains(n)) continue;
+          var r=n.getBoundingClientRect();
+          if(r.top>115 && r.top<innerHeight-30 && r.width>80 && isVisible(n,r)) targets.push(n);
+          if(targets.length>=40) break;
+        }
+        var target=targets[Math.floor(Math.random()*targets.length)];
+        var token=run;
+        await takeoff();
+        if(token===run && mode==="roam" && menu.hidden && bubble.hidden && host.style.display!=="none" && !panel.isConnected) {
+          if(await fly(target?perchOn(target):{x:80+Math.random()*(innerWidth-160),y:120+Math.random()*(innerHeight-180)},1800,.2)) await land();
+        }
+      }
+      scheduleRoam();
+    }, (4000+Math.random()*4000)*speed);
+  }
+  function effectiveBackground(el) {
+    for(var n=el;n;n=n.parentElement) {
+      var cs=getComputedStyle(n);
+      if(cs.backgroundImage !== "none") return "";
+      var color=cs.backgroundColor;
+      var match=color.match(/^rgba?\((.*)\)$/);
+      if(!match) return ""; // Culorile CSS necunoscute nu sunt fundaluri transparente.
+      var alpha=Number((match[1].split(",")[3] || "1").trim());
+      if(alpha === 1) return color;
+      if(alpha > 0) return ""; // Fundal semitransparent: nu tragem concluzii despre contrast.
+    }
+    return "rgb(255, 255, 255)";
+  }
+  // Citire plafonată, independentă de spire:page și de identificatorii campaniei.
+  function readFacts() {
+    var elements=[], visited=0, h1=0, missing=0;
+    critiqueElements=new Map();
+    var walker=document.createTreeWalker(document.body || document.documentElement,NodeFilter.SHOW_ELEMENT,{
+      acceptNode:function(n){ return n===host || SKIP_TAGS[n.tagName] || n.ownerSVGElement ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT; }
+    });
+    var el=walker.currentNode;
+    while(el && visited++<MAX_VISITED) {
+      var current=el; el=walker.nextNode();
+      var r=current.getBoundingClientRect(), cs=isVisible(current,r);
+      if(!cs) continue;
+      var tag=current.tagName.toLowerCase();
+      var semanticText=/^(a|button|label|summary|h[1-6])$/.test(tag) || /^(button|link|heading)$/.test(current.getAttribute("role") || "");
+      var text=normalize(semanticText ? current.innerText : directText(current),120);
+      if(tag==="h1") h1++;
+      if(tag==="img" && !current.hasAttribute("alt")) missing++;
+      if(elements.length>=200) continue;
+      var role=current.getAttribute("role") || (tag==="button" || (tag==="input" && /^(button|submit|reset)$/.test(current.type)) ? "button" : tag==="a" && current.hasAttribute("href") ? "link" : /^h[1-6]$/.test(tag) ? "heading" : tag==="img" ? "img" : "");
+      var labelled=normalize((current.getAttribute("aria-labelledby") || "").split(/\s+/).slice(0,20).map(function(id){var n=document.getElementById(id);return n?n.textContent:"";}).join(" "),120);
+      var image=current.querySelector("img[alt]"), name=normalize(current.getAttribute("aria-label") || labelled || text || current.getAttribute("title") || current.getAttribute("alt") || (image && image.getAttribute("alt")),120);
+      var pointer=cs.cursor==="pointer" || current.hasAttribute("onclick");
+      var childPointer=false;
+      // Numai ultimul descendent cu cursor pointer poartă acțiunea.
+      for(var i=0;pointer && i<current.children.length && visited<MAX_VISITED;i++,visited++) {
+        var child=current.children[i], cr=child.getBoundingClientRect();
+        if(cr.width>0 && cr.height>0 && getComputedStyle(child).cursor==="pointer") {childPointer=true;break;}
+      }
+      var nativeParent=current.parentElement && current.parentElement.closest("a,button,input,select,textarea,summary,label,[role=button],[role=link]");
+      var fake=pointer && !childPointer && !nativeParent && !/^(a|button|input|select|textarea|summary|label)$/.test(tag) && role!=="button" && role!=="link";
+      if(!text && !fake && tag!=="img" && role!=="img" && role!=="button" && role!=="link") continue;
+      var id="crit-"+elements.length; critiqueElements.set(id,current);
+      var size=parseFloat(cs.fontSize), weight=parseInt(cs.fontWeight,10)||400;
+      elements.push({id:id,tag:tag,role:role,text:text,accessibleName:name,fontSizePx:size,fontWeight:weight,color:cs.color,background:effectiveBackground(current),
+        box:{x:r.left,y:r.top,w:r.width,h:r.height},inFirstScreen:r.bottom>0 && r.right>0 && r.top<innerHeight && r.left<innerWidth,
+        isLink:role==="link",href:tag==="a"?current.href:null,isButtonLike:fake,isImage:tag==="img" || role==="img",
+        alt:current.getAttribute("alt"),isHeadingLike:!/^h[1-6]$/.test(tag) && role!=="heading" && (size>=20 || (size>=18 && weight>=700))});
+    }
+    var types=[];
+    function jsonTypes(value,depth) {
+      if(!value || typeof value!=="object" || depth>15 || types.length>=100) return;
+      if(Array.isArray(value)) return value.slice(0,100).forEach(function(v){jsonTypes(v,depth+1);});
+      var type=value["@type"]; if(typeof type==="string") types.push(type); else if(Array.isArray(type)) type.slice(0,20).forEach(function(t){if(typeof t==="string")types.push(t);});
+      Object.keys(value).slice(0,100).forEach(function(k){if(k!=="@type") jsonTypes(value[k],depth+1);});
+    }
+    Array.from(document.querySelectorAll('script[type="application/ld+json"]')).slice(0,10).forEach(function(s){
+      if(s.textContent.length<=100000) try {jsonTypes(JSON.parse(s.textContent),0);} catch (_) {}
+    });
+    bird.dataset.analyzed=String(elements.length);
+    var meta=document.querySelector('meta[name="description"]');
+    return {page:{url:location.href,title:document.title,lang:document.documentElement.lang,metaDescription:meta?meta.content:"",jsonLdTypes:types,h1Count:h1,imagesWithoutAlt:missing},elements:elements};
+  }
+  var outline=document.createElement("div"); outline.className="spire-crit-outline"; outline.hidden=true; boxes.appendChild(outline);
+  var outlined=null;
+  function updateOutline() {
+    if(!outlined || !outlined.isConnected) {outline.hidden=true;return;}
+    var r=outlined.getBoundingClientRect();
+    outline.style.left=r.left+"px";outline.style.top=r.top+"px";outline.style.width=r.width+"px";outline.style.height=r.height+"px";
+  }
+  window.addEventListener("scroll",updateOutline,true);
+  window.addEventListener("resize",function(){updateOutline();pos=clampPoint(pos);place(pos.x,pos.y);});
+  function stopCritique() {
+    tour++; run++; mode="roam"; outlined=null; outline.hidden=true; bubble.hidden=true;
+    if(resumeBubble) resumeBubble();
+    wings("perched");
+  }
+  function line(parent, tag, text, cls) {
+    var el=document.createElement(tag);el.textContent=text;if(cls)el.className=cls;parent.appendChild(el);return el;
+  }
+  function showBubble(c,index,total,summary) {
+    bubble.replaceChildren(); bubble.hidden=false;
+    if(summary) {
+      bubble.dataset.summary="true";line(bubble,"h2","Am terminat");line(bubble,"p",summary);positionPopup(bubble);
+      return Promise.resolve();
+    }
+    delete bubble.dataset.summary;
+    var labels={"important":"Important","de-imbunatatit":"De îmbunătățit","marunt":"Mărunt"};
+    var level=line(bubble,"div",labels[c.level],"spire-level");
+    level.dataset.level=c.level;
+    line(bubble,"h2",c.title);line(bubble,"p",c.body);line(bubble,"p","Ce faci: "+c.fix);line(bubble,"p","Pentru asistenții AI: "+c.agent,"spire-ai");
+    var row=document.createElement("div");row.className="spire-row";bubble.appendChild(row);line(row,"span",(index+1)+" din "+total);
+    return new Promise(function(resolve){
+      var done=false;
+      function next(){if(done)return;done=true;clearTimeout(timer);resumeBubble=null;resolve();}
+      button(row,"Următorul",next,true);button(row,"Oprește",stopCritique);
+      var timer=setTimeout(next,8000*speed);resumeBubble=next;positionPopup(bubble);
+    });
+  }
+  async function critique() {
+    stopCritique();mode="crit";var id=tour;pose("searching");await wait(1200);
+    if(id!==tour)return;
+    var facts=readFacts(), crits=globalThis.SpireCritique.critiquePage(facts.page,facts.elements,{w:innerWidth,h:innerHeight});
+    // Observațiile despre pagină vin după parcurgerea elementelor.
+    crits=crits.filter(function(c){return c.elementId!==null;}).concat(crits.filter(function(c){return c.elementId===null;}));
+    for(var i=0;i<crits.length;i++) {
+      if(id!==tour)return;
+      bubble.hidden=true;outline.hidden=true;outlined=null;
+      var c=crits[i], target=critiqueElements.get(c.elementId);
+      if(target && target.isConnected) {
+        var r=target.getBoundingClientRect();
+        if(r.top<115 || r.bottom>innerHeight || r.left<0 || r.right>innerWidth) {
+          target.scrollIntoView({block:"center",behavior:motion.matches?"instant":"smooth"});await wait(650);
+          if(id!==tour)return;
+        }
+        await takeoff();if(id!==tour)return;
+        if(!await fly(perchOn(target)))return;
+        await land();if(id!==tour)return;
+        outlined=target;outline.hidden=false;if(!outline.isConnected)boxes.appendChild(outline);updateOutline();
+      }
+      pose("searching");await wait(500);if(id!==tour)return;
+      pose("thinking");await wait(500);if(id!==tour)return;
+      pose(c.level==="important"?"worried":"thinking");
+      await showBubble(c,i,crits.length);
+    }
+    if(id!==tour)return;
+    outlined=null;outline.hidden=true;pose(crits.some(function(c){return c.level==="important";})?"happy":"celebrate");
+    showBubble(null,0,0,globalThis.SpireCritique.summarySentence(crits)); mode="roam";
+  }
+  pose("idle");place(pos.x,pos.y);scheduleRoam();
+
 
   // ---------------------------------------------------------------------------------------------
   // Scanarea paginii (A2). Contractul: PageElement și PageSummary din src/lib/extensionBridge.ts.

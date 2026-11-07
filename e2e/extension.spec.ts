@@ -102,6 +102,11 @@ function prepareExtension(): string {
   const rewritten = config.replace(/var APP_URL = "[^"]*";/, `var APP_URL = ${JSON.stringify(APP_URL)};`);
   if (rewritten === config) throw new Error("Nu găsesc APP_URL în config.js (s-a schimbat forma?)");
   writeFileSync(configPath, rewritten);
+  const contentPath = join(dir, "content.js");
+  writeFileSync(contentPath, "globalThis.__spireTestSpeed = 0.08;\n" + readFileSync(contentPath, "utf8")
+    .replace("var facts=readFacts(), crits=", "var facts=readFacts();bird.dataset.facts=JSON.stringify(facts);var crits=")
+    .replace("var elements=[], visited=0, h1=0, missing=0;", "var rectReads=0, originalRect=Element.prototype.getBoundingClientRect;Element.prototype.getBoundingClientRect=function(){rectReads++;return originalRect.call(this);};var elements=[], visited=0, h1=0, missing=0;")
+    .replace('bird.dataset.analyzed=String(elements.length);', 'Element.prototype.getBoundingClientRect=originalRect;bird.dataset.rectReads=String(rectReads);bird.dataset.analyzed=String(elements.length);'));
   return dir;
 }
 
@@ -124,7 +129,8 @@ async function launch(options: { deviceScaleFactor?: number; args?: string[] } =
   const html = { status: 200, contentType: "text/html; charset=utf-8" };
   await ctx.route(`${SITE_ORIGIN}/**`, (route) => {
     const body = new URL(route.request().url()).pathname === "/mare" ? bigPage() : readFileSync(FIXTURE, "utf8");
-    return route.fulfill({ ...html, body });
+    const headers: Record<string, string> = new URL(route.request().url()).pathname === "/csp" ? { "Content-Security-Policy": "default-src 'none'; style-src 'none'; img-src 'none'; frame-src 'none'" } : {};
+    return route.fulfill({ ...html, headers, body });
   });
   await ctx.route(`${APP_URL}/**`, (route) => {
     // Navigarea din script (o redirecționare 302 prin route nu e urmată în iframe).
@@ -170,6 +176,8 @@ async function openFixture(ctx: BrowserContext = context): Promise<Page> {
 
 // Cadrul iframe-ului Spire (din shadow root), după ce s-a încărcat de pe originea dată.
 async function appFrame(page: Page, origin = APP_URL): Promise<Frame> {
+  await page.locator("#spire-root").getByRole("button", { name: "Spire, deschide meniul" }).click();
+  await page.locator("#spire-root").getByRole("button", { name: "Fă o campanie", exact: true }).click();
   await expect.poll(() => page.frames().some((f) => f.url().startsWith(origin))).toBe(true);
   return page.frames().find((f) => f.url().startsWith(origin)) as Frame;
 }
@@ -212,6 +220,8 @@ test("după injectare, Spire apare peste pagină: shadow root cu iframe la /nou?
   await expect(root).toHaveCount(1);
   expect(await root.evaluate((el) => el.shadowRoot !== null)).toBe(true);
 
+  await expect(root.locator("iframe")).toHaveCount(0);
+  await appFrame(page);
   // Locatorii Playwright trec prin shadow root-urile deschise.
   const iframe = root.locator("iframe");
   await expect(iframe).toHaveCount(1);
@@ -232,7 +242,10 @@ test("injectarea de două ori nu dublează stratul", async () => {
   expect(await inject()).toBe(true);
   expect(await inject()).toBe(true);
   await expect(page.locator("#spire-root")).toHaveCount(1);
-  await expect(page.locator("#spire-root iframe")).toHaveCount(1);
+  await expect(page.locator("#spire-root iframe")).toHaveCount(0);
+  await expect(page.locator("#spire-root")).toBeHidden();
+  expect(await inject()).toBe(true);
+  await expect(page.locator("#spire-root .spire-bird")).toBeVisible();
   await page.close();
 });
 
@@ -333,6 +346,7 @@ test("după spire:scan, aplicația primește spire:page cu elementele vizibile a
 test("după spire:picks, chenarele celor 4 elemente se aprind pe rând, cu etichete în română", async () => {
   const page = await openFixture();
   expect(await inject()).toBe(true);
+  await appFrame(page);
   const root = page.locator("#spire-root");
   await expect(root.locator(".spire-box")).toHaveCount(4);
   await expect(root.locator(".spire-box.spire-box-lit")).toHaveCount(4);
@@ -675,4 +689,135 @@ test("content.js trimite referința doar spre APP_ORIGIN, iar background.js capt
   const background = readFileSync(join(EXT_SRC, "background.js"), "utf8");
   expect(background).toMatch(/sender\.id !== chrome\.runtime\.id/);
   expect(background).toMatch(/captureVisibleTab/);
+});
+
+test("uliul pornește fără panou și se plimbă singur", async () => {
+  const page = await openFixture();
+  expect(await inject()).toBe(true);
+  const bird = page.locator("#spire-root .spire-bird");
+  await expect(bird).toBeVisible();
+  await expect(page.locator("#spire-root iframe")).toHaveCount(0);
+  const before = await bird.getAttribute("style");
+  await expect.poll(() => bird.getAttribute("style")).not.toBe(before);
+  await appFrame(page);
+  await expect(page.locator("#spire-root iframe")).toHaveAttribute("src", APP_URL + "/nou?din=extensie");
+  await page.close();
+});
+
+async function startCritique(page: Page) {
+  const root = page.locator("#spire-root");
+  await root.getByRole("button", { name: "Spire, deschide meniul" }).click();
+  await root.getByRole("button", { name: "Critică pagina", exact: true }).click();
+  await expect(root.locator(".spire-bubble")).toBeVisible();
+}
+
+test("fundalul oklch necunoscut nu devine alb în verificarea contrastului", async () => {
+  const page = await openFixture();
+  await page.evaluate(() => { document.body.innerHTML = '<h1>Test</h1><p style="background:oklch(30% .1 250);color:white">Text lizibil</p>'; });
+  await inject(); await startCritique(page);
+  const facts = JSON.parse((await page.locator("#spire-root .spire-bird").getAttribute("data-facts"))!);
+  expect(facts.elements.find((e: { text: string }) => e.text === "Text lizibil").background).toBe("");
+  await page.close();
+});
+
+test("citirea copiilor respectă plafonul și pe o pagină foarte lată", async () => {
+  const page = await openFixture();
+  await page.evaluate(() => { document.body.innerHTML = '<h1>Test</h1>' + '<span>x</span>'.repeat(20000); });
+  await inject(); await startCritique(page);
+  expect(Number(await page.locator("#spire-root .spire-bird").getAttribute("data-rect-reads"))).toBeLessThan(15000);
+  await page.close();
+});
+
+test("meniul deschis în zbor anulează turul și permite reluarea plimbării", async () => {
+  const page = await openFixture(); await inject();
+  const root = page.locator("#spire-root"), bird = root.locator(".spire-bird");
+  await bird.click(); await root.getByRole("button", { name: "Critică pagina", exact: true }).click();
+  await expect(bird).toHaveClass(/flap|glide/);
+  await bird.dispatchEvent("click");
+  await page.keyboard.press("Escape");
+  await expect(root.locator(".spire-bubble")).toBeHidden();
+  const stopped = await bird.getAttribute("style");
+  await expect.poll(() => bird.getAttribute("style"), { timeout: 4000 }).not.toBe(stopped);
+  await page.close();
+});
+
+test("critica aterizează, conturează elementul, avansează și termină cu rezumat", async () => {
+  const page = await openFixture();
+  await inject();
+  await startCritique(page);
+  const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-bird")).toHaveClass(/perched/);
+  await expect(root.locator(".spire-bird")).not.toHaveClass(/flap/);
+  await expect(root.locator('.spire-pose.show[data-pose="perched"]')).toHaveCount(1);
+  await expect(root.locator(".spire-crit-outline")).toBeVisible();
+  const first = await root.locator(".spire-bubble h2").textContent();
+  await root.getByRole("button", { name: "Următorul" }).click();
+  await expect.poll(() => root.locator(".spire-bubble h2").textContent()).not.toBe(first);
+  for (let i = 0; i < 8 && !(await root.locator(".spire-bubble").getAttribute("data-summary")); i++) {
+    const next = root.getByRole("button", { name: "Următorul" });
+    if (await next.isVisible()) await next.click();
+    await page.waitForTimeout(450);
+  }
+  await expect(root.locator('.spire-bubble[data-summary="true"]')).toBeVisible();
+  await page.close();
+});
+
+test("CSP strict: uliul are stiluri și critica merge fără iframe", async () => {
+  const page = await context.newPage();
+  await page.goto(SITE_ORIGIN + "/csp");
+  await inject();
+  const bird = page.locator("#spire-root .spire-bird");
+  await expect(bird).toHaveCSS("position", "fixed");
+  await expect(bird).toHaveCSS("width", "140px");
+  await startCritique(page);
+  await expect(page.locator("#spire-root iframe")).toHaveCount(0);
+  await page.locator("#spire-root").getByRole("button", { name: "Oprește" }).click();
+  await expect(page.locator("#spire-root .spire-bubble")).toBeHidden();
+  await page.close();
+});
+
+test("critica plafonează lectura și păstrează textul HTML ca text", async () => {
+  const page = await context.newPage();
+  await page.goto(SITE_ORIGIN + "/mare");
+  await page.evaluate(() => {
+    document.body.replaceChildren();
+    const bad = document.createElement("a");
+    bad.href = "#";
+    bad.style.cssText = "display:block;color:#eee;background:white";
+    bad.textContent = "<img src=x onerror=alert(1)>";
+    document.body.append(bad);
+    for (let i = 0; i < 5000; i++) {
+      const p = document.createElement("p"); p.textContent = "Rând " + i; document.body.append(p);
+    }
+  });
+  await inject();
+  await startCritique(page);
+  const root = page.locator("#spire-root");
+  await expect(root.locator(".spire-bubble")).toContainText("<img src=x onerror=alert(1)>");
+  await expect(root.locator(".spire-bubble img")).toHaveCount(0);
+  expect(Number(await root.locator(".spire-bird").getAttribute("data-analyzed"))).toBeLessThanOrEqual(200);
+  await page.close();
+});
+
+test("faptele separă textul propriu, controalele reale, butonul fals și numele ARIA", async () => {
+  const page = await openFixture();
+  await page.evaluate(() => {
+    document.body.replaceChildren();
+    const wrap = document.createElement("div");
+    const button = document.createElement("button");
+    button.style.cursor = "pointer";
+    const span = document.createElement("span"); span.textContent = "Control real";
+    button.append(span); wrap.append(button);
+    const fake = document.createElement("div"); fake.style.cursor = "pointer";
+    const leaf = document.createElement("span"); leaf.textContent = "Control fals"; fake.append(leaf); wrap.append(fake);
+    const image = document.createElement("img"); image.setAttribute("aria-label", "Cană ilustrată"); image.width = 180; image.height = 180;
+    image.src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'/>";
+    wrap.append(image); document.body.append(wrap);
+  });
+  await inject(); await startCritique(page);
+  const facts = JSON.parse((await page.locator("#spire-root .spire-bird").getAttribute("data-facts"))!);
+  expect(facts.elements.filter((e: { isButtonLike: boolean }) => e.isButtonLike).map((e: { text: string }) => e.text)).toEqual(["Control fals"]);
+  expect(facts.elements.some((e: { tag: string }) => e.tag === "body")).toBe(false);
+  expect(facts.elements.find((e: { tag: string }) => e.tag === "img").accessibleName).toBe("Cană ilustrată");
+  await page.close();
 });

@@ -7,7 +7,7 @@ async function injectSpire(tabId) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["config.js", "content.js"],
+      files: ["config.js", "mascot-poses.js", "critique.js", "content.js"],
     });
     return true;
   } catch (e) {
