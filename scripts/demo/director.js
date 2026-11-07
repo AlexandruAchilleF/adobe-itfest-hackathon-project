@@ -249,8 +249,10 @@
         video.addEventListener("loadeddata", resolve, { once: true });
         video.addEventListener("error", () => reject(new Error(`Clipul nu se încarcă: ${src}`)), { once: true });
       });
-      video.currentTime = from;
-      await new Promise((resolve) => video.addEventListener("seeked", resolve, { once: true }));
+      if (from > 0) {
+        video.currentTime = from;
+        await new Promise((resolve) => video.addEventListener("seeked", resolve, { once: true }));
+      }
       await video.play();
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {

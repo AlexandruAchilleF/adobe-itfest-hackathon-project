@@ -17,8 +17,8 @@ const LIVE_SITE = "https://www.marinapark.ro";
 const OPENING_PHOTO = `${LIVE_SITE}/wp-content/uploads/2022/01/IMG_20210501_222151-scaled.jpg`;
 const PUBLIC_ADDRESS = "adobe-itfest-hackathon-project.vercel.app";
 const CLIP = `${APP}/samples/spire/demo-videos/marina-park.mp4`;
-const CLIP_FROM = 20; // ultimele 20 s din 40: foișorul, hamacele, marea și numele Marina Park la final
-const CLIP_MS = 20_000;
+const CLIP_FROM = 0; // clipul întreg, de la titlu până la numele Marina Park
+const CLIP_MS = 40_000;
 const POSTER = `${APP}/samples/spire/demo-videos/afis-marina-park.png`;
 const REFERENCE = `${APP}/samples/spire/marina-park/referinta-camping.png`;
 /** Descărcarea clipului durează câteva milisecunde pe localhost; rețeaua încetinită face bara reală vizibilă. */
